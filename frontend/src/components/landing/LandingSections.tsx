@@ -58,18 +58,23 @@ export function LandingSections() {
       {/* ── About · the statement ─────────────────────────────────────────── */}
       <section className="landing-about" id="about">
         <div className="landing-container">
-          <h2 className="landing-statement">
+          <h2 className="landing-statement scroll-reveal">
             The CNP Department website is the working home of two student communities at GSFC University
             <span className="landing-stop" aria-hidden="true">.</span>
           </h2>
 
-          <div className="landing-about-foot">
+          <div className="landing-about-foot scroll-reveal scroll-reveal--delay-1">
             <p className="landing-about-line">
               One platform for the people who run the clubs and the projects.
             </p>
             <ul className="landing-roles" aria-label="Who signs in">
-              {ROLES.map((role) => (
-                <li key={role.label} title={role.duty}>
+              {ROLES.map((role, idx) => (
+                <li
+                  key={role.label}
+                  title={role.duty}
+                  className="scroll-reveal"
+                  style={{ '--reveal-delay': `${idx * 60}ms` } as React.CSSProperties}
+                >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                     <path d={role.path} />
                   </svg>
@@ -85,7 +90,7 @@ export function LandingSections() {
       {/* ── Student Managed Clubs · head over the directory, full width ────── */}
       <section className="landing-clubs" id="clubs">
         <div className="landing-container landing-clubs-grid">
-          <div className="landing-clubs-copy">
+          <div className="landing-clubs-copy scroll-reveal">
             <h2>Clubs that students run themselves</h2>
             <p className="landing-lead">
               Interest-based groups planned and led by students, with a faculty coordinator guiding
@@ -96,7 +101,7 @@ export function LandingSections() {
             <LandingPoints points={SMC_POINTS} />
           </div>
 
-          <figure className="landing-shot landing-shot--clubs">
+          <figure className="landing-shot landing-shot--clubs scroll-reveal scroll-reveal--scale scroll-reveal--delay-2">
             <div className="landing-shot-frame">
               <img
                 src="/screens/clubs-detail.webp"
@@ -118,7 +123,7 @@ export function LandingSections() {
       {/* ── GUIITAR Projects · head, screen, supports, the vision panel ────── */}
       <section className="landing-projects" id="projects">
         <div className="landing-container">
-          <div className="landing-projects-head">
+          <div className="landing-projects-head scroll-reveal">
             <div>
               <h2>Ideas with the backing to become real</h2>
             </div>
@@ -133,7 +138,7 @@ export function LandingSections() {
           </div>
 
           <div className="landing-projects-body">
-            <figure className="landing-shot landing-shot--projects">
+            <figure className="landing-shot landing-shot--projects scroll-reveal scroll-reveal--scale">
               <div className="landing-shot-frame">
                 <img
                   src="/screens/projects-detail.webp"
@@ -148,8 +153,12 @@ export function LandingSections() {
             </figure>
 
             <ul className="landing-supports">
-              {GUIITAR_POINTS.map((point) => (
-                <li key={point.title}>
+              {GUIITAR_POINTS.map((point, idx) => (
+                <li
+                  key={point.title}
+                  className="scroll-reveal"
+                  style={{ '--reveal-delay': `${idx * 100}ms` } as React.CSSProperties}
+                >
                   <span className="landing-supports-mark" aria-hidden="true" />
                   <h3>{point.title}</h3>
                   <p>{point.text}</p>
@@ -158,7 +167,7 @@ export function LandingSections() {
             </ul>
           </div>
 
-          <figure className="landing-vision">
+          <figure className="landing-vision scroll-reveal scroll-reveal--scale scroll-reveal--delay-1">
             <blockquote>
               <p>
                 To nurture young minds by providing a platform to explore and showcase their potential,
@@ -179,7 +188,7 @@ export function LandingSections() {
       <section className="landing-how" id="how">
         <div className="landing-container">
           <div className="landing-how-top">
-            <figure className="landing-shot landing-shot--events">
+            <figure className="landing-shot landing-shot--events scroll-reveal scroll-reveal--scale">
               <div className="landing-shot-frame">
                 <img
                   src="/screens/events-detail.webp"
@@ -193,7 +202,7 @@ export function LandingSections() {
               <figcaption>One calendar for every club, with upcoming and past events marked.</figcaption>
             </figure>
 
-            <div className="landing-how-copy">
+            <div className="landing-how-copy scroll-reveal scroll-reveal--delay-1">
               <h2>Managing clubs and projects, together</h2>
               <p className="landing-lead">
                 Clubs, projects, events, notifications and material requests, handled in one place.
@@ -202,8 +211,12 @@ export function LandingSections() {
           </div>
 
           <ul className="landing-helps">
-            {HELP_ITEMS.map((item) => (
-              <li key={item.title}>
+            {HELP_ITEMS.map((item, idx) => (
+              <li
+                key={item.title}
+                className="scroll-reveal"
+                style={{ '--reveal-delay': `${idx * 80}ms` } as React.CSSProperties}
+              >
                 <h3>{item.title}</h3>
                 <p>{item.text}</p>
                 <span className="landing-helps-tick" aria-hidden="true" />
