@@ -583,17 +583,19 @@
   z-index: var(--z-modal);
   display: grid;
   place-items: center;
-  padding: var(--space-lg);
+  padding: var(--space-md);
   background: var(--color-scrim);
   backdrop-filter: blur(2px);
+  overflow-y: auto;
   animation: ui-fade 160ms var(--ease-out) both;
 }
 
 .ui-modal {
   width: 100%;
   max-width: 560px;
-  max-height: min(86vh, 760px);
-  overflow: auto;
+  max-height: calc(100vh - 48px);
+  margin: auto;
+  overflow-y: auto;
   background: var(--color-sheet);
   border: var(--rule-hair) solid var(--color-rule-2);
   border-radius: var(--radius-card);

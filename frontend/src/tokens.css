@@ -31,7 +31,7 @@
   --shell-w: 264px; --shell-w-collapsed: 76px; --head-h: 64px; --ui-max: 1380px;
 
   --z-base: 1; --z-raised: 10; --z-dropdown: 100; --z-sticky: 200;
-  --z-sticky-nav: 300; --z-modal: 400; --z-toast: 500; --z-tooltip: 600;
+  --z-sticky-nav: 300; --z-modal: 9999; --z-toast: 10000; --z-tooltip: 10100;
 
   /* Cobalt surfaces and ink */
   --color-paper: oklch(98.6% 0.005 250);
