@@ -680,10 +680,8 @@ router.patch('/:notificationId/read', requireAuth, async (req, res) => {
       });
     }
 
-    await Notification.updateOne(
-      { _id: notification._id },
-      { $set: { isRead: true } }
-    );
+    notification.isRead = true;
+    await notification.save();
 
     res.status(200).json({
       success: true,
