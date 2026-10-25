@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
-import { BookScene } from './BookScene';
-import { LaptopScene } from './LaptopScene';
+import { WelcomeOrbit } from './WelcomeOrbit';
 
 interface LandingHeroProps {
   signedIn: boolean;
@@ -11,7 +10,7 @@ export function LandingHero({ signedIn }: LandingHeroProps) {
     <section className="landing-hero" id="top">
       <div className="landing-stars" aria-hidden="true" />
       <div className="landing-stage">
-        <BookScene />
+        <WelcomeOrbit />
         <div className="landing-welcome">
           <h1>
             Welcome to the <span>CNP Department</span>
@@ -26,7 +25,6 @@ export function LandingHero({ signedIn }: LandingHeroProps) {
             </svg>
           </Link>
         </div>
-        <LaptopScene />
       </div>
       <a className="landing-scroll" href="#about" aria-label="Scroll to learn more">
         <span />

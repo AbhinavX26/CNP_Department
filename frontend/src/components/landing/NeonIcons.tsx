@@ -47,3 +47,22 @@ export const DetectiveGlassesIcon: FC<NeonIconProps> = ({ size = 32, color = 'cu
     <path d="M5.4 12.6a2.4 2.4 0 0 1 1.6-.9M15.4 12.6a2.4 2.4 0 0 1 1.6-.9" />
   </svg>
 );
+
+/** Open book. */
+export const BookIcon: FC<NeonIconProps> = ({ size = 32, color = 'currentColor' }) => (
+  <svg width={size} height={size} stroke={color} {...common}>
+    <path d="M12 6.5C10.2 5 7.6 4.3 3.5 4.5v13c4.1-.2 6.7.5 8.5 2 1.8-1.5 4.4-2.2 8.5-2v-13c-4.1-.2-6.7.5-8.5 2Z" />
+    <path d="M12 6.5V19.5" />
+    <path d="M6 8.5c1.2 0 2.2.2 3.2.6M6 11.5c1.2 0 2.2.2 3.2.6M18 8.5c-1.2 0-2.2.2-3.2.6M18 11.5c-1.2 0-2.2.2-3.2.6" />
+  </svg>
+);
+
+/** Laptop with a smiley on screen. */
+export const LaptopIcon: FC<NeonIconProps> = ({ size = 32, color = 'currentColor' }) => (
+  <svg width={size} height={size} stroke={color} {...common}>
+    <rect x="4.5" y="5" width="15" height="10.5" rx="1.6" />
+    <path d="M2.5 19h19" />
+    <path d="M9.4 11.4c.7 1 1.6 1.4 2.6 1.4s1.9-.4 2.6-1.4" />
+    <path d="M9.6 8.6h.01M14.4 8.6h.01" />
+  </svg>
+);
