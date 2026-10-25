@@ -139,16 +139,98 @@ export default function Dashboard() {
   if (user?.role === 'student') return <StudentDashboardPage user={user} />;
 
   if (loading) return <LoadingScreen isReady={!loading} />;
+  if (!user) return null;
+
+  let roleLabel = 'Dashboard';
+  let roleIntro = '';
+  let primaryAction = 'View dashboard';
+  let primaryPath = '/dashboard';
+  let overviewSummary = '';
+  const overviewAttention: string[] = [];
+
+  switch (user.role) {
+    case 'faculty_coordinator':
+      roleLabel = 'Faculty Coordinator';
+      roleIntro = 'Coordinate assigned clubs and university events.';
+      primaryAction = 'Manage clubs';
+      primaryPath = '/clubs';
+      overviewSummary = coordinatorClubs.length + ' assigned ' + (coordinatorClubs.length === 1 ? 'club' : 'clubs') + ' and ' + upcomingEvents.length + ' upcoming ' + (upcomingEvents.length === 1 ? 'event.' : 'events.');
+      if (pendingRequests.length) overviewAttention.push(pendingRequests.length + ' pending club ' + (pendingRequests.length === 1 ? 'request' : 'requests'));
+      break;
+    case 'faculty_mentor':
+      roleLabel = 'Faculty Mentor';
+      roleIntro = 'Keep your mentored GUIITAR projects moving.';
+      primaryAction = 'View projects';
+      primaryPath = '/projects';
+      overviewSummary = 'You mentor ' + mentorProjects.length + ' ' + (mentorProjects.length === 1 ? 'project.' : 'projects.');
+      break;
+    case 'club_admin':
+      roleLabel = 'Club Admin';
+      roleIntro = 'Oversee club membership and campus events.';
+      primaryAction = 'Manage clubs';
+      primaryPath = '/clubs';
+      overviewSummary = (clubAdminStats?.totalClubs ?? 0) + ' clubs and ' + upcomingEvents.length + ' upcoming ' + (upcomingEvents.length === 1 ? 'event.' : 'events.');
+      if (clubAdminRequests.length) overviewAttention.push(clubAdminRequests.length + ' pending club ' + (clubAdminRequests.length === 1 ? 'request' : 'requests'));
+      break;
+    case 'project_admin':
+      roleLabel = 'Project Admin';
+      roleIntro = 'Coordinate project requests, materials, and inventory.';
+      primaryAction = 'Manage projects';
+      primaryPath = '/projects';
+      overviewSummary = (projectAdminStats?.totalProjects ?? 0) + ' projects, including ' + (projectAdminStats?.activeProjects ?? 0) + ' active.';
+      if (projectAdminRequests.length) overviewAttention.push(projectAdminRequests.length + ' pending project ' + (projectAdminRequests.length === 1 ? 'request' : 'requests'));
+      if (projectAdminStats?.pendingMaterialRequests) overviewAttention.push(projectAdminStats.pendingMaterialRequests + ' material ' + (projectAdminStats.pendingMaterialRequests === 1 ? 'request to review' : 'requests to review'));
+      break;
+  }
+
+  if (unreadNotifications) overviewAttention.push(unreadNotifications + ' unread ' + (unreadNotifications === 1 ? 'notification' : 'notifications'));
 
   return (
-    <div>
-      <h2 className="section-title">📊 Dashboard</h2>
-      <p className="section-sub">Welcome back, {user?.name} ({user?.role})</p>
+    <div className="staff-dash">
+      <header className="student-dash-header">
+        <div className="student-dash-header-copy">
+          <p className="student-dash-eyebrow">
+            {roleLabel} · {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
+          </p>
+          <h2 className="student-dash-title">
+            Welcome back, <span className="student-dash-title-accent">{user.name.trim().split(/\s+/)[0] || user.name}</span>
+          </h2>
+          <p className="student-dash-lede">{roleIntro}</p>
+        </div>
+        <div className="student-dash-header-actions">
+          <button
+            type="button"
+            className="student-dash-notification-link"
+            onClick={() => navigate('/notifications')}
+            aria-label={unreadNotifications ? 'Notifications, ' + unreadNotifications + ' unread' : 'Notifications'}
+          >
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M18 9a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>Notifications</span>
+            {unreadNotifications > 0 ? <span className="student-dash-notification-count">{unreadNotifications > 99 ? '99+' : unreadNotifications}</span> : null}
+          </button>
+          <button type="button" className="btn btn-primary btn-sm" onClick={() => navigate(primaryPath)}>
+            {primaryAction}
+          </button>
+        </div>
+      </header>
+
+      <div className="student-dash-overview" role="region" aria-label="Dashboard summary">
+        <p className="student-dash-overview-summary">{overviewSummary}</p>
+        {overviewAttention.length ? (
+          <ul className="student-dash-overview-attention">
+            {overviewAttention.map((item) => <li key={item}>{item}</li>)}
+          </ul>
+        ) : (
+          <p className="student-dash-overview-quiet">No pending requests or unread notifications right now.</p>
+        )}
+      </div>
       
       {user?.role === 'faculty_coordinator' && (
-        <div className="dashboard-grid">
+        <div className="role-dashboard-grid role-dashboard-grid--coordinator">
           {/* Assigned Clubs Section (Multi-Card Grid, matching Faculty Mentor layout) */}
-          <div className="card" style={{ gridColumn: '1 / -1' }}>
+          <div className="card">
             <div className="card-header" style={{ marginBottom: '16px' }}>
               <h3 className="card-title">Assigned Clubs</h3>
               <span className="badge badge-primary">{coordinatorClubs.length}</span>
@@ -533,8 +615,8 @@ export default function Dashboard() {
       )}
 
       {user?.role === 'faculty_mentor' && (
-        <div className="dashboard-grid">
-          <div className="card" style={{ gridColumn: '1 / -1' }}>
+        <div className="role-dashboard-grid role-dashboard-grid--mentor">
+          <div className="card">
             <div className="card-header" style={{ marginBottom: '16px' }}>
               <h3 className="card-title">Assigned Projects</h3>
               <span className="badge badge-primary">{mentorProjects.length}</span>
@@ -624,8 +706,8 @@ export default function Dashboard() {
       )}
 
       {user?.role === 'club_admin' && clubAdminStats && (
-        <div className="dashboard-grid">
-          <div className="card" style={{ gridColumn: '1 / -1' }}>
+        <div className="role-dashboard-grid role-dashboard-grid--club-admin">
+          <div className="card">
             <div className="card-header" style={{ marginBottom: '16px' }}>
               <h3 className="card-title">Club Administration</h3>
             </div>
@@ -818,8 +900,8 @@ export default function Dashboard() {
         </div>
       )}
       {user?.role === 'project_admin' && projectAdminStats && (
-        <div className="dashboard-grid">
-          <div className="card" style={{ gridColumn: '1 / -1' }}>
+        <div className="role-dashboard-grid role-dashboard-grid--project-admin">
+          <div className="card">
             <div className="card-header" style={{ marginBottom: '16px' }}>
               <h3 className="card-title">Project Administration Overview</h3>
             </div>
