@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { api, API_URL, getStoredToken } from '../../services/api';
+import { createPortal } from 'react-dom';
+import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { UserSelect } from '../UserSelect';
 import '../../pages/Clubs/clubs.css';
@@ -100,11 +101,16 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
 
   useEffect(() => {
     if (!modal) return;
+    const origOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setModal(null);
     };
     window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = origOverflow;
+      window.removeEventListener('keydown', onKey);
+    };
   }, [modal]);
 
   const loadRequests = async () => {
@@ -216,18 +222,9 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
       const formData = new FormData();
       formData.append('logo', file);
 
-      const res = await fetch(`${API_URL}/clubs/${clubId}/logo`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getStoredToken()}`
-        },
-        body: formData
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to upload logo');
-
+      await api('POST', `/clubs/${clubId}/logo`, formData);
       alert('Logo updated successfully');
-      window.location.reload(); // Refresh to show new logo everywhere
+      onUpdate();
     } catch (error: any) {
       alert(error.message || 'Error uploading logo');
     } finally {
@@ -245,18 +242,9 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
       const formData = new FormData();
       formData.append('coverImage', file);
 
-      const res = await fetch(`${API_URL}/clubs/${clubId}/cover_image`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${getStoredToken()}`
-        },
-        body: formData
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || 'Failed to upload cover image');
-
+      await api('POST', `/clubs/${clubId}/cover_image`, formData);
       alert('Cover image updated successfully');
-      window.location.reload(); // Refresh to show new cover everywhere
+      onUpdate();
     } catch (error: any) {
       alert(error.message || 'Error uploading cover image');
     } finally {
@@ -308,297 +296,315 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
         </button>
       </div>
 
-      {modal === 'requests' && (
-        <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
-          <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-requests-title">
-            <div className="ui-modal__head">
-              <div className="ui-panel__titles">
-                <h2 id="clubs-requests-title" className="ui-panel__title">Join requests</h2>
-                <span className="ui-panel__meta">{requests.length}</span>
-              </div>
-              <button type="button" className="ui-icon-btn" onClick={() => setModal(null)} aria-label="Close">
-                <CloseIcon />
-              </button>
-            </div>
-
-            <div className="ui-panel__body ui-panel__body--flush">
-              {loading ? (
-                <div className="clubs-skel clubs-skel--row">
-                  <div className="ui-skel clubs-skel__plate clubs-skel__plate--sm" />
-                  <div className="clubs-skel__body">
-                    <div className="ui-skel clubs-skel__line clubs-skel__line--title" />
-                    <div className="ui-skel clubs-skel__line clubs-skel__line--short" />
-                  </div>
+      {modal === 'requests' &&
+        createPortal(
+          <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
+            <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-requests-title">
+              <div className="ui-modal__head">
+                <div className="ui-panel__titles">
+                  <h2 id="clubs-requests-title" className="ui-panel__title">Join requests</h2>
+                  <span className="ui-panel__meta">{requests.length}</span>
                 </div>
-              ) : requests.length ? (
-                <div>
-                  {requests.map(r => (
-                    <div key={r._id} className="clubs-requests__row">
-                      {r.studentId?.profileImage ? (
-                        <img src={r.studentId.profileImage} alt="" className="ui-avatar" />
-                      ) : (
-                        <span className="ui-avatar" aria-hidden="true">{initials(r.studentId?.name)}</span>
-                      )}
+                <button type="button" className="ui-icon-btn" onClick={() => setModal(null)} aria-label="Close">
+                  <CloseIcon />
+                </button>
+              </div>
 
-                      <div className="ui-grow">
-                        <div className="clubs-member__name">{r.studentId?.name || 'Unknown student'}</div>
-                        <div className="clubs-requests__meta">
-                          <a href={`mailto:${r.studentId?.email}`}>{r.studentId?.email}</a>
-                          {r.studentId?.department ? ` · ${r.studentId.department}` : ''}
-                          {r.studentId?.semester ? ` · Semester ${r.studentId.semester}` : ''}
-                          {r.createdAt ? ` · ${new Date(r.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}` : ''}
+              <div className="ui-panel__body ui-panel__body--flush">
+                {loading ? (
+                  <div className="clubs-skel clubs-skel--row">
+                    <div className="ui-skel clubs-skel__plate clubs-skel__plate--sm" />
+                    <div className="clubs-skel__body">
+                      <div className="ui-skel clubs-skel__line clubs-skel__line--title" />
+                      <div className="ui-skel clubs-skel__line clubs-skel__line--short" />
+                    </div>
+                  </div>
+                ) : requests.length ? (
+                  <div>
+                    {requests.map(r => (
+                      <div key={r._id} className="clubs-requests__row">
+                        {r.studentId?.profileImage ? (
+                          <img src={r.studentId.profileImage} alt="" className="ui-avatar" />
+                        ) : (
+                          <span className="ui-avatar" aria-hidden="true">{initials(r.studentId?.name)}</span>
+                        )}
+
+                        <div className="ui-grow">
+                          <div className="clubs-member__name">{r.studentId?.name || 'Unknown student'}</div>
+                          <div className="clubs-requests__meta">
+                            <a href={`mailto:${r.studentId?.email}`}>{r.studentId?.email}</a>
+                            {r.studentId?.department ? ` · ${r.studentId.department}` : ''}
+                            {r.studentId?.semester ? ` · Semester ${r.studentId.semester}` : ''}
+                            {r.createdAt ? ` · ${new Date(r.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short' })}` : ''}
+                          </div>
+                        </div>
+
+                        <div className="clubs-requests__actions">
+                          <button type="button" className="ui-btn ui-btn--sm" onClick={() => handleApprove(r._id)}>
+                            <CheckIcon />
+                            Approve
+                          </button>
+                          <button type="button" className="ui-btn ui-btn--ghost ui-btn--sm clubs-requests__reject" onClick={() => handleReject(r._id)}>
+                            Reject
+                          </button>
                         </div>
                       </div>
-
-                      <div className="clubs-requests__actions">
-                        <button type="button" className="ui-btn ui-btn--sm" onClick={() => handleApprove(r._id)}>
-                          <CheckIcon />
-                          Approve
-                        </button>
-                        <button type="button" className="ui-btn ui-btn--ghost ui-btn--sm clubs-requests__reject" onClick={() => handleReject(r._id)}>
-                          Reject
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="clubs-admin__empty">
-                  <CheckIcon />
-                  <span>No requests waiting.</span>
-                </div>
-              )}
-            </div>
-
-            <div className="ui-modal__foot">
-              <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setModal(null)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {modal === 'edit' && (
-        <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
-          <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-edit-title">
-            <div className="ui-modal__head">
-              <div>
-                <h2 id="clubs-edit-title" className="ui-panel__title">Edit club details</h2>
-              </div>
-              <button type="button" className="ui-icon-btn" onClick={() => setModal(null)} aria-label="Close">
-                <CloseIcon />
-              </button>
-            </div>
-            <form onSubmit={(e) => { e.preventDefault(); handleUpdateDetails(); }}>
-              <div className="ui-modal__body clubs-modal__body">
-                <div>
-                  <label className="ui-label" htmlFor="clubs-edit-name">Club name</label>
-                  <input
-                    id="clubs-edit-name"
-                    className="ui-field"
-                    type="text"
-                    value={editName}
-                    onChange={e => setEditName(e.target.value)}
-                    required
-                    disabled={saving}
-                    autoFocus
-                  />
-                </div>
-                <div>
-                  <label className="ui-label" htmlFor="clubs-edit-description">Description</label>
-                  <textarea
-                    id="clubs-edit-description"
-                    className="ui-field ui-field--area"
-                    value={editDescription}
-                    onChange={e => setEditDescription(e.target.value)}
-                    rows={4}
-                    disabled={saving}
-                  />
-                </div>
-              </div>
-              <div className="ui-modal__foot">
-                <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setModal(null)} disabled={saving}>
-                  Cancel
-                </button>
-                <button type="submit" className="ui-btn ui-btn--primary" disabled={saving}>
-                  {saving ? 'Saving…' : 'Save changes'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {modal === 'member' && (
-        <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
-          <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-member-title">
-            <div className="ui-modal__head">
-              <div>
-                <h2 id="clubs-member-title" className="ui-panel__title">Add member</h2>
-              </div>
-              <button type="button" className="ui-icon-btn" onClick={() => setModal(null)} aria-label="Close">
-                <CloseIcon />
-              </button>
-            </div>
-            <form onSubmit={handleAddMember}>
-              <div className="ui-modal__body clubs-modal__body">
-                <div>
-                  <label className="ui-label" htmlFor="clubs-add-student">Student</label>
-                  <UserSelect
-                    id="clubs-add-student"
-                    role="student"
-                    value={addStudentId}
-                    onChange={setAddStudentId}
-                    placeholder="Search and select student…"
-                    disabledUserIds={existingMemberIds}
-                    disabledReason="Already a member"
-                  />
-                </div>
-
-                <div>
-                  <label className="ui-label" htmlFor="clubs-add-type">Membership</label>
-                  <span className="clubs-select">
-                    <select
-                      id="clubs-add-type"
-                      className="ui-field ui-field--select"
-                      value={addMembershipType}
-                      onChange={e => setAddMembershipType(e.target.value)}
-                    >
-                      <option value="member">Member</option>
-                      <option value="core_team">Core team</option>
-                    </select>
-                  </span>
-                </div>
-
-                {addMembershipType === 'core_team' && (
-                  <div>
-                    <label className="ui-label" htmlFor="clubs-add-position">Position</label>
-                    <input
-                      id="clubs-add-position"
-                      type="text"
-                      className="ui-field"
-                      placeholder="e.g. Technical lead"
-                      value={addPosition}
-                      onChange={e => setAddPosition(e.target.value)}
-                      required
-                    />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="clubs-admin__empty">
+                    <CheckIcon />
+                    <span>No requests waiting.</span>
                   </div>
                 )}
               </div>
+
               <div className="ui-modal__foot">
-                <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setModal(null)} disabled={saving}>
+                <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setModal(null)}>
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {modal === 'edit' &&
+        createPortal(
+          <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
+            <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-edit-title">
+              <div className="ui-modal__head">
+                <div>
+                  <h2 id="clubs-edit-title" className="ui-panel__title">Edit club details</h2>
+                </div>
+                <button type="button" className="ui-icon-btn" onClick={() => setModal(null)} aria-label="Close">
+                  <CloseIcon />
+                </button>
+              </div>
+              <form onSubmit={(e) => { e.preventDefault(); handleUpdateDetails(); }}>
+                <div className="ui-modal__body clubs-modal__body">
+                  <div>
+                    <label className="ui-label" htmlFor="clubs-edit-name">Club name</label>
+                    <input
+                      id="clubs-edit-name"
+                      className="ui-field"
+                      type="text"
+                      value={editName}
+                      onChange={e => setEditName(e.target.value)}
+                      required
+                      disabled={saving}
+                      autoFocus
+                    />
+                  </div>
+                  <div>
+                    <label className="ui-label" htmlFor="clubs-edit-description">Description</label>
+                    <textarea
+                      id="clubs-edit-description"
+                      className="ui-field ui-field--area"
+                      value={editDescription}
+                      onChange={e => setEditDescription(e.target.value)}
+                      rows={4}
+                      disabled={saving}
+                    />
+                  </div>
+                </div>
+                <div className="ui-modal__foot">
+                  <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setModal(null)} disabled={saving}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="ui-btn ui-btn--primary" disabled={saving}>
+                    {saving ? 'Saving…' : 'Save changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {modal === 'member' &&
+        createPortal(
+          <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
+            <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-member-title">
+              <div className="ui-modal__head">
+                <div>
+                  <h2 id="clubs-member-title" className="ui-panel__title">Add member</h2>
+                </div>
+                <button type="button" className="ui-icon-btn" onClick={() => setModal(null)} aria-label="Close">
+                  <CloseIcon />
+                </button>
+              </div>
+              <form onSubmit={handleAddMember}>
+                <div className="ui-modal__body clubs-modal__body">
+                  <div>
+                    <label className="ui-label" htmlFor="clubs-add-student">Student</label>
+                    <UserSelect
+                      id="clubs-add-student"
+                      role="student"
+                      value={addStudentId}
+                      onChange={setAddStudentId}
+                      placeholder="Search and select student…"
+                      disabledUserIds={existingMemberIds}
+                      disabledReason="Already a member"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="ui-label" htmlFor="clubs-add-type">Membership</label>
+                    <span className="clubs-select">
+                      <select
+                        id="clubs-add-type"
+                        className="ui-field ui-field--select"
+                        value={addMembershipType}
+                        onChange={e => setAddMembershipType(e.target.value)}
+                      >
+                        <option value="member">Member</option>
+                        <option value="core_team">Core team</option>
+                      </select>
+                    </span>
+                  </div>
+
+                  {addMembershipType === 'core_team' && (
+                    <div>
+                      <label className="ui-label" htmlFor="clubs-add-position">Position</label>
+                      <input
+                        id="clubs-add-position"
+                        type="text"
+                        className="ui-field"
+                        placeholder="e.g. Technical lead"
+                        value={addPosition}
+                        onChange={e => setAddPosition(e.target.value)}
+                        required
+                      />
+                    </div>
+                  )}
+                </div>
+                <div className="ui-modal__foot">
+                  <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setModal(null)} disabled={saving}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="ui-btn ui-btn--primary" disabled={!addStudentId || saving}>
+                    {saving ? 'Adding…' : 'Add member'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {modal === 'coordinator' &&
+        createPortal(
+          <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
+            <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-coordinator-title">
+              <div className="ui-modal__head">
+                <div>
+                  <h2 id="clubs-coordinator-title" className="ui-panel__title">Faculty coordinator</h2>
+                </div>
+                <button type="button" className="ui-icon-btn" onClick={() => setModal(null)} aria-label="Close">
+                  <CloseIcon />
+                </button>
+              </div>
+              <div className="ui-modal__body clubs-modal__body">
+                <div className="clubs-upload">
+                  <div className="clubs-upload__text">
+                    <p className="clubs-upload__title">
+                      {club.facultyCoordinatorId
+                        ? (typeof club.facultyCoordinatorId === 'object' ? club.facultyCoordinatorId.name : club.facultyCoordinatorId)
+                        : 'No coordinator assigned'}
+                    </p>
+                    {typeof club.facultyCoordinatorId === 'object' && club.facultyCoordinatorId?.email ? (
+                      <p className="clubs-upload__hint">{club.facultyCoordinatorId.email}</p>
+                    ) : null}
+                  </div>
+                  <span className={`ui-tag ${club.facultyCoordinatorId ? 'is-positive' : 'is-warning'}`}>
+                    {club.facultyCoordinatorId ? 'Assigned' : 'Unassigned'}
+                  </span>
+                </div>
+
+                <div>
+                  <label className="ui-label" htmlFor="clubs-coordinator-select">Assign or reassign</label>
+                  <UserSelect
+                    id="clubs-coordinator-select"
+                    role="faculty_coordinator"
+                    value={selectedCoordinatorId}
+                    onChange={setSelectedCoordinatorId}
+                    placeholder="Search and select faculty coordinator…"
+                    disabledUserIds={currentCoordinatorId ? [currentCoordinatorId] : []}
+                    disabledReason="Currently assigned"
+                  />
+                </div>
+              </div>
+              <div className="ui-modal__foot">
+                <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setModal(null)} disabled={assigning}>
                   Cancel
                 </button>
-                <button type="submit" className="ui-btn ui-btn--primary" disabled={!addStudentId || saving}>
-                  {saving ? 'Adding…' : 'Add member'}
+                <button
+                  type="button"
+                  className="ui-btn ui-btn--primary"
+                  onClick={handleAssignCoordinator}
+                  disabled={assigning || selectedCoordinatorId === currentCoordinatorId}
+                >
+                  {assigning ? 'Updating…' : 'Update assignment'}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {modal === 'coordinator' && (
-        <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
-          <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-coordinator-title">
-            <div className="ui-modal__head">
-              <div>
-                <h2 id="clubs-coordinator-title" className="ui-panel__title">Faculty coordinator</h2>
-              </div>
-              <button type="button" className="ui-icon-btn" onClick={() => setModal(null)} aria-label="Close">
-                <CloseIcon />
-              </button>
             </div>
-            <div className="ui-modal__body clubs-modal__body">
-              <div className="clubs-upload">
-                <div className="clubs-upload__text">
-                  <p className="clubs-upload__title">
-                    {club.facultyCoordinatorId
-                      ? (typeof club.facultyCoordinatorId === 'object' ? club.facultyCoordinatorId.name : club.facultyCoordinatorId)
-                      : 'No coordinator assigned'}
-                  </p>
-                  {typeof club.facultyCoordinatorId === 'object' && club.facultyCoordinatorId?.email ? (
-                    <p className="clubs-upload__hint">{club.facultyCoordinatorId.email}</p>
+          </div>,
+          document.body
+        )}
+
+      {modal === 'images' &&
+        createPortal(
+          <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
+            <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-images-title">
+              <div className="ui-modal__head">
+                <div>
+                  <h2 id="clubs-images-title" className="ui-panel__title">Club images</h2>
+                </div>
+                <button type="button" className="ui-icon-btn" onClick={() => setModal(null)} aria-label="Close">
+                  <CloseIcon />
+                </button>
+              </div>
+              <div className="ui-modal__body clubs-modal__body">
+                <input type="file" accept="image/*" ref={fileInputRef} onChange={handleLogoUpload} className="ui-visually-hidden" id="clubs-logo-input" />
+                <div className="clubs-upload">
+                  {club.logo ? (
+                    <img src={club.logo} alt="Club logo preview" className="ui-avatar" style={{ width: 44, height: 44, borderRadius: 8, objectFit: 'cover' }} />
+                  ) : (
+                    <span className="ui-avatar" style={{ width: 44, height: 44, borderRadius: 8 }} aria-hidden="true">{initials(club.name)}</span>
+                  )}
+                  <div className="clubs-upload__text">
+                    <p className="clubs-upload__title">Logo</p>
+                    <p className="clubs-upload__hint">Square, 400 px or larger.</p>
+                  </div>
+                  <button type="button" className="ui-btn ui-btn--sm" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
+                    {uploading ? 'Uploading…' : (club.logo ? 'Change logo' : 'Choose logo')}
+                  </button>
+                </div>
+
+                <input type="file" accept="image/*" ref={coverImageInputRef} onChange={handleCoverImageUpload} className="ui-visually-hidden" id="clubs-cover-input" />
+                <div className="clubs-upload">
+                  {club.coverImage ? (
+                    <img src={club.coverImage} alt="Club cover preview" style={{ width: 68, height: 40, borderRadius: 6, objectFit: 'cover' }} />
                   ) : null}
+                  <div className="clubs-upload__text">
+                    <p className="clubs-upload__title">Cover image</p>
+                    <p className="clubs-upload__hint">Wide, around 1600 × 400 px.</p>
+                  </div>
+                  <button type="button" className="ui-btn ui-btn--sm" disabled={uploadingCover} onClick={() => coverImageInputRef.current?.click()}>
+                    {uploadingCover ? 'Uploading…' : (club.coverImage ? 'Change cover' : 'Choose cover')}
+                  </button>
                 </div>
-                <span className={`ui-tag ${club.facultyCoordinatorId ? 'is-positive' : 'is-warning'}`}>
-                  {club.facultyCoordinatorId ? 'Assigned' : 'Unassigned'}
-                </span>
               </div>
-
-              <div>
-                <label className="ui-label" htmlFor="clubs-coordinator-select">Assign or reassign</label>
-                <UserSelect
-                  id="clubs-coordinator-select"
-                  role="faculty_coordinator"
-                  value={selectedCoordinatorId}
-                  onChange={setSelectedCoordinatorId}
-                  placeholder="Search and select faculty coordinator…"
-                  disabledUserIds={currentCoordinatorId ? [currentCoordinatorId] : []}
-                  disabledReason="Currently assigned"
-                />
-              </div>
-            </div>
-            <div className="ui-modal__foot">
-              <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setModal(null)} disabled={assigning}>
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="ui-btn ui-btn--primary"
-                onClick={handleAssignCoordinator}
-                disabled={assigning || selectedCoordinatorId === currentCoordinatorId}
-              >
-                {assigning ? 'Updating…' : 'Update assignment'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {modal === 'images' && (
-        <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
-          <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-images-title">
-            <div className="ui-modal__head">
-              <div>
-                <h2 id="clubs-images-title" className="ui-panel__title">Club images</h2>
-              </div>
-              <button type="button" className="ui-icon-btn" onClick={() => setModal(null)} aria-label="Close">
-                <CloseIcon />
-              </button>
-            </div>
-            <div className="ui-modal__body clubs-modal__body">
-              <input type="file" accept="image/*" ref={fileInputRef} onChange={handleLogoUpload} className="ui-visually-hidden" id="clubs-logo-input" />
-              <div className="clubs-upload">
-                <div className="clubs-upload__text">
-                  <p className="clubs-upload__title">Logo</p>
-                  <p className="clubs-upload__hint">Square, 400 px or larger.</p>
-                </div>
-                <button type="button" className="ui-btn ui-btn--sm" disabled={uploading} onClick={() => fileInputRef.current?.click()}>
-                  {uploading ? 'Uploading…' : 'Choose logo'}
-                </button>
-              </div>
-
-              <input type="file" accept="image/*" ref={coverImageInputRef} onChange={handleCoverImageUpload} className="ui-visually-hidden" id="clubs-cover-input" />
-              <div className="clubs-upload">
-                <div className="clubs-upload__text">
-                  <p className="clubs-upload__title">Cover image</p>
-                  <p className="clubs-upload__hint">Wide, around 1600 × 400 px.</p>
-                </div>
-                <button type="button" className="ui-btn ui-btn--sm" disabled={uploadingCover} onClick={() => coverImageInputRef.current?.click()}>
-                  {uploadingCover ? 'Uploading…' : 'Choose cover'}
+              <div className="ui-modal__foot">
+                <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setModal(null)}>
+                  Close
                 </button>
               </div>
             </div>
-            <div className="ui-modal__foot">
-              <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setModal(null)}>
-                Close
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   );
 }
