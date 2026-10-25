@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../../services/api';
 
 interface InventoryItem {
@@ -389,10 +390,11 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
       </div>
 
       {/* Request materials · team leader */}
-      {isModalOpen && (
-        <div
-          className="ui-overlay"
-          onMouseDown={(event) => {
+      {isModalOpen &&
+        createPortal(
+          <div
+            className="ui-overlay"
+            onMouseDown={(event) => {
             if (event.target === event.currentTarget) closeModal();
           }}
         >
@@ -609,7 +611,8 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
               </footer>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );

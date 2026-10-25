@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { api } from '../../services/api';
 import { Counter, KindGlyph } from '../ui/vis';
 
@@ -441,10 +442,11 @@ export function ProjectMaterials({ projectId, isTL = false, onSummaryChange }: P
       </div>
 
       {/* Add material · team leader */}
-      {isModalOpen && (
-        <div
-          className="ui-overlay"
-          onMouseDown={(event) => {
+      {isModalOpen &&
+        createPortal(
+          <div
+            className="ui-overlay"
+            onMouseDown={(event) => {
             if (event.target === event.currentTarget) closeModal();
           }}
         >
@@ -635,7 +637,8 @@ export function ProjectMaterials({ projectId, isTL = false, onSummaryChange }: P
               </footer>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </section>
   );

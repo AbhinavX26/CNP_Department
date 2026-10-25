@@ -4,6 +4,7 @@ import cors from 'cors';
 import dns from "node:dns";
 
 import connectDB from './config/db.js';
+import User from './src/models/User.js';
 import healthRoutes from './routes/healthRoutes.js';
 import authRoutes from './src/routes/authRoutes.js';
 import userRoutes from './src/routes/userRoutes.js';
@@ -116,9 +117,19 @@ app.use((err, _req, res, _next) => {
   return res.status(500).json({ success: false, message: 'Something went wrong. Please try again.' });
 });
 
-// ─── Start Server ─────────────────────────────────────────────────────────────
 const startServer = async () => {
   await connectDB();
+
+  try {
+    const userCount = await User.countDocuments();
+    if (userCount === 0) {
+      console.log('🌱  Database is empty — auto-seeding starter users and data...');
+      const { runSeed } = await import('./seed.mjs');
+      await runSeed(false);
+    }
+  } catch (err) {
+    console.warn('Auto-seed check failed:', err.message);
+  }
 
   // Start background 24-hour event reminder scheduler
   startEventReminderScheduler();
