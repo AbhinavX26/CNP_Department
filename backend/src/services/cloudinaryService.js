@@ -55,11 +55,11 @@ import { getBase64DataURI } from '../middleware/upload.js';
  */
 function extractMetadata(response) {
   return {
-    secure_url:    response.secure_url,
-    public_id:     response.public_id,
+    secure_url: response.secure_url,
+    public_id: response.public_id,
     resource_type: response.resource_type,
-    format:        response.format,
-    bytes:         response.bytes,
+    format: response.format,
+    bytes: response.bytes,
   };
 }
 
@@ -84,7 +84,7 @@ function extractMetadata(response) {
 export async function uploadImage(filePathOrBuffer, options = {}) {
   const uploadOptions = {
     resource_type: 'image',
-    ...(options.folder   && { folder:    options.folder }),
+    ...(options.folder && { folder: options.folder }),
     ...(options.publicId && { public_id: options.publicId }),
   };
 
@@ -117,7 +117,7 @@ export async function uploadImage(filePathOrBuffer, options = {}) {
 export async function uploadRaw(filePathOrBuffer, options = {}) {
   const uploadOptions = {
     resource_type: 'raw',
-    ...(options.folder   && { folder:    options.folder }),
+    ...(options.folder && { folder: options.folder }),
     ...(options.publicId && { public_id: options.publicId }),
   };
 

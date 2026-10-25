@@ -75,7 +75,7 @@ async function enrichNotification(notif, userId) {
           obj.metadata.reason = mr.reason;
         }
       }
-    } catch {}
+    } catch { }
   }
 
   // 1b. Enrich Material Addition notifications (for Project Admin and Mentors)
@@ -123,7 +123,7 @@ async function enrichNotification(notif, userId) {
           obj.link = `/projects/${mat.projectId._id}`;
         }
       }
-    } catch {}
+    } catch { }
   }
 
   // 1c. Enrich Material Request approval/rejection notifications
@@ -164,7 +164,7 @@ async function enrichNotification(notif, userId) {
             obj.message = `Your request for ${mr.quantity}x "${iName}" for project "${pName}" was rejected by ${rName}. Reason: ${reason}`;
           }
         }
-      } catch {}
+      } catch { }
     } else if (isApprovedMR && (!obj.metadata.projectName || !obj.link)) {
       try {
         let mr = null;
@@ -194,7 +194,7 @@ async function enrichNotification(notif, userId) {
             obj.message = `Project Admin ${rName} approved your request for ${mr.quantity}x "${iName}" for project "${pName}".`;
           }
         }
-      } catch {}
+      } catch { }
     }
 
     if (!obj.link && obj.metadata.projectId) {
@@ -228,7 +228,7 @@ async function enrichNotification(notif, userId) {
           const p = await Project.findOne({ teamLeaderId: userId });
           if (p) obj.link = `/projects/${p._id}`;
         }
-      } catch {}
+      } catch { }
     }
 
     if (isFeedback && (!obj.metadata.feedbackText || obj.message === 'You have new feedback from your mentor.')) {
@@ -257,7 +257,7 @@ async function enrichNotification(notif, userId) {
             obj.message = `${mName} provided feedback on update "${uTitle}" for project "${pName}": "${preview}"`;
           }
         }
-      } catch {}
+      } catch { }
     } else if (!isFeedback && obj.relatedId) {
       try {
         const upd = await ProjectUpdate.findById(obj.relatedId).populate('projectId studentId');
@@ -288,7 +288,7 @@ async function enrichNotification(notif, userId) {
             obj.metadata.submissionTime = upd.createdAt;
           }
         }
-      } catch {}
+      } catch { }
     }
   }
 
@@ -332,7 +332,7 @@ async function enrichNotification(notif, userId) {
             }
           }
         }
-      } catch {}
+      } catch { }
     }
 
     if (obj.type === 'club_join_request') {
@@ -494,8 +494,10 @@ router.patch('/:notificationId/read', requireAuth, async (req, res) => {
       });
     }
 
-    notification.isRead = true;
-    await notification.save();
+    await Notification.updateOne(
+      { _id: notification._id },
+      { $set: { isRead: true } }
+    );
 
     res.status(200).json({
       success: true,
