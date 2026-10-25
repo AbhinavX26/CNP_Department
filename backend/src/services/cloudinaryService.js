@@ -42,6 +42,7 @@
  */
 
 import cloudinary from '../config/cloudinary.js';
+import { getBase64DataURI } from '../middleware/upload.js';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -158,3 +159,45 @@ export async function deleteAsset(publicId, resourceType = 'image') {
     throw new Error(`Cloudinary deletion failed: ${error.message}`);
   }
 }
+
+/**
+ * Upload a replacement image to Cloudinary, delete the entity's previous asset
+ * if one existed, and save the updated Mongoose document.
+ *
+ * @param {object} params
+ * @param {import('mongoose').Document} params.document - The document to update
+ * @param {Express.Multer.File} params.file - Multer file from request
+ * @param {string} params.folder - Target Cloudinary folder
+ * @param {string} [params.urlField='image'] - Field name for the secure URL
+ * @param {string} [params.publicIdField='imagePublicId'] - Field name for Cloudinary public ID
+ * @param {string} [params.logLabel] - Context label for delete failure logs
+ * @returns {Promise<{ secure_url: string, public_id: string, resource_type: string, format: string, bytes: number }>}
+ */
+export async function replaceEntityImage({
+  document,
+  file,
+  folder,
+  urlField = 'image',
+  publicIdField = 'imagePublicId',
+  logLabel,
+}) {
+  const fileUri = getBase64DataURI(file);
+  const result = await uploadImage(fileUri, { folder });
+
+  const oldPublicId = document[publicIdField];
+  if (oldPublicId) {
+    try {
+      await deleteAsset(oldPublicId, 'image');
+    } catch (err) {
+      const label = logLabel ? ` ${logLabel}` : '';
+      console.error(`Failed to delete old${label} ${oldPublicId}:`, err.message);
+    }
+  }
+
+  document[urlField] = result.secure_url;
+  document[publicIdField] = result.public_id;
+  await document.save();
+
+  return result;
+}
+
