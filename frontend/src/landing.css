@@ -620,7 +620,7 @@
 
 .landing-supports li {
   position: relative;
-  padding: var(--space-md) 0 var(--space-md);
+  padding: var(--space-md) 0 var(--space-md) var(--space-lg);
   border-top: var(--rule-hair) solid var(--color-rule-2);
 }
 .landing-supports li:last-child { border-bottom: var(--rule-hair) solid var(--color-rule-2); }
@@ -628,13 +628,15 @@
 .landing-supports-mark {
   position: absolute;
   left: 0;
-  top: var(--space-lg);
+  top: calc(var(--space-md) + 0.6em);
+  transform: translateY(-50%);
   width: 6px;
   height: 6px;
+  border-radius: 50%;
   background: var(--color-accent);
   transition: transform var(--dur-short) var(--ease-out);
 }
-.landing-supports li:hover .landing-supports-mark { transform: scale(1.6); }
+.landing-supports li:hover .landing-supports-mark { transform: translateY(-50%) scale(1.6); }
 
 .landing-supports h3 { font-size: var(--text-lg); }
 .landing-supports p {
