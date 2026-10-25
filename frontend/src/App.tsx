@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth, isProfileComplete } from './context/AuthContext';
 import { LoadingProvider, usePageLoading } from './context/LoadingContext';
-import { AppLayout } from './components/layout/AppLayout';
+import { AppLayout } from './components/layout/legacy/AppLayout';
 import { ProtectedRoute, RoleProtectedRoute } from './components/ProtectedRoute';
 
 // Pages
@@ -71,7 +71,7 @@ function RouteProgress() {
 function ScrollReset() {
   const { pathname } = useLocation();
   useEffect(() => {
-    const scroller = document.querySelector('.shell-content');
+    const scroller = document.querySelector('.shell-content, .main-content');
     if (scroller) scroller.scrollTop = 0;
     else window.scrollTo(0, 0);
   }, [pathname]);

@@ -4856,3 +4856,78 @@ input[type="number"]:focus {
     box-shadow: none;
   }
 }
+
+/* Dashboard palette: restore CNP navy and gold without changing other screens. */
+.shell-content .dash,
+.shell-content .sd-dash {
+  --color-paper: #edf1f9;
+  --color-paper-2: #e7edf8;
+  --color-paper-3: #dce5f4;
+  --color-sheet: #fff;
+  --color-ink: #0f2262;
+  --color-ink-2: #293c69;
+  --color-muted: #52617b;
+  --color-rule: #dce3f2;
+  --color-rule-2: #bdc8dc;
+  --color-graphite: #0c1a47;
+  --color-graphite-2: #142d79;
+  --color-graphite-ink: #f5f7fc;
+  --color-graphite-muted: #c9d4ed;
+  --color-accent: #203d91;
+  --color-accent-2: #e3b04b;
+  --color-accent-wash: #eaf0ff;
+  --color-accent-ink: #fff;
+  --color-accent-deep: #142d79;
+  --color-accent-edge: #0c1a47;
+  --color-focus: #314da0;
+  --color-glyph-0: #eef2fa;
+  --color-glyph-1: #d6e0f2;
+  --color-glyph-2: #b0c1e3;
+  --color-glyph-3: #7189bf;
+  --color-glyph-4: #314da0;
+  --color-accent-glow: rgb(32 61 145 / 16%);
+  --color-warning: #95620c;
+  --color-warning-wash: #fff4d6;
+}
+
+:root[data-theme="dark"] .shell-content .dash,
+:root[data-theme="dark"] .shell-content .sd-dash {
+  --color-paper: #111c35;
+  --color-paper-2: #17284a;
+  --color-paper-3: #20355f;
+  --color-sheet: #142443;
+  --color-ink: #f5f7fc;
+  --color-ink-2: #d5def4;
+  --color-muted: #aab7d3;
+  --color-rule: #293e66;
+  --color-rule-2: #3c5685;
+  --color-graphite: #09142c;
+  --color-graphite-2: #0c1a38;
+  --color-graphite-ink: #f5f7fc;
+  --color-graphite-muted: #b3c3e5;
+  --color-accent: #8aa7ed;
+  --color-accent-2: #e3b04b;
+  --color-accent-wash: #1b2d52;
+  --color-accent-ink: #0c1a47;
+  --color-accent-deep: #b2c5f4;
+  --color-accent-edge: #9bb4f0;
+  --color-focus: #f6e3b4;
+  --color-glyph-0: #17284a;
+  --color-glyph-1: #243b66;
+  --color-glyph-2: #3a5688;
+  --color-glyph-3: #6682bc;
+  --color-glyph-4: #9bb4f0;
+  --color-accent-glow: rgb(138 167 237 / 24%);
+  --color-warning: #f0c66c;
+  --color-warning-wash: #3a2d16;
+}
+
+.shell-content :is(.dash, .sd-dash) .ui-page-head {
+  padding-bottom: 16px;
+  border-bottom: 2px solid var(--color-accent-2);
+}
+
+.shell-content .dash-region__head,
+.shell-content .sd-region__head {
+  border-bottom-color: var(--color-accent-2);
+}
