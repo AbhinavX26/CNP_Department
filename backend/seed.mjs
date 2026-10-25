@@ -70,9 +70,11 @@ let report = {
   cloudinaryAssetsUploaded: 0
 };
 
-async function runSeed() {
+async function runSeed(shouldExit = true) {
   console.log('WARNING: This will delete existing development data in MongoDB.');
-  await connectDB();
+  if (mongoose.connection.readyState !== 1) {
+    await connectDB();
+  }
 
   console.log('Clearing collections...');
   await Promise.all([
@@ -601,12 +603,18 @@ async function runSeed() {
   console.log('\n--- SEED COMPLETE ---');
   console.log(report);
   
-  // Clean up
-  mongoose.disconnect();
-  process.exit(0);
+  if (shouldExit) {
+    mongoose.disconnect();
+    process.exit(0);
+  }
 }
 
-runSeed().catch(err => {
-  console.error(err);
-  process.exit(1);
-});
+export { runSeed };
+
+if (process.argv[1] && process.argv[1].endsWith('seed.mjs')) {
+  runSeed(true).catch(err => {
+    console.error(err);
+    process.exit(1);
+  });
+}
+
