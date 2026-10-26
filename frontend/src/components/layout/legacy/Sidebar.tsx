@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
+import { NAV_GROUPS } from '../Sidebar';
 
 export const NAVIGATION = [
   { id: 'dashboard',     label: 'Dashboard',         icon: '📊', path: '/dashboard',         roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] },
@@ -51,17 +52,29 @@ export function Sidebar() {
         <span>CNP Portal</span>
       </div>
 
-      <div className="nav-links">
-        {NAVIGATION.filter(nav => nav.roles.includes(user.role)).map(nav => (
-          <NavLink
-            key={nav.id}
-            to={nav.path}
-            className={({ isActive }) => `main-nav-btn ${isActive ? 'active' : ''}`}
-          >
-            <NavIcon id={nav.id} /> {nav.label}
-          </NavLink>
-        ))}
-      </div>
+      <nav className="nav-links" aria-label="Main navigation">
+        {NAV_GROUPS.map((group) => {
+          const entries = NAVIGATION.filter(
+            (nav) => nav.roles.includes(user.role) && group.items.includes(nav.id),
+          );
+          if (!entries.length) return null;
+
+          return (
+            <section className="nav-group" key={group.id} aria-labelledby={`nav-group-${group.id}`}>
+              <p className="nav-group-label" id={`nav-group-${group.id}`}>{group.label}</p>
+              {entries.map((nav) => (
+                <NavLink
+                  key={nav.id}
+                  to={nav.path}
+                  className={({ isActive }) => `main-nav-btn ${isActive ? 'active' : ''}`}
+                >
+                  <NavIcon id={nav.id} /> {nav.label}
+                </NavLink>
+              ))}
+            </section>
+          );
+        })}
+      </nav>
 
       <div className="user-indicator">
         <div className="user-info">

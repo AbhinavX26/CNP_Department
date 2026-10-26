@@ -4,7 +4,6 @@ import { useStudentDashboardData } from '../../hooks/useStudentDashboardData';
 import { DashboardSkeleton } from '../../components/dashboard/student/DashboardSkeleton';
 import { StudentDashboardHeader } from '../../components/dashboard/student/StudentDashboardHeader';
 import { StudentMemberships } from '../../components/dashboard/student/StudentMemberships';
-import { StudentNotificationSummary } from '../../components/dashboard/student/StudentNotificationSummary';
 import { StudentOverview, countPendingRequests } from '../../components/dashboard/student/StudentOverview';
 import { StudentProjects } from '../../components/dashboard/student/StudentProjects';
 import { StudentRequests } from '../../components/dashboard/student/StudentRequests';
@@ -62,11 +61,6 @@ export function StudentDashboardPage({ user }: StudentDashboardPageProps) {
         <aside className="student-dash-aside" aria-label="Campus updates">
           <StudentUpcomingEvents events={data.upcomingEvents} error={data.errors.events} />
           <StudentRequests requests={data.joinRequests} error={data.errors.requests} />
-          <StudentNotificationSummary
-            unreadCount={data.unreadCount}
-            notifications={data.notifications}
-            error={data.errors.notifications}
-          />
         </aside>
       </div>
     </div>
