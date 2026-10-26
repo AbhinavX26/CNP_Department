@@ -57,7 +57,7 @@ export function LandingHero({ signedIn }: LandingHeroProps) {
   return (
     <section className="landing-hero" id="top">
       <div className="landing-container landing-hero-grid">
-        <div className="landing-hero-copy">
+        <div className="landing-hero-copy scroll-reveal">
           <h1>Welcome to the CNP Department</h1>
           <p className="landing-hero-line">Clubs and projects, organised, resourced and seen.</p>
           <div className="landing-hero-actions">
@@ -71,7 +71,7 @@ export function LandingHero({ signedIn }: LandingHeroProps) {
         </div>
 
         <div
-          className="landing-stage"
+          className="landing-stage scroll-reveal scroll-reveal--scale scroll-reveal--delay-1"
           onMouseEnter={() => setPaused(true)}
           onMouseLeave={() => setPaused(false)}
           onFocusCapture={() => setPaused(true)}

@@ -9,11 +9,11 @@ export function LandingClose({ signedIn }: LandingCloseProps) {
   return (
     <section className="landing-close">
       <div className="landing-container landing-close-inner">
-        <div className="landing-close-copy">
+        <div className="landing-close-copy scroll-reveal">
           <h2>Sign in to manage your club, project or team.</h2>
         </div>
 
-        <div className="landing-close-action">
+        <div className="landing-close-action scroll-reveal scroll-reveal--delay-1">
           <Link className="key key--primary key--lg" to={signedIn ? '/dashboard' : '/login'}>
             {signedIn ? 'Open dashboard' : 'Log in'}
           </Link>
