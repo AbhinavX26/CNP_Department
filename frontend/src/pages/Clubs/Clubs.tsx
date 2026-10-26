@@ -1,23 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
-import type { CSSProperties } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { ClubForm } from '../../components/clubs/ClubForm';
-import { StudentClubCard } from '../../components/clubs/StudentClubCard';
-import { Crest } from '../../components/clubs/Crest';
-import { RoleMark, type RoleKind } from '../../components/clubs/RoleMark';
-import { Counter, Bars, Segments } from '../../components/ui/vis';
-import { Tooltip } from '../../components/ui/Tooltip';
 import { usePageLoading } from '../../context/LoadingContext';
-import './clubs.css';
+import './clubs-page.css';
 
-interface RosterMember {
-  name: string;
-  image?: string | null;
-  core: boolean;
-  position?: string | null;
-}
+type RoleKind = 'core' | 'member' | 'pending' | 'staff';
 
 interface Club {
   _id: string;
@@ -27,33 +16,50 @@ interface Club {
   coverImage?: string | null;
   images?: string[];
   facultyCoordinatorId?: any;
-  totalMembers?: number;
   memberCount?: number;
+  totalMembers?: number;
   coreTeamCount?: number;
-  regularMemberCount?: number;
-  createdAt?: string;
-  rosterPreview?: RosterMember[];
 }
 
-const SearchIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.7" />
-    <path d="M15.5 15.5 20 20" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-  </svg>
-);
+const sizeOf = (c: Club) => c.memberCount ?? c.totalMembers ?? 0;
 
-const DirectoryIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="M4 6h16M4 12h16M4 18h10" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-  </svg>
+const initialsOf = (name: string) =>
+  name.replace(/^Dr\.\s*/i, '').trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase() || '?';
+
+/** Three steps of one blue, picked from the name so a person keeps their shade. */
+const shade = (name: string) => (name.split('').reduce((n, ch) => n + ch.charCodeAt(0), 0) % 3) + 1;
+
+function Mark({ name, image, size = 40 }: { name: string; image?: string | null; size?: number }) {
+  return (
+    <span className="cl-mark" style={{ width: size, height: size, fontSize: Math.round(size * 0.36) }} aria-hidden="true">
+      {image ? <img src={image} alt="" /> : initialsOf(name)}
+    </span>
+  );
+}
+
+function Face({ name, image, size = 32 }: { name: string; image?: string | null; size?: number }) {
+  const style = { width: size, height: size, fontSize: Math.round(size * 0.38) };
+  return image ? (
+    <img className="cl-face" src={image} alt="" style={style} />
+  ) : (
+    <span className={`cl-face cl-face--s${shade(name)}`} style={style} aria-hidden="true">{initialsOf(name)}</span>
+  );
+}
+
+const icon = (path: ReactNode) => () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
 );
+const SearchIcon = icon(<><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 4.5 4.5" /></>);
+const ClubIcon = icon(<path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18" />);
+const PeopleIcon = icon(<path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35M15.5 5.2a3 3 0 0 1 0 5.6" />);
+const StarIcon = icon(<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9L12 3Z" />);
+const CapIcon = icon(<path d="m2 9 10-5 10 5-10 5L2 9Zm5 3v4c0 1.5 2.5 3 5 3s5-1.5 5-3v-4" />);
 
 export default function Clubs() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { setPageLoading } = usePageLoading();
   const [clubs, setClubs] = useState<Club[]>([]);
-  const [membersByClub, setMembersByClub] = useState<Record<string, any[]>>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -86,7 +92,6 @@ export default function Clubs() {
       rosterEntries.forEach(([clubId, list]) => {
         rosters[clubId] = list;
       });
-      setMembersByClub(rosters);
 
       if (user?.role === 'student') {
         const reqs = await api<any>('GET', '/join-requests/student').then((r) => r.data);
@@ -169,26 +174,24 @@ export default function Clubs() {
     });
   }, [clubs, query, scope, myMemberships]);
 
-  // MOCK: the featured club is chosen client side — the newest club the student belongs to,
-  // else the newest club by createdAt (the API order is not contractual).
-  // Suggested API: GET /clubs?featured=1 or a `featured` flag on the club record.
-  const { lead, rest } = useMemo(() => {
-    const byNewest = [...visible].sort(
-      (a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime(),
-    );
-    const featured = (isStudent && byNewest.find((c) => myMemberships[c._id])) || byNewest[0] || null;
-    return {
-      lead: featured,
-      rest: featured ? visible.filter((c) => c._id !== featured._id) : [],
-    };
-  }, [visible, isStudent, myMemberships]);
+  // Clubs the student belongs to come first; everything else keeps the directory's own
+  // alphabetical order so the grid never reshuffles between visits.
+  const ordered = useMemo(
+    () =>
+      [...visible].sort((a, b) => {
+        const mine = Number(!!myMemberships[b._id] || !!myPending[b._id]) - Number(!!myMemberships[a._id] || !!myPending[a._id]);
+        return mine || a.name.localeCompare(b.name);
+      }),
+    [visible, myMemberships, myPending],
+  );
 
   const filtersActive = query.trim().length > 0 || scope !== 'all';
-
-  const myClubs = useMemo(
-    () => clubs.filter((c) => myMemberships[c._id]),
-    [clubs, myMemberships],
+  const myClubs = useMemo(() => clubs.filter((c) => myMemberships[c._id]), [clubs, myMemberships]);
+  const biggest = useMemo(
+    () => [...clubs].sort((a, b) => (b.memberCount ?? b.totalMembers ?? 0) - (a.memberCount ?? a.totalMembers ?? 0)),
+    [clubs],
   );
+  const maxMembers = Math.max(...biggest.map((c) => c.memberCount ?? c.totalMembers ?? 0), 0);
 
   const coordinatorList = useMemo(() => {
     // MOCK: coordinator → clubs grouping is derived from the directory payload.
@@ -217,407 +220,227 @@ export default function Clubs() {
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name));
   }, [clubs]);
 
-  const pendingRole = (clubId: string): { role: RoleKind; label: string } | null =>
-    myPending[clubId] ? { role: 'pending', label: 'Request pending' } : null;
-
-  const roleOf = (clubId: string): { role: RoleKind; label: string } | null => {
-    const pending = pendingRole(clubId);
-    if (pending) return pending;
-    const membership = myMemberships[clubId];
+  const roleOf = (club: Club): { kind: RoleKind; label: string } | null => {
+    if (user?.role === 'club_admin') return { kind: 'staff', label: 'Admin' };
+    if (user?.role === 'faculty_coordinator') {
+      const coordId = typeof club.facultyCoordinatorId === 'object' ? club.facultyCoordinatorId?._id : club.facultyCoordinatorId;
+      if (coordId === user._id) return { kind: 'staff', label: 'Coordinator' };
+    }
+    if (myPending[club._id]) return { kind: 'pending', label: 'Request pending' };
+    const membership = myMemberships[club._id];
     if (!membership) return null;
     if (membership.membershipType === 'core_team') {
       const position = membership.position && membership.position.toLowerCase() !== 'member' ? membership.position : null;
-      return { role: 'core', label: position ? `Core team · ${position}` : 'Core team' };
+      return { kind: 'core', label: position ? `Core · ${position}` : 'Core team' };
     }
-    return { role: 'member', label: 'Member' };
+    return { kind: 'member', label: 'Member' };
   };
 
-  const cardTag = (club: Club): string | undefined => {
-    if (user?.role === 'club_admin') return 'Admin';
-    if (user?.role === 'faculty_coordinator') {
-      const coordId = typeof club.facultyCoordinatorId === 'object' ? club.facultyCoordinatorId?._id : club.facultyCoordinatorId;
-      if (coordId === user._id) return 'Coordinator';
-    }
-    return undefined;
+  const clearFilters = () => {
+    setQuery('');
+    setScope('all');
   };
 
-  const rosterPreview = (clubId: string): RosterMember[] =>
-    (membersByClub[clubId] ?? [])
-      .map((m) => ({
-        name: m.studentId?.name ?? '',
-        image: m.studentId?.profileImage ?? null,
-        core: m.membershipType === 'core_team',
-        position: m.position ?? null,
-      }))
-      .filter((p) => p.name);
-
-  const renderCard = (club: Club, isLead = false) => (
-    <StudentClubCard
-      key={club._id}
-      club={{ ...club, rosterPreview: rosterPreview(club._id) }}
-      membership={myMemberships[club._id] || null}
-      pending={!!myPending[club._id]}
-      tag={cardTag(club)}
-      lead={isLead}
-      onClick={() => navigate(`/clubs/${club._id}`)}
-    />
-  );
-
-  const indexCells = [
-    { label: 'clubs', value: clubs.length },
-    { label: 'members', value: totalMembers },
-    { label: 'core team', value: coreTeamTotal },
-    { label: 'coordinators', value: coordinatorCount },
+  const withCoordinator = coveredClubs;
+  const corePct = totalMembers > 0 ? Math.round((coreTeamTotal / totalMembers) * 100) : 0;
+  const tiles = [
+    { label: clubs.length === 1 ? 'Club' : 'Clubs', value: clubs.length, note: isStudent ? `${joinedCount} joined` : 'In the directory', tone: 'deep', Icon: ClubIcon },
+    { label: totalMembers === 1 ? 'Member' : 'Members', value: totalMembers, note: clubs.length ? `About ${Math.round(totalMembers / clubs.length)} per club` : '', tone: 'blue', Icon: PeopleIcon },
+    { label: 'Core team seats', value: coreTeamTotal, note: `${corePct}% of all members`, tone: 'sky', Icon: StarIcon },
+    { label: coordinatorCount === 1 ? 'Coordinator' : 'Coordinators', value: coordinatorCount, note: clubs.length - withCoordinator > 0 ? `${clubs.length - withCoordinator} ${clubs.length - withCoordinator === 1 ? 'club' : 'clubs'} without one` : 'Every club covered', tone: 'mist', Icon: CapIcon },
   ];
+  const noClubs = !loading && !error && clubs.length === 0;
 
   return (
-    <div className="clubs-page">
-      <header className="ui-page-head clubs-rise" style={{ '--i': 0 } as CSSProperties}>
-        <div className="ui-page-head__text">
-          <h1 className="ui-title">Clubs</h1>
+    <div className="cl">
+      <header className="cl-head">
+        <div>
+          <h1 className="cl-title">Clubs</h1>
+          <p className="cl-sub">Student-managed clubs, who guides them and how big they are.</p>
         </div>
-
-        <div className="ui-page-actions clubs-actions">
-          <div className="ui-search clubs-search">
+        <div className="cl-tools">
+          <label className="cl-search">
             <SearchIcon />
             <input
-              id="clubs-search"
-              className="ui-field"
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search clubs"
+              placeholder="Search clubs or coordinators"
               aria-label="Search clubs by name, description or coordinator"
             />
-          </div>
-
+          </label>
           {isStudent && (
-            <div className="ui-seg" role="group" aria-label="Filter the directory">
-              <button type="button" aria-pressed={scope === 'all'} onClick={() => setScope('all')}>
-                All
-              </button>
+            <div className="cl-seg" role="group" aria-label="Filter the directory">
+              <button type="button" aria-pressed={scope === 'all'} onClick={() => setScope('all')}>All</button>
               <button type="button" aria-pressed={scope === 'mine'} onClick={() => setScope('mine')}>
-                My clubs{joinedCount ? ` ${joinedCount}` : ''}
+                My clubs{joinedCount ? <span>{joinedCount}</span> : null}
               </button>
             </div>
           )}
-
           {canCreate && !showForm && (
-            <button type="button" className="ui-btn ui-btn--primary" onClick={() => setShowForm(true)}>
-              New club
-            </button>
+            <button type="button" className="cl-btn" onClick={() => setShowForm(true)}>+ New club</button>
           )}
         </div>
       </header>
 
-      {loading ? (
-        <div className="clubs-index clubs-index--loading clubs-rise" style={{ '--i': 1 } as CSSProperties} aria-hidden="true">
-          {[0, 1, 2, 3].map((i) => (
-            <div className="clubs-index__cell" key={i}>
-              <span className="ui-skel clubs-index__skel" />
-            </div>
-          ))}
-        </div>
-      ) : !error && clubs.length > 0 ? (
-        <section
-          className="clubs-index clubs-rise"
-          style={{ '--i': 1 } as CSSProperties}
-          aria-label="Directory totals"
-        >
-          <div className="clubs-index__cells">
-            {indexCells.map((cell) => (
-              <div className="clubs-index__cell" key={cell.label}>
-                <Counter value={cell.value} className="clubs-index__n" />
-                <span className="clubs-index__k">{cell.label}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="clubs-index__meter">
-            <Tooltip
-              label={`${coreTeamTotal} of ${totalMembers} members hold a core-team seat`}
-            >
-              <span className="clubs-index__meter-track">
-                <Segments
-                  value={coreTeamTotal}
-                  total={totalMembers}
-                  segments={28}
-                  tone="ramp"
-                  ariaLabel={`${coreTeamTotal} of ${totalMembers} members hold a core-team seat`}
-                />
-              </span>
-            </Tooltip>
-            <div className="clubs-index__legend" aria-hidden="true">
-              <span className="clubs-index__key" />
-              <span className="clubs-index__keyk">core</span>
-              <span className="clubs-index__keyn">{coreTeamTotal}</span>
-              <span className="clubs-index__key clubs-index__key--rest" />
-              <span className="clubs-index__keyk">others</span>
-              <span className="clubs-index__keyn">{Math.max(0, totalMembers - coreTeamTotal)}</span>
-            </div>
-          </div>
-        </section>
-      ) : null}
-
       {showForm && (
-        <ClubForm
-          onSave={() => { setShowForm(false); loadClubs(); }}
-          onCancel={() => setShowForm(false)}
-        />
+        <ClubForm onSave={() => { setShowForm(false); loadClubs(); }} onCancel={() => setShowForm(false)} />
       )}
 
       {error ? (
-        <div className="clubs-error clubs-rise" style={{ '--i': 2 } as CSSProperties}>
-          <div className="ui-notice ui-notice--error" role="alert">
-            <span>{error}</span>
-          </div>
-          <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={loadClubs}>
-            Try again
-          </button>
+        <div className="cl-state" role="alert">
+          <p className="cl-state-title">The club directory didn&rsquo;t load</p>
+          <p className="cl-state-text">{error}</p>
+          <button type="button" className="cl-btn cl-btn--quiet" onClick={loadClubs}>Try again</button>
         </div>
       ) : loading ? (
-        <div className="clubs-layout clubs-layout--loading" aria-busy="true" aria-label="Loading clubs">
-          <section className="clubs-board">
-            <div className="clubs-skel clubs-skel--lead">
-              <div className="ui-skel clubs-skel__plate" />
-              <div className="clubs-skel__body">
-                <div className="ui-skel clubs-skel__line clubs-skel__line--title" />
-                <div className="ui-skel clubs-skel__line" />
-                <div className="ui-skel clubs-skel__line clubs-skel__line--short" />
-              </div>
-            </div>
-            {[0, 1, 2].map((i) => (
-              <div className="clubs-skel clubs-skel--row" key={i}>
-                <div className="ui-skel clubs-skel__plate clubs-skel__plate--sm" />
-                <div className="clubs-skel__body">
-                  <div className="ui-skel clubs-skel__line clubs-skel__line--title" />
-                </div>
+        <div aria-busy="true" aria-label="Loading clubs" className="cl-loading">
+          <div className="cl-tiles">{[0, 1, 2, 3].map((i) => <span key={i} className="cl-skel cl-skel--tile" />)}</div>
+          <span className="cl-skel cl-skel--table" />
+        </div>
+      ) : noClubs ? (
+        <div className="cl-state">
+          <p className="cl-state-title">No clubs yet</p>
+          <p className="cl-state-text">
+            {canCreate ? 'Clubs appear here as soon as they are created. Start the first one.' : 'The department has not published a student-managed club yet.'}
+          </p>
+        </div>
+      ) : (
+        <>
+          <section className="cl-tiles" aria-label="Directory totals">
+            {tiles.map(({ label, value, note, tone, Icon }) => (
+              <div key={label} className={`cl-tile cl-tile--${tone}`}>
+                <span className="cl-tile-icon"><Icon /></span>
+                <span className="cl-tile-value">{value}</span>
+                <span className="cl-tile-label">{label}</span>
+                <span className="cl-tile-note">{note}</span>
               </div>
             ))}
           </section>
-          <aside className="clubs-aside" aria-hidden="true">
-            <div className="ui-panel">
-              <div className="clubs-skel clubs-skel--row">
-                <div className="ui-skel clubs-skel__plate clubs-skel__plate--sm" />
-                <div className="clubs-skel__body">
-                  <div className="ui-skel clubs-skel__line clubs-skel__line--short" />
+
+          <div className="cl-layout">
+            <section className="cl-card" aria-label={filtersActive ? 'Filtered clubs' : 'Club directory'}>
+              <header className="cl-card-head">
+                <div>
+                  <h2 className="cl-card-title">Club directory</h2>
+                  <p className="cl-card-sub">
+                    {filtersActive ? `${visible.length} of ${clubs.length} clubs match` : isStudent ? 'Your clubs are listed first' : 'Alphabetical'}
+                  </p>
                 </div>
-              </div>
-            </div>
-          </aside>
-        </div>
-      ) : clubs.length === 0 ? (
-        <div className="ui-empty clubs-empty clubs-rise" style={{ '--i': 2 } as CSSProperties}>
-          <span className="ui-empty__mark"><DirectoryIcon /></span>
-          <p className="ui-empty__title">No clubs yet</p>
-          <p className="ui-empty__text">
-            {canCreate
-              ? 'Clubs appear here as soon as they are created. Start the first one.'
-              : 'The department has not published a student-managed club yet.'}
-          </p>
-          {canCreate && !showForm && (
-            <button type="button" className="ui-btn ui-btn--primary ui-btn--sm" onClick={() => setShowForm(true)}>
-              New club
-            </button>
-          )}
-        </div>
-      ) : visible.length === 0 ? (
-        <div className="ui-empty clubs-empty clubs-rise" style={{ '--i': 2 } as CSSProperties}>
-          <span className="ui-empty__mark"><SearchIcon /></span>
-          <p className="ui-empty__title">No clubs match this view</p>
-          <p className="ui-empty__text">
-            {scope === 'mine' && !query.trim()
-              ? 'You have not joined a club yet.'
-              : `Nothing in ${clubs.length} clubs matches “${query.trim()}”.`}
-          </p>
-          <button
-            type="button"
-            className="ui-btn ui-btn--quiet ui-btn--sm"
-            onClick={() => { setQuery(''); setScope('all'); }}
-          >
-            Clear filters
-          </button>
-        </div>
-      ) : (
-        <div className="clubs-layout">
-          <section
-            className="clubs-board clubs-rise"
-            style={{ '--i': 2 } as CSSProperties}
-            aria-label={filtersActive ? 'Filtered clubs' : 'Club directory'}
-          >
-            {lead && renderCard(lead, true)}
-            {rest.length > 0 && (
-              <div className="clubs-board__index">
-                {rest.map((club) => renderCard(club))}
-              </div>
-            )}
+                {filtersActive ? <button type="button" className="cl-link" onClick={clearFilters}>Clear filters</button> : null}
+              </header>
 
-            {filtersActive && (
-              <footer className="clubs-board__foot">
-                <span className="clubs-board__count">
-                  {visible.length} / {clubs.length}
-                </span>
-                <button
-                  type="button"
-                  className="ui-btn ui-btn--ghost ui-btn--sm"
-                  onClick={() => { setQuery(''); setScope('all'); }}
-                >
-                  Clear
-                </button>
-              </footer>
-            )}
-          </section>
+              {visible.length === 0 ? (
+                <p className="cl-empty">
+                  {scope === 'mine' && !query.trim() ? 'You have not joined a club yet.' : `Nothing in ${clubs.length} clubs matches \u201c${query.trim()}\u201d.`}
+                </p>
+              ) : (
+                <ul className="cl-rows">
+                  <li className="cl-row cl-row--head" aria-hidden="true">
+                    <span>Club</span><span>Coordinator</span><span>Members</span><span>Your role</span>
+                  </li>
+                  {ordered.map((club) => {
+                    const coord = typeof club.facultyCoordinatorId === 'object' ? club.facultyCoordinatorId : null;
+                    const role = roleOf(club);
+                    const n = sizeOf(club);
+                    const core = club.coreTeamCount ?? 0;
+                    return (
+                      <li className={`cl-row${role ? ' is-mine' : ''}`} key={club._id}>
+                        <span className="cl-cell cl-club">
+                          <Mark name={club.name} image={club.logo || club.coverImage || club.images?.[0]} />
+                          <span className="cl-club-text">
+                            <button type="button" className="cl-open" onClick={() => navigate(`/clubs/${club._id}`)}>{club.name}</button>
+                            <span className="cl-desc">{club.description?.trim() || 'No description yet.'}</span>
+                          </span>
+                        </span>
+                        <span className="cl-cell cl-coord" data-label="Coordinator">
+                          {coord?.name ? (
+                            <>
+                              <Face name={coord.name} image={coord.profileImage} size={26} />
+                              <span><strong>{coord.name}</strong>{coord.department ? <em>{coord.department}</em> : null}</span>
+                            </>
+                          ) : <span className="cl-muted">None assigned</span>}
+                        </span>
+                        <span className="cl-cell cl-size" data-label="Members">
+                          <span className="cl-meter" role="img" aria-label={`${n} members, ${core} on the core team`}>
+                            <i style={{ width: `${maxMembers ? Math.round((n / maxMembers) * 100) : 0}%` }} />
+                          </span>
+                          <b>{n}</b>
+                        </span>
+                        <span className="cl-cell cl-role" data-label="Your role">
+                          {role ? <span className={`cl-pill cl-pill--${role.kind}`}>{role.label}</span> : <span className="cl-muted">&mdash;</span>}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </section>
 
-          <aside className="clubs-aside" aria-label="Directory instruments">
-            {isStudent ? (
-              <section className="ui-panel clubs-rise" style={{ '--i': 3 } as CSSProperties}>
-                <header className="ui-panel__head">
-                  <div className="ui-panel__titles">
-                    <h2 className="ui-panel__title">Your clubs</h2>
-                    <span className="ui-panel__meta">{myClubs.length}</span>
-                  </div>
-                </header>
-                <div className="ui-panel__body clubs-mine">
+            <aside className="cl-side" aria-label="Directory summary">
+              {isStudent ? (
+                <section className="cl-card">
+                  <header className="cl-card-head"><h2 className="cl-card-title">Your clubs</h2><span className="cl-count">{myClubs.length}</span></header>
                   {myClubs.length ? (
-                    <div className="clubs-mine__rail">
+                    <ul className="cl-list">
                       {myClubs.map((club) => {
-                        const role = roleOf(club._id);
+                        const role = roleOf(club);
                         return (
-                          <Tooltip key={club._id} label={`${club.name} · ${role?.label ?? 'Member'}`}>
-                            <button
-                              type="button"
-                              className="clubs-mine__tile"
-                              onClick={() => navigate(`/clubs/${club._id}`)}
-                              aria-label={`${club.name}, ${role?.label ?? 'Member'}`}
-                            >
-                              <Crest name={club.name} image={club.logo} size={44} lit />
-                              {role ? (
-                                <RoleMark
-                                  role={role.role}
-                                  label={role.label}
-                                  quiet
-                                  size={12}
-                                  className="clubs-mine__mark"
-                                />
-                              ) : null}
+                          <li key={club._id}>
+                            <button type="button" className="cl-list-row" onClick={() => navigate(`/clubs/${club._id}`)}>
+                              <Mark name={club.name} image={club.logo || club.coverImage || club.images?.[0]} size={34} />
+                              <span className="cl-list-name">{club.name}</span>
+                              {role ? <span className={`cl-pill cl-pill--${role.kind}`}>{role.label}</span> : null}
                             </button>
-                          </Tooltip>
+                          </li>
                         );
                       })}
-                    </div>
+                    </ul>
                   ) : (
-                    <div className="clubs-mine__empty">
-                      <span className="clubs-hatch clubs-hatch--void" aria-hidden="true" />
-                      <p className="ui-meta">No memberships yet.</p>
-                      <button
-                        type="button"
-                        className="ui-btn ui-btn--quiet ui-btn--sm"
-                        onClick={() => setScope('all')}
-                      >
-                        Browse clubs
-                      </button>
-                    </div>
+                    <p className="cl-empty">You haven&rsquo;t joined a club yet. Open one from the directory and send a request.</p>
                   )}
-                </div>
-              </section>
-            ) : (
-              <section className="ui-panel clubs-rise" style={{ '--i': 3 } as CSSProperties}>
-                <header className="ui-panel__head">
-                  <div className="ui-panel__titles">
-                    <h2 className="ui-panel__title">Members</h2>
-                    <span className="ui-panel__meta">{totalMembers}</span>
-                  </div>
-                </header>
-                <div className="ui-panel__body clubs-rank">
-                  <Bars
-                    data={[...clubs]
-                      .sort((a, b) => (b.memberCount ?? b.totalMembers ?? 0) - (a.memberCount ?? a.totalMembers ?? 0))
-                      .map((club) => ({
-                        label: club.name,
-                        value: club.memberCount ?? club.totalMembers ?? 0,
-                        hint: `${club.coreTeamCount ?? 0} core team of ${club.memberCount ?? club.totalMembers ?? 0}`,
-                      }))}
-                    tone="ramp"
-                    ariaLabel={`Members per club, ${totalMembers} in total`}
-                  />
-                </div>
-              </section>
-            )}
-          </aside>
-
-          <section className="ui-panel clubs-coverage-panel clubs-rise" style={{ '--i': 3 } as CSSProperties}>
-            <header className="ui-panel__head">
-              <div className="ui-panel__titles">
-                <h2 className="ui-panel__title">Coordinators</h2>
-                <span className="ui-panel__meta">{coordinatorList.length}</span>
-              </div>
-            </header>
-            <div className="ui-panel__body clubs-coverage">
-              <div className="clubs-coverage__rail">
-                <Tooltip
-                  label={`${coveredClubs} of ${clubs.length} clubs have a faculty coordinator`}
-                >
-                  <span className="clubs-coverage__meter">
-                    <Segments
-                      value={coveredClubs}
-                      total={clubs.length}
-                      segments={12}
-                      tone="ramp"
-                      ariaLabel={`${coveredClubs} of ${clubs.length} clubs have a faculty coordinator`}
-                    />
-                  </span>
-                </Tooltip>
-                {clubs.length - coveredClubs > 0 ? (
-                  <Tooltip
-                    label={`${clubs.length - coveredClubs} ${clubs.length - coveredClubs === 1 ? 'club has' : 'clubs have'} no faculty coordinator`}
-                  >
-                    <span className="clubs-hatch clubs-hatch--void" tabIndex={0} aria-label="Uncovered clubs" />
-                  </Tooltip>
-                ) : null}
-                <span className="clubs-coverage__ratio">
-                  {coveredClubs}/{clubs.length}
-                  <span className="ui-visually-hidden"> clubs have a faculty coordinator</span>
-                </span>
-              </div>
-
-              {coordinatorList.length ? (
-                <ul className="clubs-coordlist">
-                  {coordinatorList.map((coord) => (
-                    <li className="clubs-coord" key={coord._id}>
-                      {coord.profileImage ? (
-                        <img src={coord.profileImage} alt="" className="ui-avatar ui-avatar--sm" />
-                      ) : (
-                        <span className="ui-avatar ui-avatar--sm" aria-hidden="true">
-                          {coord.name.replace(/^Dr\.\s*/i, '').trim().split(/\s+/).slice(0, 2).map((p) => p[0]).join('').toUpperCase()}
-                        </span>
-                      )}
-                      <span className="clubs-coord__text">
-                        <span className="clubs-coord__name">{coord.name}</span>
-                        {coord.department ? <span className="clubs-coord__dept">{coord.department}</span> : null}
-                      </span>
-                      <span className="clubs-coord__clubs">
-                        {coord.clubs.map((club) => (
-                          <Tooltip key={club._id} label={club.name}>
-                            <button
-                              type="button"
-                              className="clubs-coord__crest"
-                              onClick={() => navigate(`/clubs/${club._id}`)}
-                              aria-label={club.name}
-                            >
-                              <Crest name={club.name} size={22} />
-                            </button>
-                          </Tooltip>
-                        ))}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
+                </section>
               ) : (
-                <p className="clubs-coverage__void">No faculty coordinator assigned.</p>
+                <section className="cl-card">
+                  <header className="cl-card-head"><h2 className="cl-card-title">Members per club</h2><span className="cl-count">{totalMembers}</span></header>
+                  <ul className="cl-ranks">
+                    {biggest.map((club) => (
+                      <li key={club._id}>
+                        <span className="cl-rank-name">{club.name}</span>
+                        <span className="cl-meter"><i style={{ width: `${maxMembers ? Math.round((sizeOf(club) / maxMembers) * 100) : 0}%` }} /></span>
+                        <b>{sizeOf(club)}</b>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
               )}
-            </div>
-          </section>
-        </div>
+
+              <section className="cl-card">
+                <header className="cl-card-head"><h2 className="cl-card-title">Faculty coordinators</h2><span className="cl-count">{coordinatorList.length}</span></header>
+                {coordinatorList.length ? (
+                  <ul className="cl-list">
+                    {coordinatorList.map((coord) => (
+                      <li className="cl-person" key={coord._id}>
+                        <Face name={coord.name} image={coord.profileImage} size={34} />
+                        <span className="cl-person-text">
+                          <strong>{coord.name}</strong>
+                          <span>{coord.department || 'Faculty'}</span>
+                          <span className="cl-chips">
+                            {coord.clubs.map((club) => (
+                              <button type="button" key={club._id} onClick={() => navigate(`/clubs/${club._id}`)}>{club.name}</button>
+                            ))}
+                          </span>
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="cl-empty">No faculty coordinator has been assigned yet.</p>
+                )}
+              </section>
+            </aside>
+          </div>
+        </>
       )}
     </div>
   );

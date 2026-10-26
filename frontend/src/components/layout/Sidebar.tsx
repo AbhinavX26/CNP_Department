@@ -15,7 +15,8 @@ export const NAVIGATION = [
   { id: 'notifications', label: 'Notifications',     icon: 'notifications', path: '/notifications',     roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] },
   { id: 'inventory',     label: 'Inventory',         icon: 'inventory',     path: '/inventory',         roles: ['project_admin'] },
   { id: 'requests',      label: 'Material Requests', icon: 'requests',      path: '/material-requests', roles: ['project_admin'] },
-  { id: 'profile',       label: 'Profile',           icon: 'profile',       path: '/profile',           roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] }
+  { id: 'profile',       label: 'Profile',           icon: 'profile',       path: '/profile',           roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] },
+  { id: 'about',         label: 'About Us',          icon: 'about',         path: '/about',             roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] }
 ];
 
 /**
@@ -27,6 +28,7 @@ export const NAV_GROUPS: { id: string; label: string; items: string[] }[] = [
   { id: 'inbox',       label: 'Inbox',       items: ['notifications'] },
   { id: 'operations',  label: 'Operations',  items: ['inventory', 'requests'] },
   { id: 'account',     label: 'Account',     items: ['profile'] },
+  { id: 'developers',  label: 'Developers',  items: ['about'] },
 ];
 
 /* Line icons on the 24px grid, drawn inside a common 4–20 optical square so
@@ -41,6 +43,7 @@ export const NAV_ICON_PATHS: Record<string, string> = {
   inventory: 'm4 8 8-4 8 4-8 4-8-4Zm0 0v8l8 4m8-12v8l-8 4m0-8v8',
   requests: 'M4 13h4l1.5 3h5L16 13h4M4 13V6.5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1V13M4 13v4.5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V13',
   profile: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4.5 20a7.5 7.5 0 0 1 15 0',
+  about: 'M12 12a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4ZM5.5 19a6.5 6.5 0 0 1 13 0M18.5 8.2a2.4 2.4 0 0 1 0 4.4M20.5 17.5c0-1.7-.9-3-2.2-3.6',
 };
 
 export function NavIcon({ id, className = 'rail-icon' }: { id: string; className?: string }) {

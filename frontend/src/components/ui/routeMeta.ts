@@ -48,6 +48,10 @@ export const ROUTE_META: Record<string, RouteMeta> = {
     title: 'Profile',
     description: 'Your CNP Department identity: role, department, semester and contact details.',
   },
+  '/about': {
+    title: 'About us',
+    description: 'The developers behind the CNP Department portal.',
+  },
 };
 
 /** Detail routes: the route carries an id, so the title names the collection. */

@@ -450,6 +450,9 @@ export default function Projects() {
               </span>
             )}
           </div>
+          <p className="ui-sub prj-head__intro">
+            Explore GUIITAR projects and see how each team is progressing.
+          </p>
         </div>
 
         <div className="ui-page-actions prj-head__actions">
@@ -649,6 +652,7 @@ export default function Projects() {
                           {group.items.map((item) => {
                             const { project, leader, members, status } = item;
                             const relation = relationOf(item);
+                            const teamSize = project.memberCount ?? members.length;
                             const people = members.map((member) => ({
                               name: member.name || 'Unnamed student',
                               image: member.profileImage || undefined,
@@ -672,18 +676,30 @@ export default function Projects() {
                                     label={<span className="prj-tip__text">{project.description}</span>}
                                   >
                                     <span className="prj-row__main">
-                                      <span className="prj-row__name">{project.name}</span>
+                                      <span className="prj-row__title">
+                                        <span className="prj-row__name">{project.name}</span>
+                                        <span className={`prj-row__status is-${status}`}>
+                                          {STATUS_LABEL[status]}
+                                        </span>
+                                      </span>
                                       <span className="prj-row__line">{project.description}</span>
                                     </span>
                                   </Tooltip>
                                 ) : (
                                   <span className="prj-row__main">
-                                    <span className="prj-row__name">{project.name}</span>
+                                    <span className="prj-row__title">
+                                      <span className="prj-row__name">{project.name}</span>
+                                      <span className={`prj-row__status is-${status}`}>
+                                        {STATUS_LABEL[status]}
+                                      </span>
+                                    </span>
                                   </span>
                                 )}
 
                                 <span className="prj-row__marks">
                                   <span className="prj-team">
+                                    <span className="prj-card-meta__label">Team</span>
+                                    <span className="prj-team__people">
                                     {people.length ? (
                                       <AvatarStack people={people} max={4} size="sm" />
                                     ) : (
@@ -693,19 +709,23 @@ export default function Projects() {
                                         aria-label="No team members yet"
                                       />
                                     )}
+                                      <span className="prj-team__count">
+                                        {teamSize} {teamSize === 1 ? 'member' : 'members'}
+                                      </span>
+                                    </span>
                                     <Tooltip
-                                      label={`${members.length} ${
-                                        members.length === 1 ? 'member' : 'members'
+                                      label={`${teamSize} ${
+                                        teamSize === 1 ? 'member' : 'members'
                                       } of ${maxTeam} — the largest team on the board`}
                                     >
                                       <span className="prj-team__bed">
                                         <Segments
-                                          value={members.length}
+                                          value={teamSize}
                                           total={maxTeam}
                                           segments={Math.min(8, Math.max(3, maxTeam))}
                                           tone="ramp"
-                                          ariaLabel={`${members.length} ${
-                                            members.length === 1 ? 'member' : 'members'
+                                          ariaLabel={`${teamSize} ${
+                                            teamSize === 1 ? 'member' : 'members'
                                           }; largest team on the board has ${maxTeam}`}
                                         />
                                       </span>
@@ -732,6 +752,9 @@ export default function Projects() {
                                       <span className="prj-lead__glyph" aria-hidden="true">
                                         <LeadMark size={11} />
                                       </span>
+                                      <span className="prj-lead__name">
+                                        {leader?.name || 'Leader unassigned'}
+                                      </span>
                                       <span className="ui-visually-hidden">
                                         {leader?.name ? `Led by ${leader.name}` : 'No team leader assigned'}
                                       </span>
@@ -751,6 +774,13 @@ export default function Projects() {
                                           )}
                                         </span>
                                       </Tooltip>
+                                      <span className="prj-rel__text">
+                                        {relation === 'lead'
+                                          ? 'You lead'
+                                          : relation === 'member'
+                                            ? 'On team'
+                                            : 'Request pending'}
+                                      </span>
                                     </span>
                                   )}
                                 </span>

@@ -10,7 +10,8 @@ export const NAVIGATION = [
   { id: 'notifications', label: 'Notifications',     icon: '🔔', path: '/notifications',     roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] },
   { id: 'inventory',     label: 'Inventory',         icon: '📦', path: '/inventory',         roles: ['project_admin'] },
   { id: 'requests',      label: 'Material Requests', icon: '🛒', path: '/material-requests', roles: ['project_admin'] },
-  { id: 'profile',       label: 'Profile',           icon: '👤', path: '/profile',           roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] }
+  { id: 'profile',       label: 'Profile',           icon: '👤', path: '/profile',           roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] },
+  { id: 'about',         label: 'About Us',          icon: '👥', path: '/about',             roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] }
 ];
 
 /* Line icons (24px grid) so the navy sidebar stays crisp and on-brand; replaces emoji glyphs. */
@@ -23,6 +24,7 @@ const NAV_ICON_PATHS: Record<string, string> = {
   inventory: 'm4 8 8-4 8 4-8 4-8-4Zm0 0v8l8 4m8-12v8l-8 4m0-8v8',
   requests: 'M4 5h2l2 10h9l2-7H7M10 20h.01M17 20h.01',
   profile: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0',
+  about: 'M12 12a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4ZM5.5 19a6.5 6.5 0 0 1 13 0M18.5 8.2a2.4 2.4 0 0 1 0 4.4M20.5 17.5c0-1.7-.9-3-2.2-3.6',
 };
 
 function NavIcon({ id }: { id: string }) {

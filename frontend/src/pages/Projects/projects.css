@@ -71,6 +71,7 @@
   align-items: center;
   gap: var(--space-sm);
 }
+.prj-head__intro { margin-top: var(--space-xs); }
 
 .prj-head__count {
   display: inline-grid;
@@ -280,41 +281,38 @@
 
 /* ── Project beds (rows) ─────────────────────────────────────────────────── */
 
-.prj-rows { border-top: 0; }
-.prj-rows li:last-child .prj-row { border-bottom: 0; }
+.prj-rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+.prj-rows li { min-width: 0; }
 
 .prj-row {
   position: relative;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto auto;
-  grid-template-areas: "plate main marks open";
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas: "plate main" "marks marks" "open open";
+  align-content: start;
   align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-sm) var(--space-2xs) var(--space-sm) 0;
-  border-bottom: var(--rule-hair) solid var(--color-rule);
-  border-radius: 3px;
+  gap: var(--space-sm);
+  height: 100%;
+  min-height: 174px;
+  padding: var(--space-md);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-card);
+  background: var(--color-sheet);
   color: inherit;
   text-decoration: none;
-  transition: background-color var(--dur-short) var(--ease-in-out);
+  transition: border-color var(--dur-short) var(--ease-in-out), background-color var(--dur-short) var(--ease-in-out), transform var(--dur-short) var(--ease-out);
 }
-.prj-row:hover { background: var(--color-paper-2); }
-.prj-row:active { background: var(--color-paper-3); }
-
-/* A hair of cobalt down the left edge only while the row is being handled. */
-.prj-row::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: var(--space-xs);
-  bottom: var(--space-xs);
-  width: 2px;
-  border-radius: 1px;
-  background: var(--color-accent);
-  transform: scaleY(0);
-  transition: transform var(--dur-short) var(--ease-out);
+.prj-row:hover {
+  border-color: var(--color-accent-2);
+  background: var(--color-paper-2);
+  transform: translateY(-1px);
 }
-.prj-row:hover::before,
-.prj-row:focus-visible::before { transform: scaleY(1); }
+.prj-row:active { background: var(--color-paper-3); transform: none; }
 
 /* The monogram plate: one geometry shared with the club crest and the dashboard
    tiles — 40px, an 8px cut corner, a hairline inside, the letters at 36%. */
@@ -340,7 +338,15 @@
 .prj-row__main {
   grid-area: main;
   display: grid;
-  gap: 1px;
+  gap: var(--space-2xs);
+  min-width: 0;
+}
+
+.prj-row__title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-xs);
   min-width: 0;
 }
 
@@ -350,10 +356,30 @@
   color: var(--color-ink);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  flex: 1;
+  min-width: 0;
+  line-height: 1.25;
   transition: color var(--dur-short) var(--ease-in-out);
 }
 .prj-row:hover .prj-row__name { color: var(--color-accent-deep); }
+
+.prj-row__status {
+  flex: none;
+  padding: var(--space-3xs) var(--space-xs);
+  border: var(--rule-hair) solid var(--color-rule);
+  border-radius: var(--radius-pill);
+  background: var(--color-paper-2);
+  color: var(--color-muted);
+  font: 500 var(--text-xs)/1.2 var(--font-body);
+  white-space: nowrap;
+}
+.prj-row__status.is-active { color: var(--color-positive); background: var(--color-positive-wash); border-color: var(--color-positive-wash); }
+.prj-row__status.is-completed { color: var(--color-accent-deep); background: var(--color-accent-wash); border-color: var(--color-accent-wash); }
+.prj-row__status.is-inactive { color: var(--color-muted); }
 
 .prj-row__line {
   font-size: var(--text-xs);
@@ -361,14 +387,21 @@
   color: var(--color-muted);
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  white-space: normal;
+  min-height: 2.8em;
 }
 
 .prj-row__marks {
   grid-area: marks;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
+  padding-top: var(--space-sm);
+  border-top: var(--rule-hair) solid var(--color-rule);
   min-width: 0;
 }
 
@@ -378,12 +411,15 @@
 .prj-team {
   display: grid;
   gap: var(--space-2xs);
-  flex: none;
+  min-width: 0;
   --vis-seg-h: 4px;
 }
+.prj-card-meta__label { color: var(--color-muted); font-size: var(--text-xs); }
+.prj-team__people { display: flex; align-items: center; gap: var(--space-xs); min-width: 0; }
+.prj-team__count { color: var(--color-ink-2); font-size: var(--text-xs); white-space: nowrap; }
 .prj-team__bed {
   display: block;
-  width: 4.5rem;
+  width: 100%;
   opacity: 0.72;
   transition: opacity var(--dur-short) var(--ease-in-out);
 }
@@ -409,15 +445,17 @@
 /* The leader: one avatar with the lead glyph, name on hover. */
 .prj-lead {
   position: relative;
-  flex: none;
-  width: 24px;
-  height: 24px;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  min-width: 0;
 }
 .prj-lead__plate {
   display: grid;
   place-items: center;
-  width: 24px;
-  height: 24px;
+  width: 28px;
+  height: 28px;
+  flex: none;
   overflow: hidden;
   border-radius: 4px;
   background: var(--color-accent-wash);
@@ -434,8 +472,8 @@
 }
 .prj-lead__glyph {
   position: absolute;
-  right: -5px;
-  bottom: -5px;
+  left: 18px;
+  top: 16px;
   display: grid;
   place-items: center;
   width: 14px;
@@ -450,15 +488,21 @@
   color: var(--color-muted);
   border-style: dashed;
 }
+.prj-lead__name {
+  overflow: hidden;
+  color: var(--color-ink-2);
+  font-size: var(--text-xs);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
 /* Your relation: one glyph, one word on hover. A person for a seat you hold, the
    lead crown for a project you run, a dashed ring while a request waits. The
    shapes differ, so the mark is readable before the tip is opened. */
 .prj-rel {
-  display: grid;
-  place-items: center;
-  width: var(--space-lg);
-  height: var(--space-lg);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2xs);
   flex: none;
   color: var(--color-muted);
 }
@@ -470,6 +514,7 @@
   border-radius: 3px;
 }
 .prj-rel__mark svg { width: 15px; height: 15px; }
+.prj-rel__text { color: currentColor; font-size: var(--text-xs); white-space: nowrap; }
 
 .prj-rel.is-member { color: var(--color-ink-2); }
 .prj-rel.is-pending { color: var(--color-warning); }
@@ -486,7 +531,9 @@
   align-items: center;
   justify-content: flex-end;
   gap: var(--space-2xs);
-  width: 4.1rem;
+  width: auto;
+  min-height: 36px;
+  justify-self: end;
   font: 500 var(--text-xs)/1 var(--font-display);
   color: var(--color-accent-deep);
   opacity: 0.55;
@@ -655,17 +702,7 @@
 }
 
 @media (max-width: 900px) {
-  .prj-row {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      "plate main marks"
-      "plate open open";
-    row-gap: var(--space-2xs);
-  }
-  .prj-row__marks { gap: var(--space-sm); justify-self: end; }
   .prj-row__open { width: auto; opacity: 1; transform: none; }
-  .prj-row__open span { display: none; }
-  .prj-team__bed { width: 3.4rem; }
 }
 
 @media (max-width: 760px) {
@@ -673,28 +710,14 @@
   .prj-search { max-width: none; }
   .prj-rail__cell { min-width: 5.25rem; padding-inline: var(--space-sm); }
   .prj-rail__label { font-size: 11px; }
-  .prj-row__line { display: none; }
-
-  /* The marks drop under the name so the title keeps its line on a phone. */
-  .prj-row {
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    grid-template-areas:
-      "plate main open"
-      "marks marks marks";
-    row-gap: var(--space-xs);
-  }
-  .prj-row__marks {
-    justify-self: start;
-    padding-left: 3.5rem;
-  }
 }
 
 @media (max-width: 560px) {
   .prj-rail__all { display: none; }
   .prj-rail__cell { min-width: 0; }
   .prj-row { gap: var(--space-sm); }
-  .prj-row__marks { gap: var(--space-xs); padding-left: 3.5rem; }
-  .prj-team__bed { width: 3rem; }
+  .prj-row__marks { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .prj-row__open { grid-column: 1 / -1; }
   .prj-gauge__row { grid-template-columns: 18px minmax(0, auto) minmax(0, 1fr) auto; }
 }
 

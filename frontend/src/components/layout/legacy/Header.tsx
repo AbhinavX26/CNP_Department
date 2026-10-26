@@ -87,6 +87,7 @@ export function Header() {
 
   const getPageTitle = () => {
     const path = location.pathname.split('/')[1] || 'dashboard';
+    if (path === 'about') return 'About us';
     return path.charAt(0).toUpperCase() + path.slice(1).replace('-', ' ');
   };
 
