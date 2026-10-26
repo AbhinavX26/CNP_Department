@@ -9,6 +9,7 @@ import { usePageLoading } from '../../context/LoadingContext';
 import { Counter, DateTile, KindGlyph } from '../../components/ui/vis';
 import { Tooltip } from '../../components/ui/Tooltip';
 import './events.css';
+import './events-theme.css';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const DAY_MS = 86_400_000;
@@ -407,9 +408,14 @@ function DayCell({ date, events, level, isToday, isSelected, onSelect, onOpen }:
     month: 'long',
   })}, ${events.length} ${events.length === 1 ? 'event' : 'events'}`;
 
+  // A day is wholly past or wholly ahead (past is judged by calendar day); undated
+  // events count as past, the same rule partitionEvents uses.
+  const hasUpcoming = events.some(e => eventDate(e) && !isEventPast(e.eventDate || e.date));
+  const dayState = events.length === 0 ? '' : hasUpcoming ? ' has-upcoming' : ' has-past';
+
   return (
     <div
-      className={`evt-cell${isToday ? ' is-today' : ''}${isSelected ? ' is-selected' : ''}`}
+      className={`evt-cell${dayState}${isToday ? ' is-today' : ''}${isSelected ? ' is-selected' : ''}`}
       data-level={level || undefined}
     >
       <div className="evt-cell__head">
@@ -1036,6 +1042,10 @@ export default function Events() {
                   <span className="evt-cal__marks-label">per week</span>
                   <WeekBars weeks={weekBuckets} />
                 </div>
+                <ul className="evt-legend" aria-label="Day colours">
+                  <li><i className="evt-legend__dot evt-legend__dot--upcoming" aria-hidden="true" />Upcoming</li>
+                  <li><i className="evt-legend__dot evt-legend__dot--past" aria-hidden="true" />Past</li>
+                </ul>
               </div>
               <div className="evt-cal__nav">
                 <button

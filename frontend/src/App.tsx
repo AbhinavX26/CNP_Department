@@ -11,6 +11,7 @@ import Clubs from './pages/Clubs/Clubs';
 import ClubDetails from './pages/Clubs/ClubDetails';
 import Projects from './pages/Projects/Projects';
 import ProjectDetails from './pages/Projects/ProjectDetails';
+import About from './pages/About/About';
 import Events from './pages/Events/Events';
 import Notifications from './pages/Notifications/Notifications';
 import Profile from './pages/Profile/Profile';
@@ -182,6 +183,7 @@ export default function App() {
                 <Route path="events" element={<Events />} />
                 <Route path="notifications" element={<Notifications />} />
                 <Route path="profile" element={<Profile />} />
+                <Route path="about" element={<About />} />
                 <Route element={<RoleProtectedRoute allowedRoles={['project_admin']} />}>
                   <Route path="material-requests" element={<MaterialRequests />} />
                   <Route path="inventory" element={<Inventory />} />
