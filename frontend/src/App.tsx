@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AuthProvider, useAuth, isProfileComplete } from './context/AuthContext';
 import { LoadingProvider, usePageLoading } from './context/LoadingContext';
 import { AppLayout } from './components/layout/legacy/AppLayout';
@@ -19,7 +19,25 @@ import Register from './pages/Auth/Register';
 import MaterialRequests from './pages/MaterialRequests/MaterialRequests';
 import Inventory from './pages/Inventory/Inventory';
 import Landing from './pages/Landing/Landing';
+import ErrorPage from './pages/Error/ErrorPage';
 import LoadingScreen from './components/LoadingScreen';
+import { HTTP_ERROR_EVENT } from './services/api';
+
+function HttpErrorRedirect() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleHttpError = (event: Event) => {
+      const status = (event as CustomEvent<{ status: number }>).detail?.status;
+      if (status) navigate(`/error/${status}`, { replace: true });
+    };
+
+    window.addEventListener(HTTP_ERROR_EVENT, handleHttpError);
+    return () => window.removeEventListener(HTTP_ERROR_EVENT, handleHttpError);
+  }, [navigate]);
+
+  return null;
+}
 
 /**
  * In-app navigation is a route swap, not a page load. The shell stays mounted;
@@ -170,8 +188,11 @@ export default function App() {
                 </Route>
               </Route>
             </Route>
+            <Route path="/error/:statusCode" element={<ErrorPage />} />
+            <Route path="*" element={<ErrorPage />} />
             </Routes>
           </BootGate>
+          <HttpErrorRedirect />
           <RouteProgress />
           <ScrollReset />
         </BrowserRouter>

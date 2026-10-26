@@ -1,14 +1,25 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router-dom';
 
-interface DashboardSectionProps {
+export interface DashboardSectionProps {
   id: string;
   eyebrow?: string;
   title: string;
   count?: number;
+  meta?: string;
   actionLabel?: string;
+  actionTo?: string;
   onAction?: () => void;
   children: ReactNode;
   className?: string;
+}
+
+export function PanelError({ message }: { message: string }) {
+  return (
+    <div className="ui-empty" role="alert">
+      <p>{message}</p>
+    </div>
+  );
 }
 
 export function DashboardSection({
@@ -16,7 +27,9 @@ export function DashboardSection({
   eyebrow,
   title,
   count,
+  meta,
   actionLabel,
+  actionTo,
   onAction,
   children,
   className = '',
@@ -38,9 +51,18 @@ export function DashboardSection({
                 {count}
               </span>
             ) : null}
+            {meta ? (
+              <span className="student-dash-count" aria-label={meta}>
+                {meta}
+              </span>
+            ) : null}
           </div>
         </div>
-        {actionLabel && onAction ? (
+        {actionLabel && actionTo ? (
+          <Link to={actionTo} className="btn btn-ghost btn-sm student-dash-section-action">
+            {actionLabel}
+          </Link>
+        ) : actionLabel && onAction ? (
           <button type="button" className="btn btn-ghost btn-sm student-dash-section-action" onClick={onAction}>
             {actionLabel}
           </button>

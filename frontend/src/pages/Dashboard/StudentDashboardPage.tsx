@@ -3,11 +3,9 @@ import type { User } from '../../types';
 import { useStudentDashboardData } from '../../hooks/useStudentDashboardData';
 import { DashboardSkeleton } from '../../components/dashboard/student/DashboardSkeleton';
 import { StudentDashboardHeader } from '../../components/dashboard/student/StudentDashboardHeader';
-import { StudentMemberships } from '../../components/dashboard/student/StudentMemberships';
-import { StudentOverview, countPendingRequests } from '../../components/dashboard/student/StudentOverview';
-import { StudentProjects } from '../../components/dashboard/student/StudentProjects';
-import { StudentRequests } from '../../components/dashboard/student/StudentRequests';
 import { StudentUpcomingEvents } from '../../components/dashboard/student/StudentUpcomingEvents';
+import { StudentRequests } from '../../components/dashboard/student/StudentRequests';
+import { OverviewPanel, ClubsPanel, ProjectsPanel } from '../../components/dashboard/student/insights/panels';
 
 interface StudentDashboardPageProps {
   user: User;
@@ -19,7 +17,6 @@ export function StudentDashboardPage({ user }: StudentDashboardPageProps) {
 
   if (data.loading) return <DashboardSkeleton />;
 
-  const pendingRequests = countPendingRequests(data.joinRequests);
   const hasErrors = Object.values(data.errors).some(Boolean);
 
   return (
@@ -32,15 +29,6 @@ export function StudentDashboardPage({ user }: StudentDashboardPageProps) {
         onNotifications={() => navigate('/notifications')}
       />
 
-      {!data.errors.clubs && !data.errors.projects && !data.errors.requests && !data.errors.notifications ? (
-        <StudentOverview
-          clubCount={data.clubs.length}
-          projectCount={data.projects.length}
-          pendingRequestCount={pendingRequests}
-          unreadNotifications={data.unreadCount}
-        />
-      ) : null}
-
       {hasErrors ? (
         <div className="student-dash-refresh-note" role="status">
           <span>Some dashboard details couldn’t be refreshed.</span>
@@ -50,14 +38,10 @@ export function StudentDashboardPage({ user }: StudentDashboardPageProps) {
 
       <div className="student-dash-layout">
         <div className="student-dash-main">
-          <StudentMemberships clubs={data.clubs} error={data.errors.clubs} />
-          <StudentProjects
-            projects={data.projects}
-            currentUserId={user._id}
-            error={data.errors.projects}
-          />
+          <OverviewPanel data={data} />
+          <ClubsPanel data={data} />
+          <ProjectsPanel data={data} />
         </div>
-
         <aside className="student-dash-aside" aria-label="Campus updates">
           <StudentUpcomingEvents events={data.upcomingEvents} error={data.errors.events} />
           <StudentRequests requests={data.joinRequests} error={data.errors.requests} />
