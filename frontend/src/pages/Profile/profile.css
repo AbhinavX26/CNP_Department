@@ -1,280 +1,426 @@
-/* Hallmark · CNP Department · Profile (Cobalt theme, signed-in app)
-   ─────────────────────────────────────────────────────────────────────────────
-   Profile — the identity plate.
+/* ═══════════════════════════════════════════════════════════════════════════
+   Profile page — Cobalt · redesign pass
+   Mirrors the Clubs directory aesthetic: rich gradient hero identity card,
+   clean 4-column fact readout tiles, white card surfaces with subtle elevation,
+   vibrant cobalt action keys, and harmonized About & Contact sidebar cards.
+   All original .prf-* class names are strictly preserved.
+   ═══════════════════════════════════════════════════════════════════════════ */
 
-   Read mode is one plate: a large monogram, the name, the role as a mark and the
-   academic facts as a glyph grid, with the completeness gauge on its foot. Below
-   it the record is open, ruled, no second box. Edit mode is one sheet with two
-   columns and rules between the sections — never a panel inside a panel.
-
-   This sheet also owns the shared person block (UserDisplay) and the person
-   picker (UserSelect), so a person reads the same in every list.
-
-   Layout only — every colour, space, type size, radius and duration is a token.
-   ───────────────────────────────────────────────────────────────────────────── */
-
+/* ── Local palette (identical to clubs-page.css & student-dash) ─────────── */
 .prf-page {
-  display: grid;
-  gap: var(--space-lg);
-  width: 100%;
+  --prf-ink:    #122549;
+  --prf-muted:  #5f6f8d;
+  --prf-faint:  #8a97b2;
+  --prf-line:   #e4ebf7;
+  --prf-blue:   #0462d3;
+  --prf-wash:   #deecfd;
+  --prf-grad:   linear-gradient(135deg, #0c1a47, #0462d3);
+  --prf-card-bg:#ffffff;
+
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  max-width: 1320px;
+  margin: 0 auto;
+  color: var(--prf-ink);
 }
 
+.prf-page * { box-sizing: border-box; }
+
 /* The primitive page head carries its own bottom margin; the page grid owns rhythm. */
-.prf-page .ui-page-head { margin-bottom: 0; }
-.prf-page .ui-page-actions { margin-left: auto; }
+.prf-page .ui-page-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0;
+  padding-bottom: 4px;
+}
+
+.prf-page .ui-page-head .ui-title {
+  margin: 0;
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--prf-ink);
+}
+
+.prf-page .ui-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: auto;
+}
+
+/* Primary and Ghost button overrides inside .prf-page to match Clubs .cl-btn */
+.prf-page .ui-btn--primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--prf-grad);
+  color: #fff;
+  box-shadow: 0 4px 14px -3px rgba(4, 98, 211, 0.35);
+  transition: transform var(--dur-short) var(--ease-out), filter var(--dur-short);
+}
+
+.prf-page .ui-btn--primary:hover:not(:disabled) {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.prf-page .ui-btn--primary:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.prf-page .ui-btn--ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid var(--prf-line);
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  background: #fff;
+  color: var(--prf-muted);
+  transition: background-color var(--dur-short), color var(--dur-short);
+}
+
+.prf-page .ui-btn--ghost:hover:not(:disabled) {
+  background: #eaf1fc;
+  color: var(--prf-ink);
+}
+
+.prf-page .ui-btn--quiet {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px solid var(--prf-line);
+  border-radius: 9px;
+  background: #eaf1fc;
+  color: var(--prf-blue);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color var(--dur-short), border-color var(--dur-short);
+}
+
+.prf-page .ui-btn--quiet:hover {
+  background: var(--prf-wash);
+  border-color: #b8d4f7;
+}
 
 /* ── Notices ─────────────────────────────────────────────────────────────── */
+.prf-notices { display: grid; gap: 8px; }
 
-.prf-notices { display: grid; gap: var(--space-xs); }
+.prf-notices .ui-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 13.5px;
+  font-weight: 500;
+}
 
 .prf-notices .ui-notice svg {
   flex: none;
-  width: 16px;
-  height: 16px;
-  margin-top: 2px;
-  color: var(--color-warning);
+  width: 18px;
+  height: 18px;
 }
-.prf-notices .ui-notice--error svg { color: var(--color-negative); }
-.prf-notices .ui-notice--positive svg { color: var(--color-positive); }
 
-/* ── Entrance: four regions rise once, 40ms apart ────────────────────────── */
+.prf-notices .ui-notice--error {
+  background: #fff5f5;
+  border: 1px solid #ffd4d4;
+  color: #c53030;
+}
+.prf-notices .ui-notice--error svg { color: #e53e3e; }
 
+.prf-notices .ui-notice--positive {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+.prf-notices .ui-notice--positive svg { color: #16a34a; }
+
+/* ── Entrance animation ─────────────────────────────────────────────────── */
 .prf-enter {
   animation: prf-rise var(--dur-short) var(--ease-out) both;
-  animation-delay: calc(var(--prf-i, 0) * 40ms);
+  animation-delay: calc(var(--prf-i, 0) * 45ms);
 }
 
 @keyframes prf-rise {
-  from { opacity: 0; transform: translateY(6px); }
+  from { opacity: 0; transform: translateY(8px); }
   to { opacity: 1; transform: none; }
 }
 
-/* ── The plate ───────────────────────────────────────────────────────────── */
-
-.prf-plate { overflow: hidden; }
-
-.prf-plate__body {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-lg) var(--space-xl);
-  padding: var(--space-lg);
+/* ── The identity plate (Hero card like Clubs banner) ───────────────────── */
+.prf-plate {
+  position: relative;
+  background: #ffffff;
+  border: 1px solid var(--prf-line);
+  border-radius: 18px;
+  box-shadow: 0 10px 28px -16px rgba(18, 37, 73, 0.22);
+  overflow: hidden;
 }
 
-/* The portrait is a die-cut plate; the photo control lives outside the cut so
-   the clip-path never bites it. It rests quiet and materialises into a key on
-   hover/focus of the portrait, and is a full key on touch. */
-.prf-portrait { position: relative; flex: none; }
+/* Top decorative header gradient stripe matching Clubs banner */
+.prf-plate::before {
+  content: '';
+  display: block;
+  height: 96px;
+  width: 100%;
+  background: linear-gradient(135deg, #0c1a47 0%, #0462d3 60%, #6db2ff 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.prf-plate__body {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 20px 24px;
+  padding: 0 24px 22px;
+  margin-top: -46px; /* pulls the avatar upwards halfway into the banner */
+}
+
+/* The portrait avatar */
+.prf-portrait {
+  position: relative;
+  flex: none;
+}
 
 .prf-portrait__face {
   display: grid;
   place-items: center;
-  width: 112px;
-  height: 112px;
+  width: 104px;
+  height: 104px;
   overflow: hidden;
-  background: var(--color-accent-wash);
-  color: var(--color-accent-deep);
-  clip-path: polygon(0 0, calc(100% - var(--space-lg)) 0, 100% var(--space-lg), 100% 100%, 0 100%);
-  box-shadow: inset 0 0 0 1px var(--color-rule);
+  border-radius: 20px;
+  background: linear-gradient(135deg, #0c1a47, #0462d3);
+  color: #ffffff;
+  box-shadow: 0 0 0 4px #ffffff, 0 6px 20px rgba(12, 26, 71, 0.24);
+  transition: transform var(--dur-short) var(--ease-out);
 }
 
-.prf-portrait__face img { width: 100%; height: 100%; object-fit: cover; }
+.prf-portrait:hover .prf-portrait__face {
+  transform: scale(1.02);
+}
+
+.prf-portrait__face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
 
 .prf-portrait__mono {
-  font: 600 var(--text-3xl)/1 var(--font-display);
-  letter-spacing: var(--tracking-display);
+  font: 700 34px/1 var(--font-display);
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
+  color: #ffffff;
 }
 
 .prf-portrait__action {
   position: absolute;
-  right: calc(var(--space-2xs) * -1);
-  bottom: calc(var(--space-2xs) * -1);
+  right: -6px;
+  bottom: -6px;
   display: grid;
   place-items: center;
-  width: 30px;
-  height: 30px;
-  border: var(--rule-hair) solid transparent;
-  border-radius: var(--radius-pill);
-  background: transparent;
-  color: var(--color-ink-2);
-  box-shadow: none;
-  opacity: 0.55;
-  transform: none;
-  transition:
-    opacity var(--dur-short) var(--ease-in-out),
-    background-color var(--dur-short) var(--ease-in-out),
-    color var(--dur-short) var(--ease-in-out),
-    border-color var(--dur-short) var(--ease-in-out);
-}
-
-/* Quiet at rest so it is discoverable; hovering the portrait turns it into a key. */
-.prf-portrait:hover .prf-portrait__action,
-.prf-portrait:focus-within .prf-portrait__action {
-  opacity: 1;
-  background: var(--color-sheet);
-  border-color: var(--color-rule-2);
-  box-shadow: var(--shadow-card);
+  width: 34px;
+  height: 34px;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  background: #ffffff;
+  color: var(--prf-blue);
+  box-shadow: 0 3px 8px rgba(12, 26, 71, 0.18);
+  cursor: pointer;
+  transition: transform var(--dur-short) var(--ease-in-out), background-color var(--dur-short), color var(--dur-short);
 }
 
 .prf-portrait__action:hover:not(:disabled) {
-  color: var(--color-accent-deep);
-  border-color: var(--color-accent-2);
-}
-.prf-portrait__action:active:not(:disabled) { transform: translateY(1px); }
-.prf-portrait__action:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
-  opacity: 1;
-  background: var(--color-sheet);
-  border-color: var(--color-rule-2);
-  box-shadow: var(--shadow-card);
-}
-.prf-portrait__action:disabled {
-  opacity: 0.35;
-  color: var(--color-muted);
-  background: var(--color-paper-2);
-  border-color: var(--color-rule);
-  cursor: not-allowed;
+  background: var(--prf-blue);
+  color: #ffffff;
+  transform: scale(1.08);
 }
 
-@media (hover: none) {
-  .prf-portrait__action {
-    opacity: 1;
-    background: var(--color-sheet);
-    border-color: var(--color-rule-2);
-    box-shadow: var(--shadow-card);
-  }
+.prf-portrait__action:focus-visible {
+  outline: 2px solid var(--prf-blue);
+  outline-offset: 2px;
+}
+
+.prf-portrait__action:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .prf-plate__id {
   display: grid;
-  gap: var(--space-sm);
+  gap: 6px;
   flex: 1;
   min-width: 0;
+  padding-bottom: 2px;
 }
 
 .prf-plate__line {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-2xs) var(--space-sm);
+  gap: 12px;
   min-width: 0;
 }
 
 .prf-name {
-  font-size: var(--text-2xl);
-  line-height: 1.05;
+  margin: 0;
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--prf-ink);
   overflow-wrap: anywhere;
 }
 
-/* The role as a mark, not a sentence: glyph + word, one plate. */
+/* The role pill: styled identical to Clubs pills */
 .prf-role {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2xs);
-  min-height: 24px;
-  padding: 0 var(--space-xs);
-  border: var(--rule-hair) solid var(--color-rule-2);
-  border-radius: 4px;
-  background: var(--color-paper-2);
-  color: var(--color-ink-2);
-  font: 500 var(--text-xs)/1.2 var(--font-body);
+  gap: 6px;
+  height: 26px;
+  padding: 0 11px;
+  border: 1px solid #c2dbfc;
+  border-radius: 8px;
+  background: #eaf1fc;
+  color: var(--prf-blue);
+  font: 700 12px/1 var(--font-body);
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
   white-space: nowrap;
 }
-.prf-role svg { color: var(--color-accent-deep); }
 
-/* The member-since plate: the record's issue date, right-aligned on the plate. */
+.prf-role svg {
+  color: var(--prf-blue);
+}
+
+/* Member-since widget: styled like a refined Clubs calendar badge */
 .prf-since {
-  display: grid;
-  justify-items: end;
-  gap: var(--space-2xs);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
   flex: none;
   margin-left: auto;
-  padding-left: var(--space-lg);
+  padding: 8px 14px;
+  background: #f8faff;
+  border: 1px solid var(--prf-line);
+  border-radius: 12px;
 }
 
 .prf-since__label {
-  font-size: var(--text-xs);
-  line-height: 1.2;
-  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--prf-faint);
 }
 
 .prf-since__date {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 8px;
 }
 
 .prf-since__year {
-  font: 500 var(--text-md)/1 var(--font-display);
-  letter-spacing: var(--tracking-display);
-  color: var(--color-ink-2);
+  font: 700 15px/1 var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--prf-ink);
   font-variant-numeric: tabular-nums;
 }
 
-/* The field rail: one cell per fact, full-bleed across the plate, hairlines
-   between. It reads as a readout strip rather than a list of labels. */
+/* ── The field facts rail (Readout tiles) ─────────────────────────────────── */
 .prf-facts {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  list-style: none;
   margin: 0;
-  border-top: var(--rule-hair) solid var(--color-rule);
+  padding: 0;
+  border-top: 1px solid var(--prf-line);
+  background: #fafcff;
 }
 
 .prf-fact {
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 14px;
   min-width: 0;
-  padding: var(--space-sm) var(--space-lg);
-  border-left: var(--rule-hair) solid var(--color-rule);
+  padding: 16px 22px;
+  border-left: 1px solid var(--prf-line);
+  transition: background-color var(--dur-short);
 }
+
 .prf-fact:first-child { border-left: 0; }
+.prf-fact:hover { background: #f0f6ff; }
 
 .prf-fact__tile {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 36px;
+  height: 36px;
   flex: none;
-  border-radius: 4px;
-  background: var(--color-paper-2);
-  color: var(--color-ink-2);
-  box-shadow: inset 0 0 0 1px var(--color-rule);
+  border-radius: 10px;
+  background: #eaf1fc;
+  color: var(--prf-blue);
+  box-shadow: 0 1px 3px rgba(12, 26, 71, 0.06);
+}
+
+.prf-fact__tile svg {
+  width: 17px;
+  height: 17px;
 }
 
 .prf-fact__text {
   display: grid;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
 }
 
 .prf-fact__label {
-  font-size: var(--text-xs);
-  line-height: 1.2;
-  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--prf-faint);
 }
 
 .prf-fact__value {
-  font: 500 var(--text-sm)/1.25 var(--font-display);
+  font: 700 14.5px/1.25 var(--font-display);
   letter-spacing: -0.01em;
-  color: var(--color-ink);
+  color: var(--prf-ink);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-/* ── Strength: gauge, scale, and the holes as marks ──────────────────────── */
-
+/* ── Strength strip: gauge, scale, missing holes ─────────────────────────── */
 .prf-strength {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-xs) var(--space-md);
-  padding: var(--space-sm) var(--space-lg);
-  border-top: var(--rule-hair) solid var(--color-rule);
-  background: var(--color-paper-2);
+  gap: 12px 18px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--prf-line);
+  background: #ffffff;
 }
 
 .prf-strength__gauge {
@@ -291,134 +437,157 @@
   align-items: center;
   justify-content: center;
   gap: 1px;
-  font: 600 var(--text-xs)/1 var(--font-display);
-  letter-spacing: var(--tracking-display);
-  color: var(--color-ink);
+  font: 800 13px/1 var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--prf-blue);
   font-variant-numeric: tabular-nums;
 }
 
-.prf-strength__unit { color: var(--color-muted); }
+.prf-strength__unit {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--prf-muted);
+}
 
 .prf-strength__readout {
   display: grid;
-  gap: var(--space-3xs);
+  gap: 2px;
   min-width: 0;
 }
 
 .prf-strength__title {
-  font: 500 var(--text-xs)/1.2 var(--font-body);
-  color: var(--color-muted);
+  font: 700 11px/1.2 var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--prf-faint);
 }
 
 .prf-strength__ratio {
-  font: 600 var(--text-sm)/1 var(--font-display);
-  letter-spacing: var(--tracking-display);
-  color: var(--color-ink);
+  font: 700 14px/1 var(--font-display);
+  letter-spacing: -0.01em;
+  color: var(--prf-ink);
   font-variant-numeric: tabular-nums;
 }
 
 .prf-strength__scale {
-  width: var(--space-3xl);
+  width: 140px;
   --vis-seg-h: 8px;
 }
 
-/* Element-qualified so the shell's `ul { margin: 0 }` reset cannot win. */
 .prf-strength .prf-strength__missing {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-2xs);
+  align-items: center;
+  gap: 8px;
   margin-left: auto;
+  list-style: none;
+  padding: 0;
 }
 
-/* The hole in the record, drawn as a dashed slot. One click focuses that field. */
 .prf-miss {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-3xs);
-  min-height: 26px;
-  padding: 0 var(--space-xs);
-  border: 1px dashed var(--color-rule-2);
-  border-radius: 4px;
-  background: transparent;
-  color: var(--color-ink-2);
-  font: 400 var(--text-xs)/1.2 var(--font-body);
-  transition:
-    background-color var(--dur-short) var(--ease-in-out),
-    border-color var(--dur-short) var(--ease-in-out),
-    color var(--dur-short) var(--ease-in-out);
+  gap: 6px;
+  min-height: 28px;
+  padding: 0 10px;
+  border: 1px dashed #a8c7f2;
+  border-radius: 8px;
+  background: #f8faff;
+  color: var(--prf-blue);
+  font: 600 12px/1 var(--font-body);
+  cursor: pointer;
+  transition: background-color var(--dur-short), border-color var(--dur-short), transform var(--dur-short);
 }
-.prf-miss svg { flex: none; color: var(--color-muted); transition: color var(--dur-short) var(--ease-in-out); }
+
+.prf-miss svg {
+  flex: none;
+  color: var(--prf-blue);
+}
 
 button.prf-miss:hover {
-  border-color: var(--color-accent-2);
-  background: var(--color-accent-wash);
-  color: var(--color-accent-deep);
+  border-color: var(--prf-blue);
+  background: var(--prf-wash);
+  transform: translateY(-1px);
 }
-button.prf-miss:hover svg { color: var(--color-accent-deep); }
-button.prf-miss:active { transform: translateY(1px); }
+
+button.prf-miss:active {
+  transform: translateY(0);
+}
 
 .prf-strength__done {
   display: inline-flex;
   align-items: center;
-  gap: var(--space-2xs);
+  gap: 6px;
   margin-left: auto;
-  color: var(--color-positive);
-  font: 500 var(--text-xs)/1.2 var(--font-display);
+  color: #16a34a;
+  font: 700 13px/1.2 var(--font-display);
   letter-spacing: -0.01em;
+  background: #f0fdf4;
+  padding: 6px 12px;
+  border: 1px solid #bbf7d0;
+  border-radius: 999px;
 }
 
-/* ── The record · open, ruled, no second box ──────────────────────────────── */
+.prf-strength__done svg {
+  color: #16a34a;
+}
 
+/* ── The record (Read Mode: Two white cards like Clubs) ─────────────────── */
 .prf-record {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
-  gap: var(--space-xl);
-  padding-top: var(--space-md);
-  border-top: var(--rule-hair) solid var(--color-rule);
+  grid-template-columns: minmax(0, 1.4fr) 340px;
+  gap: 20px;
+  align-items: start;
 }
 
 .prf-record__side {
-  display: grid;
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
   min-width: 0;
-  padding-left: var(--space-xl);
-  border-left: var(--rule-hair) solid var(--color-rule);
 }
 
+/* Individual content card (Matches .cl-card) */
 .prf-block {
-  display: grid;
-  gap: var(--space-sm);
-  align-content: start;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
   min-width: 0;
+  padding: 22px 24px;
+  background: #ffffff;
+  border: 1px solid var(--prf-line);
+  border-radius: 18px;
+  box-shadow: 0 10px 28px -16px rgba(18, 37, 73, 0.22);
 }
 
 .prf-record__side .prf-block + .prf-block {
-  margin-top: var(--space-lg);
-  padding-top: var(--space-lg);
-  border-top: var(--rule-hair) solid var(--color-rule);
+  margin-top: 0;
+  padding-top: 22px;
+  border-top: 1px solid var(--prf-line);
 }
 
 .prf-block__head {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-md);
-  min-height: 28px;
+  gap: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--prf-line);
 }
 
 .prf-block__title {
-  font: 600 var(--text-sm)/1.3 var(--font-display);
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--color-ink);
+  color: var(--prf-ink);
 }
 
-.prf-block__head .ui-btn { flex: none; }
-
 .prf-bio {
-  max-width: 68ch;
-  font-size: var(--text-sm);
+  margin: 0;
+  font-size: 14.5px;
   line-height: 1.65;
-  color: var(--color-ink-2);
+  color: var(--prf-muted);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
@@ -427,104 +596,143 @@ button.prf-miss:active { transform: translateY(1px); }
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: var(--space-sm);
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px;
+  background: #f8faff;
+  border: 1px dashed #bed4f5;
+  border-radius: 12px;
 }
 
 .prf-block__empty-text {
-  font-size: var(--text-sm);
-  color: var(--color-muted);
+  margin: 0;
+  font-size: 13.5px;
+  color: var(--prf-muted);
 }
 
-/* ── Contact: two actions, copy tucked under hover ───────────────────────── */
-
-.prf-contact { display: grid; }
+/* ── Contact Section ──────────────────────────────────────────────────────── */
+.prf-contact {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
 
 .prf-contact__row {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-xs);
+  gap: 12px;
   min-width: 0;
-  padding: var(--space-xs) 0;
-  border-top: var(--rule-hair) solid var(--color-rule);
+  padding: 12px 0;
+  border-top: 1px solid var(--prf-line);
 }
-.prf-contact__row:first-child { padding-top: 0; border-top: 0; }
+
+.prf-contact__row:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
 
 .prf-contact__mark {
   display: grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
+  width: 32px;
+  height: 32px;
   flex: none;
-  color: var(--color-muted);
+  border-radius: 8px;
+  background: #eaf1fc;
+  color: var(--prf-blue);
+}
+
+.prf-contact__mark svg {
+  width: 16px;
+  height: 16px;
 }
 
 .prf-contact__value {
   flex: 1;
   min-width: 0;
-  font-size: var(--text-sm);
-  color: var(--color-ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--prf-ink);
   overflow-wrap: anywhere;
-  transition: color var(--dur-short) var(--ease-in-out);
+  text-decoration: none;
+  transition: color var(--dur-short);
 }
-.prf-contact__value--empty { color: var(--color-muted); }
-a.prf-contact__value:hover { color: var(--color-accent-deep); }
+
+a.prf-contact__value:hover {
+  color: var(--prf-blue);
+  text-decoration: underline;
+}
+
+.prf-contact__value--empty {
+  color: var(--prf-faint);
+  font-weight: 400;
+}
 
 .ui-icon-btn.prf-copy {
-  width: 28px;
-  height: 28px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
   flex: none;
-  color: var(--color-muted);
-  opacity: 0;
-  transition:
-    opacity var(--dur-short) var(--ease-out),
-    color var(--dur-short) var(--ease-in-out),
-    background-color var(--dur-short) var(--ease-in-out);
-}
-.prf-contact__row:hover .prf-copy,
-.prf-contact__row:focus-within .prf-copy { opacity: 1; }
-.ui-icon-btn.prf-copy:hover:not(:disabled) { color: var(--color-accent-deep); }
-.ui-icon-btn.prf-copy:active:not(:disabled) { transform: translateY(1px); }
-
-@media (hover: none) {
-  .ui-icon-btn.prf-copy { opacity: 1; }
+  border: 0;
+  border-radius: 8px;
+  background: #eaf1fc;
+  color: var(--prf-blue);
+  cursor: pointer;
+  opacity: 0.85;
+  transition: background-color var(--dur-short), opacity var(--dur-short);
 }
 
-/* ── Account: a compact fact strip ───────────────────────────────────────── */
+.prf-contact__row:hover .prf-copy {
+  opacity: 1;
+}
 
+.ui-icon-btn.prf-copy:hover {
+  background: var(--prf-wash);
+}
+
+/* ── Account section ──────────────────────────────────────────────────────── */
 .prf-acct {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(108px, 1fr));
-  gap: var(--space-md);
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin: 0;
 }
 
 .prf-acct__cell {
   display: grid;
-  gap: var(--space-2xs);
-  align-content: start;
-  min-width: 0;
+  gap: 4px;
+  padding: 12px 14px;
+  background: #f8faff;
+  border: 1px solid var(--prf-line);
+  border-radius: 12px;
 }
 
 .prf-acct__label {
-  font-size: var(--text-xs);
-  line-height: 1.2;
-  color: var(--color-muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--prf-faint);
 }
 
 .prf-acct__value {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  min-width: 0;
   margin: 0;
-  font: 500 var(--text-sm)/1.25 var(--font-display);
+  font: 700 14px/1.2 var(--font-display);
   letter-spacing: -0.01em;
-  color: var(--color-ink);
-  overflow-wrap: anywhere;
+  color: var(--prf-ink);
 }
 
-/* ── Edit mode · one sheet, two columns, rules between ───────────────────── */
-
-.prf-sheet { overflow: hidden; }
+/* ── Edit mode (Sheet card with dual columns) ────────────────────────────── */
+.prf-sheet {
+  background: #ffffff;
+  border: 1px solid var(--prf-line);
+  border-radius: 18px;
+  box-shadow: 0 10px 28px -16px rgba(18, 37, 73, 0.22);
+  overflow: hidden;
+}
 
 .prf-sheet__cols {
   display: grid;
@@ -533,85 +741,106 @@ a.prf-contact__value:hover { color: var(--color-accent-deep); }
 
 .prf-sheet__col {
   display: grid;
-  gap: var(--space-lg);
+  gap: 24px;
   align-content: start;
   min-width: 0;
-  padding: var(--space-lg);
+  padding: 24px 26px;
 }
 
-.prf-sheet__col + .prf-sheet__col { border-left: var(--rule-hair) solid var(--color-rule); }
+.prf-sheet__col + .prf-sheet__col {
+  border-left: 1px solid var(--prf-line);
+}
 
 .prf-sheet__section {
   display: grid;
-  gap: var(--space-md);
+  gap: 16px;
 }
 
 .prf-sheet__section + .prf-sheet__section {
-  padding-top: var(--space-lg);
-  border-top: var(--rule-hair) solid var(--color-rule);
+  padding-top: 22px;
+  border-top: 1px solid var(--prf-line);
 }
 
 .prf-sheet__title {
-  font: 600 var(--text-sm)/1.3 var(--font-display);
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
   letter-spacing: -0.01em;
-  color: var(--color-ink);
+  color: var(--prf-ink);
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--prf-line);
 }
 
-.prf-field { min-width: 0; }
+.prf-field {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prf-field .ui-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--prf-ink);
+}
 
 .prf-field__labelrow {
   display: flex;
   align-items: center;
-  gap: var(--space-2xs);
-  margin-bottom: var(--space-2xs);
+  gap: 6px;
 }
-.prf-field__labelrow .ui-label { margin-bottom: 0; }
 
 .prf-field__note {
   display: inline-grid;
   place-items: center;
-  width: var(--space-md);
-  height: var(--space-md);
-  border-radius: 3px;
-  color: var(--color-muted);
+  width: 18px;
+  height: 18px;
+  color: var(--prf-faint);
   cursor: help;
-  transition: color var(--dur-short) var(--ease-in-out);
-}
-.prf-field__note:hover { color: var(--color-ink-2); }
-.prf-field__note:focus-visible {
-  outline: 2px solid var(--color-focus);
-  outline-offset: 2px;
 }
 
-.prf-req { color: var(--color-warning); }
+.prf-req { color: #e53e3e; font-weight: bold; }
 
-/* app.css still skins bare element selectors (input[type="text"] …) at a
-   specificity that outranks a single class. These element-qualified forms keep
-   the primitive's padding inside this area without re-declaring its whole skin. */
-.prf-page .prf-field input.ui-field,
-.prf-page .prf-field textarea.ui-field {
-  padding: 0 var(--space-sm);
+/* Custom styled form fields inside edit sheet */
+.prf-page .ui-field {
+  width: 100%;
+  height: 42px;
+  padding: 0 14px;
+  background: #ffffff;
+  border: 1px solid var(--prf-line);
+  border-radius: 12px;
+  font: inherit;
+  font-size: 14px;
+  color: var(--prf-ink);
+  transition: border-color var(--dur-short), box-shadow var(--dur-short);
 }
-.prf-page .prf-field textarea.ui-field {
-  padding: var(--space-xs) var(--space-sm);
+
+.prf-page .ui-field:focus {
+  border-color: var(--prf-blue);
+  box-shadow: 0 0 0 3px rgba(4, 98, 211, 0.15);
+  outline: none;
+}
+
+.prf-page .ui-field:disabled {
+  background: #f8faff;
+  color: var(--prf-muted);
+  cursor: not-allowed;
+}
+
+.prf-page textarea.ui-field {
+  height: auto;
   min-height: 96px;
+  padding: 10px 14px;
   resize: vertical;
-}
-
-.prf-usel input.ui-field {
-  padding: 0 var(--space-sm);
-}
-.prf-usel__menu .ui-field {
-  padding: 0 var(--space-sm);
 }
 
 .prf-sheet__foot {
   display: none;
   justify-content: flex-end;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-lg);
-  border-top: var(--rule-hair) solid var(--color-rule);
-  background: var(--color-paper-2);
+  gap: 10px;
+  padding: 14px 24px;
+  border-top: 1px solid var(--prf-line);
+  background: #fafcff;
 }
 
 @media (max-width: 780px) {
@@ -699,8 +928,8 @@ a.prf-contact__value:hover { color: var(--color-accent-deep); }
 }
 .ui-field.prf-usel__trigger--clearable { padding-right: calc(var(--space-xl) + var(--space-lg)); }
 .ui-field.prf-usel__trigger[aria-expanded="true"] {
-  border-color: var(--color-accent);
-  box-shadow: 0 0 0 3px var(--color-accent-wash);
+  border-color: var(--prf-blue);
+  box-shadow: 0 0 0 3px rgba(4, 98, 211, 0.15);
 }
 
 .prf-usel__text {
@@ -820,8 +1049,8 @@ a.prf-contact__value:hover { color: var(--color-accent-deep); }
 .prf-usel__option > .ui-avatar { margin-top: 1px; }
 .prf-usel__option + .prf-usel__option { margin-top: 1px; }
 .prf-usel__option:hover,
-.prf-usel__option[data-highlighted="true"] { background: var(--color-paper-2); }
-.prf-usel__option[data-selected="true"] { background: var(--color-accent-wash); }
+.prf-usel__option[data-highlighted="true"] { background: #f0f6ff; }
+.prf-usel__option[data-selected="true"] { background: #deecfd; }
 .prf-usel__option[data-disabled="true"] { cursor: not-allowed; opacity: 0.62; }
 .prf-usel__option[data-disabled="true"]:hover { background: transparent; }
 
@@ -836,7 +1065,7 @@ a.prf-contact__value:hover { color: var(--color-accent-deep); }
   flex: none;
   width: 16px;
   height: 16px;
-  color: var(--color-accent-deep);
+  color: var(--prf-blue);
 }
 
 .prf-usel__skeleton { display: grid; gap: var(--space-xs); padding: var(--space-xs); }
@@ -880,60 +1109,61 @@ a.prf-contact__value:hover { color: var(--color-accent-deep); }
   .prf-sheet__cols { grid-template-columns: minmax(0, 1fr); }
   .prf-sheet__col + .prf-sheet__col {
     border-left: 0;
-    border-top: var(--rule-hair) solid var(--color-rule);
+    border-top: 1px solid var(--prf-line);
   }
 }
 
 @media (max-width: 1024px) {
   .prf-record {
     grid-template-columns: minmax(0, 1fr);
-    gap: var(--space-lg);
+    gap: 20px;
   }
-  .prf-record__side {
-    padding-left: 0;
+}
+
+@media (max-width: 768px) {
+  .prf-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .prf-fact:nth-child(2n + 1) {
     border-left: 0;
-    padding-top: var(--space-lg);
-    border-top: var(--rule-hair) solid var(--color-rule);
   }
-}
+  .prf-fact:nth-child(n + 3) {
+    border-top: 1px solid var(--prf-line);
+  }
 
-@media (max-width: 720px) {
-  .prf-plate__body { gap: var(--space-md); padding: var(--space-md); }
+  .prf-plate__body {
+    padding: 0 18px 18px;
+    margin-top: -36px;
+  }
   .prf-portrait__face {
-    width: var(--space-3xl);
-    height: var(--space-3xl);
-    clip-path: polygon(0 0, calc(100% - var(--space-md)) 0, 100% var(--space-md), 100% 100%, 0 100%);
+    width: 84px;
+    height: 84px;
   }
-  .prf-portrait__mono { font-size: var(--text-2xl); }
-  .prf-name { font-size: var(--text-xl); }
-
-  .prf-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .prf-fact { padding: var(--space-sm) var(--space-md); }
-  .prf-fact:nth-child(odd) { border-left: 0; }
-  .prf-fact:nth-child(n + 3) { border-top: var(--rule-hair) solid var(--color-rule); }
-
-  .prf-strength { padding: var(--space-sm) var(--space-md); }
-  .prf-strength .prf-strength__missing { margin-left: 0; }
-
-  .prf-since { justify-items: start; margin-left: 0; padding-left: 0; }
-
-  /* While the sheet is open on a narrow screen the plate keeps only what the
-     fields are previewing; the rails come back on save. */
-  .prf-plate--editing .prf-facts,
-  .prf-plate--editing .prf-since { display: none; }
-
-  .prf-usel__head { gap: var(--space-2xs); }
+  .prf-portrait__mono {
+    font-size: 26px;
+  }
+  .prf-name {
+    font-size: 22px;
+  }
+  .prf-since {
+    margin-left: 0;
+    align-items: flex-start;
+  }
 }
 
-@media (max-width: 560px) {
-  .prf-plate__body { flex-direction: column; align-items: flex-start; }
-
-  .prf-facts { grid-template-columns: minmax(0, 1fr); }
-  .prf-fact { border-left: 0; }
-  .prf-fact + .prf-fact { border-top: var(--rule-hair) solid var(--color-rule); }
-
-  /* The ratio already carries the value on a narrow plate; the tick scale goes. */
-  .prf-strength .prf-strength__scale { display: none; }
+@media (max-width: 540px) {
+  .prf-facts {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .prf-fact {
+    border-left: 0;
+  }
+  .prf-fact + .prf-fact {
+    border-top: 1px solid var(--prf-line);
+  }
+  .prf-strength .prf-strength__scale {
+    display: none;
+  }
 }
 
 /* ── Motion floor ────────────────────────────────────────────────────────── */

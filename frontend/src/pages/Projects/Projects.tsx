@@ -1,12 +1,10 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { CSSProperties } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { ProjectForm } from '../../components/projects/ProjectForm';
 import { usePageLoading } from '../../context/LoadingContext';
-import { AvatarStack, Counter } from '../../components/ui/vis';
-import './projects.css';
+import './project-list.css';
 
 /* ── Shapes the API returns ───────────────────────────────────────────────── */
 
@@ -48,39 +46,15 @@ interface JoinRequestRecord {
 
 type StatusKey = 'active' | 'completed' | 'inactive';
 
+const STATUS_ORDER: StatusKey[] = ['active', 'completed', 'inactive'];
+
 const STATUS_LABEL: Record<StatusKey, string> = {
   active: 'Active',
   completed: 'Completed',
   inactive: 'Inactive',
 };
 
-const STATUS_NOTE: Record<StatusKey, string> = {
-  active: 'Work in progress',
-  completed: 'Delivered and closed',
-  inactive: 'Paused for now',
-};
-
-/* What the signed-in person is to a project. Students vary row to row; a mentor
-   or an admin holds one standing across the whole page. */
-type RoleKey = 'lead' | 'member' | 'pending' | 'mentor' | 'admin';
-
-const ROLE_LABEL: Record<RoleKey, string> = {
-  lead: 'Team leader',
-  member: 'Member',
-  pending: 'Requested',
-  mentor: 'Mentor',
-  admin: 'Admin',
-};
-
-const ROLE_NOTE: Record<RoleKey, string> = {
-  lead: 'You lead this project',
-  member: 'You are on this team',
-  pending: 'Your join request is pending',
-  mentor: 'You mentor this project',
-  admin: 'You administer this project',
-};
-
-const TABS: ('all' | StatusKey)[] = ['all', 'active', 'completed', 'inactive'];
+type RelationKey = 'lead' | 'member' | 'pending';
 
 function statusKey(status?: string): StatusKey {
   return status === 'completed' || status === 'inactive' ? status : 'active';
@@ -102,91 +76,24 @@ function monogram(name?: string): string {
   return (words[0][0] + words[1][0]).toUpperCase();
 }
 
-/* ── Marks ────────────────────────────────────────────────────────────────── */
+const icon = (path: ReactNode) => () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{path}</svg>
+);
+const SearchIcon = icon(<><circle cx="10.5" cy="10.5" r="6.5" /><path d="m15.5 15.5 4.5 4.5" /></>);
+const FolderIcon = icon(<path d="M4 7.5A1.5 1.5 0 0 1 5.5 6h4l1.6 2H18.5A1.5 1.5 0 0 1 20 9.5v7a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 16.5v-9Z" />);
+const PulseIcon = icon(<path d="M3 12h4l2.5-6 4 12 2.5-6H21" />);
+const CheckIcon = icon(<path d="m5 12.5 4.5 4.5L19 7" />);
+const PeopleIcon = icon(<path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35M15.5 5.2a3 3 0 0 1 0 5.6" />);
 
-function SearchMark() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="11" cy="11" r="6.5" stroke="currentColor" strokeWidth="1.7" />
-      <path d="m16 16 4 4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-    </svg>
+/** A person's photo, or their initial on the brand gradient. */
+function Face({ person, size = 28 }: { person?: ProjectPerson | null; size?: number }) {
+  const style = { width: size, height: size, fontSize: Math.round(size * 0.4) };
+  return person?.profileImage ? (
+    <img className="pl-face" src={person.profileImage} alt="" style={style} />
+  ) : (
+    <span className="pl-face" style={style} aria-hidden="true">{initialOf(person?.name)}</span>
   );
 }
-
-/* The lead glyph: a crown on a 12px grid, so it stays crisp at 11–14px —
-   "this person leads" reads the same on a chip, a roster and a hero. */
-function LeadMark({ size = 12 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 12 12" width={size} height={size} fill="none" aria-hidden="true" focusable="false">
-      <path
-        d="M2.6 8.3 2 3.3l2.4 1.8L6 2.6l1.6 2.5L10 3.3l-.6 5Z"
-        stroke="currentColor"
-        strokeWidth="1.3"
-        strokeLinejoin="round"
-      />
-      <path d="M2.6 10.2h6.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/* Waiting on a decision: a dashed ring, the one open mark in the set. */
-function PendingMark({ size = 12 }: { size?: number }) {
-  return (
-    <svg viewBox="0 0 12 12" width={size} height={size} fill="none" aria-hidden="true" focusable="false">
-      <circle cx="6" cy="6" r="4.3" stroke="currentColor" strokeWidth="1.2" strokeDasharray="2 1.8" />
-      <circle cx="6" cy="6" r="1.15" fill="currentColor" />
-    </svg>
-  );
-}
-
-function FolderMark() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path
-        d="M4 7.5A1.5 1.5 0 0 1 5.5 6h4l1.6 2H18.5A1.5 1.5 0 0 1 20 9.5v7A1.5 1.5 0 0 1 18.5 18h-13A1.5 1.5 0 0 1 4 16.5v-9Z"
-        stroke="currentColor"
-        strokeWidth="1.7"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function PulseMark() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="M3.5 12h4l2.5-6 4 12 2.5-6h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function CheckMark() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <path d="m5.5 12.5 4.2 4.2 8.8-9.4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
-function UsersMark() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-      <circle cx="9.5" cy="9" r="3" stroke="currentColor" strokeWidth="1.7" />
-      <path d="M3.8 18.5a5.7 5.7 0 0 1 11.4 0M16 6.4a3 3 0 0 1 0 5.2M17.5 14.2a5.7 5.7 0 0 1 2.7 4.3" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/** The monogram plate on a row, with the status as a corner cut. */
-function Plate({ project, status }: { project: ProjectRecord; status: StatusKey }) {
-  return (
-    <span className={`prj-plate is-${status}`} aria-hidden="true">
-      {project.image ? <img src={project.image} alt="" /> : monogram(project.name)}
-    </span>
-  );
-}
-
-/* ── Page ─────────────────────────────────────────────────────────────────── */
 
 export default function Projects() {
   const [projects, setProjects] = useState<ProjectRecord[]>([]);
@@ -304,50 +211,28 @@ export default function Projects() {
     return counts;
   }, [decorated]);
 
-  /* The tabs count what the search left standing, so a tab never promises rows
-     the list will not show. */
-  const tabCounts = useMemo(() => {
-    const counts: Record<'all' | StatusKey, number> = {
-      all: searched.length,
-      active: 0,
-      completed: 0,
-      inactive: 0,
-    };
-    searched.forEach(({ status }) => {
-      counts[status] += 1;
-    });
-    return counts;
-  }, [searched]);
+  const visibleStatuses = STATUS_ORDER.filter((status) => statusCounts[status] > 0);
 
-  /* The caller's standing on one project. Students vary row to row; a mentor's
-     list is already their own and an admin runs everything on the board. */
-  const roleOf = (item: (typeof decorated)[number]): RoleKey | null => {
-    if (!user) return null;
-    if (user.role === 'project_admin') return 'admin';
-    if (user.role === 'faculty_mentor') return 'mentor';
-    if (user.role !== 'student') return null;
-    if (item.project.myRelation === 'leading' || (item.leader?._id && item.leader._id === user._id)) {
-      return 'lead';
-    }
-    if (item.project.myRelation === 'member' || item.members.some((member) => member._id === user._id)) {
-      return 'member';
-    }
-    return item.pending ? 'pending' : null;
+  /* Only the student's standing varies row to row; the admin and mentor views
+     already list a single relation for the whole page. */
+  const relationOf = (item: (typeof decorated)[number]): RelationKey | null => {
+    if (!user || user.role !== 'student') return null;
+    if (item.leader?._id && item.leader._id === user._id) return 'lead';
+    if (item.members.some((member) => member._id === user._id)) return 'member';
+    if (item.pending) return 'pending';
+    return null;
   };
 
-  /* A student's own projects lead the list; the sort is stable, so everything
-     else keeps the order the API gave it. */
-  const listed = (() => {
-    const rows = searched.filter((item) => statusFilter === 'all' || item.status === statusFilter);
-    if (user?.role !== 'student') return rows;
-    const rank = (item: (typeof decorated)[number]) => {
-      const role = roleOf(item);
-      return role === 'lead' ? 0 : role === 'member' ? 1 : role === 'pending' ? 2 : 3;
-    };
-    return [...rows].sort((a, b) => rank(a) - rank(b));
-  })();
-
-  const ledProjects = useMemo(() => decorated.filter((item) => item.leader), [decorated]);
+  const leaders = useMemo(() => {
+    const seen = new Set<string>();
+    return decorated
+      .map(({ project, leader }) => ({ project, leader }))
+      .filter(({ leader }) => {
+        if (!leader?._id || seen.has(leader._id)) return false;
+        seen.add(leader._id);
+        return true;
+      });
+  }, [decorated]);
 
   const studentPeople = useMemo(() => {
     const seen = new Map<string, ProjectPerson>();
@@ -361,125 +246,109 @@ export default function Projects() {
 
   const uniqueStudents = studentPeople.length;
 
-  /* Seats over projects: how many people a typical team holds. The server's
-     `memberCount` wins over the fetched roster, so a capped roster cannot
-     under-report a team. */
-  const seats = decorated.reduce(
-    (sum, item) => sum + (item.project.memberCount ?? item.members.length),
-    0,
-  );
-  const perProject = projects.length ? Math.round(seats / projects.length) : 0;
-
-  const tiles = [
-    {
-      key: 'all',
-      tone: 'deep',
-      label: 'Projects',
-      value: projects.length,
-      note: `${ledProjects.length} with a leader`,
-      mark: <FolderMark />,
-    },
-    {
-      key: 'active',
-      tone: 'bright',
-      label: 'Active',
-      value: statusCounts.active,
-      note: STATUS_NOTE.active,
-      mark: <PulseMark />,
-    },
-    {
-      key: 'completed',
-      tone: 'soft',
-      label: 'Completed',
-      value: statusCounts.completed,
-      note: statusCounts.inactive ? `${statusCounts.inactive} paused` : 'None paused',
-      mark: <CheckMark />,
-    },
-    {
-      key: 'students',
-      tone: 'wash',
-      label: 'Students on teams',
-      value: uniqueStudents,
-      note: uniqueStudents ? `About ${perProject} per project` : 'No teams yet',
-      mark: <UsersMark />,
-    },
-  ];
-
-  /* What the portfolio means to the person reading it: counts over the page,
-     never a sentence. `myRelation` comes from the API, so the student counts do
-     not depend on whether the roster call happened to succeed. */
-  const gauges = (() => {
-    if (!user || projects.length === 0) return [] as { key: string; label: string; value: number }[];
-
+  const gauges = useMemo(() => {
+    const none = [] as { key: string; label: string; value: number; total?: number }[];
+    if (!user || projects.length === 0) return none;
+    const leading = decorated.filter((item) => item.project.myRelation === 'leading' || item.leader?._id === user._id).length;
+    const onTeam = decorated.filter((item) => item.project.myRelation === 'member' || item.members.some((member) => member._id === user._id)).length;
     if (user.role === 'student') {
-      const leading = decorated.filter((item) => roleOf(item) === 'lead').length;
-      const onTeam = decorated.filter((item) => roleOf(item) === 'member').length;
       return [
-        { key: 'lead', label: 'Leading', value: leading },
-        { key: 'team', label: 'On a team', value: onTeam },
-        { key: 'req', label: 'Requesting', value: pendingProjectIds.length },
+        { key: 'lead', label: 'Leading', value: leading, total: projects.length },
+        { key: 'team', label: 'On a team', value: onTeam, total: projects.length },
+        { key: 'req', label: 'Requesting', value: pendingProjectIds.length, total: projects.length },
       ];
     }
-
-    const scope =
-      user.role === 'project_admin'
-        ? 'Administering'
-        : user.role === 'faculty_mentor'
-          ? 'Mentoring'
-          : 'On the board';
-    return [
-      { key: 'scope', label: scope, value: projects.length },
-      { key: 'lead', label: 'With a leader', value: ledProjects.length },
-      { key: 'active', label: 'Active now', value: statusCounts.active },
-    ];
-  })();
+    if (user.role === 'project_admin') {
+      return [
+        { key: 'admin', label: 'Administering', value: projects.length, total: projects.length },
+        { key: 'led', label: 'With a leader', value: leaders.length, total: projects.length },
+      ];
+    }
+    if (user.role === 'faculty_mentor') {
+      return [
+        { key: 'mentor', label: 'Mentoring', value: projects.length, total: projects.length },
+        { key: 'led', label: 'With a leader', value: leaders.length, total: projects.length },
+      ];
+    }
+    return [{ key: 'led', label: 'With a leader', value: leaders.length, total: projects.length }];
+  }, [user, decorated, projects.length, leaders.length, pendingProjectIds.length]);
 
   const standingTitle = user?.role === 'student' ? 'Your standing' : 'Portfolio';
 
-  const directorySub =
-    user?.role === 'student'
-      ? 'Your projects are listed first'
-      : user?.role === 'faculty_mentor'
-        ? 'The projects you mentor'
-        : 'Every GUIITAR project on the board';
+  const myRoleLabel = (item: (typeof decorated)[number]): { kind: 'core' | 'member' | 'pending' | 'staff'; label: string } | null => {
+    if (user?.role === 'project_admin') return { kind: 'staff', label: 'Admin' };
+    if (user?.role === 'faculty_mentor') return { kind: 'staff', label: 'Mentor' };
+    const relation = relationOf(item);
+    if (relation === 'lead') return { kind: 'core', label: 'Team leader' };
+    if (relation === 'member') return { kind: 'member', label: 'Member' };
+    if (relation === 'pending') return { kind: 'pending', label: 'Request pending' };
+    return null;
+  };
+
+  // Mine first (students), then active before completed before inactive, then by name.
+  const ordered = useMemo(
+    () =>
+      [...searched]
+        .filter((item) => statusFilter === 'all' || item.status === statusFilter)
+        .sort((a, b) => {
+          const mineA = Number(!!relationOf(a));
+          const mineB = Number(!!relationOf(b));
+          return (
+            mineB - mineA ||
+            STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) ||
+            a.project.name.localeCompare(b.project.name)
+          );
+        }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [searched, statusFilter, user],
+  );
 
   const clearFilters = () => {
     setQuery('');
     setStatusFilter('all');
   };
 
-  const TAB_LABEL: Record<'all' | StatusKey, string> = { all: 'All', ...STATUS_LABEL };
+  const filtersActive = query.trim().length > 0 || statusFilter !== 'all';
+  const totalOnTeams = uniqueStudents;
+  const avgTeam = projects.length
+    ? Math.round(decorated.reduce((n, item) => n + (item.project.memberCount ?? item.members.length), 0) / projects.length)
+    : 0;
+
+  const tiles = [
+    { label: projects.length === 1 ? 'Project' : 'Projects', value: projects.length, note: `${leaders.length} with a leader`, tone: 'deep', Icon: FolderIcon },
+    { label: 'Active', value: statusCounts.active, note: statusCounts.active ? 'Work in progress' : 'None running', tone: 'blue', Icon: PulseIcon },
+    { label: 'Completed', value: statusCounts.completed, note: statusCounts.inactive ? `${statusCounts.inactive} paused` : 'Delivered and closed', tone: 'sky', Icon: CheckIcon },
+    { label: 'Students on teams', value: totalOnTeams, note: projects.length ? `About ${avgTeam} per project` : 'No teams yet', tone: 'mist', Icon: PeopleIcon },
+  ];
+
+  const filters: { key: 'all' | StatusKey; label: string; count: number }[] = [
+    { key: 'all', label: 'All', count: projects.length },
+    ...visibleStatuses.map((status) => ({ key: status, label: STATUS_LABEL[status], count: statusCounts[status] })),
+  ];
+
+  const maxScale = (row: { total?: number; value: number }) => (row.total ? Math.round((row.value / row.total) * 100) : 0);
 
   return (
-    <div className="prj-page">
-      <header className="ui-page-head prj-head prj-rise" style={{ '--i': 0 } as CSSProperties}>
-        <div className="ui-page-head__text">
-          <h1 className="ui-title">Projects</h1>
-          <p className="ui-sub prj-head__intro">
-            Explore GUIITAR projects and see how each team is progressing.
-          </p>
+    <div className="pl">
+      <header className="pl-head">
+        <div>
+          <h1 className="pl-title">Projects</h1>
+          <p className="pl-sub">Explore GUIITAR projects and see how each team is progressing.</p>
         </div>
-
-        <div className="ui-page-actions prj-head__actions">
-          <div className="ui-search prj-search">
-            <SearchMark />
+        <div className="pl-tools">
+          <label className="pl-search">
+            <SearchIcon />
             <input
-              className="ui-field"
               type="search"
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               placeholder="Search projects or leaders"
-              aria-label="Search projects or leaders"
+              aria-label="Search projects"
             />
-          </div>
+          </label>
           {user?.role === 'project_admin' && (
-            <button
-              ref={newProjectTrigger}
-              type="button"
-              className="ui-btn ui-btn--primary"
-              onClick={() => setShowForm(true)}
-            >
-              New project
+            <button ref={newProjectTrigger} type="button" className="pl-btn" onClick={() => setShowForm(true)}>
+              + New project
             </button>
           )}
         </div>
@@ -496,290 +365,155 @@ export default function Projects() {
       )}
 
       {error && (
-        <div className="ui-notice ui-notice--error prj-notice" role="alert">
-          <span>{error}</span>
-          <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={loadProjects}>
-            Retry
-          </button>
+        <div className="pl-state pl-state--error" role="alert">
+          <p className="pl-state-title">The projects didn&rsquo;t load</p>
+          <p className="pl-state-text">{error}</p>
+          <button type="button" className="pl-btn pl-btn--quiet" onClick={loadProjects}>Try again</button>
         </div>
       )}
 
       {loading ? (
-        <div aria-hidden="true">
-          <div className="prj-tiles">
-            {[0, 1, 2, 3].map((cell) => (
-              <span className="ui-skel prj-tile-skel" key={cell} />
-            ))}
-          </div>
-          <div className="prj-layout">
-            <div className="ui-panel prj-dir">
-              <div className="prj-dir__head">
-                <span className="ui-skel" style={{ width: '9rem', height: 14 }} />
-              </div>
-              {[0, 1, 2, 3].map((row) => (
-                <div className="prj-skel-row" key={row}>
-                  <span className="ui-skel prj-skel-row__mark" />
-                  <span className="ui-skel prj-skel-row__main" />
-                  <span className="ui-skel prj-skel-row__person" />
-                </div>
-              ))}
-            </div>
-            <aside className="prj-aside">
-              <div className="ui-panel">
-                <div className="ui-panel__body ui-stack">
-                  {[0, 1, 2].map((row) => (
-                    <span className="ui-skel" key={row} style={{ width: '100%', height: 16 }} />
-                  ))}
-                </div>
-              </div>
-            </aside>
-          </div>
+        <div className="pl-loading" aria-busy="true" aria-label="Loading projects">
+          <div className="pl-tiles">{[0, 1, 2, 3].map((i) => <span key={i} className="pl-skel pl-skel--tile" />)}</div>
+          <span className="pl-skel pl-skel--table" />
         </div>
       ) : error && projects.length === 0 ? null : projects.length === 0 ? (
-        <div className="ui-empty prj-empty">
-          <span className="ui-empty__mark">
-            <FolderMark />
-          </span>
-          <p className="ui-empty__title">No projects yet</p>
-          <p className="ui-empty__text">
+        <div className="pl-state">
+          <span className="pl-state-icon"><FolderIcon /></span>
+          <p className="pl-state-title">No projects yet</p>
+          <p className="pl-state-text">
             {user?.role === 'project_admin'
               ? 'Create the first GUIITAR project to give a team a name and a board.'
               : 'Projects appear here once the council publishes them.'}
           </p>
           {user?.role === 'project_admin' && (
-            <button type="button" className="ui-btn ui-btn--primary ui-btn--sm" onClick={() => setShowForm(true)}>
-              New project
-            </button>
+            <button type="button" className="pl-btn" onClick={() => setShowForm(true)}>+ New project</button>
           )}
         </div>
       ) : (
         <>
-          {/* The portfolio in four numbers: real counts, never a sentence. */}
-          <ul className="prj-tiles" aria-label="Projects at a glance">
-            {tiles.map((tile, index) => (
-              <li
-                key={tile.key}
-                className={`prj-tile is-${tile.tone} prj-rise`}
-                style={{ '--i': index + 1 } as CSSProperties}
-              >
-                <span className="prj-tile__mark">{tile.mark}</span>
-                <span className="prj-tile__value">
-                  <Counter value={tile.value} />
-                </span>
-                <span className="prj-tile__label">{tile.label}</span>
-                <span className="prj-tile__note">{tile.note}</span>
-              </li>
+          <section className="pl-tiles" aria-label="Projects at a glance">
+            {tiles.map(({ label, value, note, tone, Icon }) => (
+              <div key={label} className={`pl-tile pl-tile--${tone}`}>
+                <span className="pl-tile-icon"><Icon /></span>
+                <span className="pl-tile-value">{value}</span>
+                <span className="pl-tile-label">{label}</span>
+                <span className="pl-tile-note">{note}</span>
+              </div>
             ))}
-          </ul>
+          </section>
 
-          <div className="prj-layout">
-            <section
-              className="ui-panel prj-dir prj-rise"
-              aria-labelledby="prj-dir-title"
-              style={{ '--i': 5 } as CSSProperties}
-            >
-              <header className="prj-dir__head">
-                <div className="prj-dir__titles">
-                  <h2 className="prj-dir__title" id="prj-dir-title">
-                    Project directory
-                  </h2>
-                  <p className="prj-dir__sub">{directorySub}</p>
+          <div className="pl-layout">
+            <section className="pl-card" aria-label="Project directory">
+              <header className="pl-card-head">
+                <div>
+                  <h2 className="pl-card-title">Project directory</h2>
+                  <p className="pl-card-sub">
+                    {filtersActive ? `${ordered.length} of ${projects.length} projects match` : user?.role === 'student' ? 'Your projects are listed first' : 'Active projects first'}
+                  </p>
                 </div>
-
-                <div className="prj-tabs" role="group" aria-label="Filter by status">
-                  {TABS.map((tab) => (
-                    <button
-                      key={tab}
-                      type="button"
-                      className="prj-tab"
-                      aria-pressed={statusFilter === tab}
-                      title={tab === 'all' ? 'Every project' : STATUS_NOTE[tab]}
-                      onClick={() => setStatusFilter(tab)}
-                    >
-                      {TAB_LABEL[tab]}
-                      <span className="prj-tab__count">{tabCounts[tab]}</span>
+                <div className="pl-seg" role="group" aria-label="Filter by status">
+                  {filters.map((f) => (
+                    <button key={f.key} type="button" aria-pressed={statusFilter === f.key} onClick={() => setStatusFilter(f.key)}>
+                      {f.label}<span>{f.count}</span>
                     </button>
                   ))}
                 </div>
               </header>
 
-              <p className="ui-visually-hidden" aria-live="polite">
-                {listed.length} of {projects.length} projects
-              </p>
+              <p className="ui-visually-hidden" aria-live="polite">{ordered.length} of {projects.length} projects</p>
 
-              {listed.length === 0 ? (
-                <div className="ui-empty prj-empty prj-empty--board">
-                  <span className="ui-empty__mark">
-                    <FolderMark />
-                  </span>
-                  <p className="ui-empty__title">No projects match this view</p>
-                  <p className="ui-empty__text">
-                    {query.trim() ? `Nothing matches “${query.trim()}”.` : 'This status has no projects.'}
-                  </p>
-                  <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={clearFilters}>
-                    Clear filters
-                  </button>
+              {ordered.length === 0 ? (
+                <div className="pl-empty">
+                  <p className="pl-state-title">No projects match this view</p>
+                  <p className="pl-state-text">{query.trim() ? `Nothing matches “${query.trim()}”.` : 'This status has no projects.'}</p>
+                  <button type="button" className="pl-btn pl-btn--quiet" onClick={clearFilters}>Clear filters</button>
                 </div>
               ) : (
-                <>
-                  <div className="prj-cols" aria-hidden="true">
-                    <span>Project</span>
-                    <span>Team leader</span>
-                    <span>Team</span>
-                    <span>Status</span>
-                    <span>Your role</span>
-                  </div>
-                  <ul className="prj-rows">
-                    {listed.map((item) => {
-                      const { project, leader, members, status } = item;
-                      const role = roleOf(item);
-                      const mine = role === 'lead' || role === 'member' || role === 'pending';
-                      const teamSize = project.memberCount ?? members.length;
-                      const people = members.map((member) => ({
-                        name: member.name || 'Unnamed student',
-                        image: member.profileImage || undefined,
-                      }));
-
-                      return (
-                        <li key={project._id}>
-                          <Link
-                            className={`prj-row is-${status}${mine ? ' is-mine' : ''}`}
-                            to={`/projects/${project._id}`}
-                          >
-                            <span className="prj-cell prj-cell--project">
-                              <Plate project={project} status={status} />
-                              <span className="prj-row__main">
-                                <span className="prj-row__name">{project.name}</span>
-                                <span className="prj-row__line" title={project.description || undefined}>
-                                  {project.description || 'No description yet.'}
-                                </span>
-                              </span>
+                <ul className="pl-rows">
+                  <li className="pl-row pl-row--head" aria-hidden="true">
+                    <span>Project</span><span>Team leader</span><span>Team</span><span>Status</span><span>Your role</span>
+                  </li>
+                  {ordered.map((item) => {
+                    const { project, leader, members, status } = item;
+                    const role = myRoleLabel(item);
+                    const size = project.memberCount ?? members.length;
+                    return (
+                      <li className={`pl-row${role && role.kind !== 'staff' ? ' is-mine' : ''}`} key={project._id}>
+                        <span className="pl-cell pl-project">
+                          <span className={`pl-plate is-${status}`} aria-hidden="true">
+                            {project.image ? <img src={project.image} alt="" /> : monogram(project.name)}
+                          </span>
+                          <span className="pl-project-text">
+                            <Link className="pl-open" to={`/projects/${project._id}`}>{project.name}</Link>
+                            <span className="pl-desc">{project.description?.trim() || 'No description yet.'}</span>
+                          </span>
+                        </span>
+                        <span className="pl-cell pl-leader" data-label="Team leader">
+                          {leader?.name ? (
+                            <>
+                              <Face person={leader} size={26} />
+                              <strong>{leader.name}</strong>
+                            </>
+                          ) : <span className="pl-muted">Not assigned</span>}
+                        </span>
+                        <span className="pl-cell pl-team" data-label="Team">
+                          {members.length > 0 ? (
+                            <span className="pl-stack" aria-hidden="true">
+                              {members.slice(0, 3).map((m, i) => <Face key={m._id || i} person={m} size={24} />)}
                             </span>
-
-                            <span className="prj-cell">
-                              <span className="prj-cell__label">Team leader</span>
-                              <span className={`prj-lead${leader ? '' : ' is-empty'}`}>
-                                <span className="prj-lead__plate" aria-hidden="true">
-                                  {leader?.profileImage ? (
-                                    <img src={leader.profileImage} alt="" />
-                                  ) : leader ? (
-                                    initialOf(leader.name)
-                                  ) : (
-                                    '?'
-                                  )}
-                                </span>
-                                <span className="prj-lead__name">{leader?.name || 'Not assigned'}</span>
-                              </span>
-                            </span>
-
-                            <span className="prj-cell">
-                              <span className="prj-cell__label">Team</span>
-                              <span className="prj-team">
-                                {people.length ? (
-                                  <AvatarStack people={people} max={3} size="sm" />
-                                ) : (
-                                  <span className="prj-av-empty" role="img" aria-label="No team members yet" />
-                                )}
-                                <span className="prj-team__count">
-                                  <strong>{teamSize}</strong> {teamSize === 1 ? 'member' : 'members'}
-                                </span>
-                              </span>
-                            </span>
-
-                            <span className="prj-cell">
-                              <span className="prj-cell__label">Status</span>
-                              <span className={`prj-status is-${status}`}>{STATUS_LABEL[status]}</span>
-                            </span>
-
-                            <span className="prj-cell">
-                              <span className="prj-cell__label">Your role</span>
-                              {role ? (
-                                <span className={`prj-role is-${role}`} title={ROLE_NOTE[role]}>
-                                  {role === 'lead' ? <LeadMark size={11} /> : null}
-                                  {role === 'pending' ? <PendingMark size={11} /> : null}
-                                  {ROLE_LABEL[role]}
-                                </span>
-                              ) : (
-                                <span className="prj-role__none" aria-label="No role on this project">
-                                  —
-                                </span>
-                              )}
-                            </span>
-                          </Link>
-                        </li>
-                      );
-                    })}
-                  </ul>
-                </>
+                          ) : null}
+                          <b>{size}</b>
+                          <span className="pl-muted">{size === 1 ? 'member' : 'members'}</span>
+                        </span>
+                        <span className="pl-cell" data-label="Status">
+                          <span className={`pl-pill pl-pill--${status}`}>{STATUS_LABEL[status]}</span>
+                        </span>
+                        <span className="pl-cell" data-label="Your role">
+                          {role ? <span className={`pl-pill pl-pill--${role.kind}`}>{role.label}</span> : <span className="pl-muted">&mdash;</span>}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
               )}
             </section>
 
-            <aside className="prj-aside" aria-label="Portfolio summary">
+            <aside className="pl-side" aria-label="Portfolio summary">
               {gauges.length > 0 && (
-                <section
-                  className="ui-panel prj-side-panel prj-rise"
-                  aria-labelledby="prj-standing-title"
-                  style={{ '--i': 5 } as CSSProperties}
-                >
-                  <header className="prj-side__head">
-                    <h2 className="prj-side__title" id="prj-standing-title">
-                      {standingTitle}
-                    </h2>
-                    <span className="prj-side__meta">
-                      <Counter value={projects.length} />
-                    </span>
+                <section className="pl-card" aria-labelledby="pl-standing-title">
+                  <header className="pl-card-head">
+                    <h2 className="pl-card-title" id="pl-standing-title">{standingTitle}</h2>
+                    <span className="pl-count">{projects.length}</span>
                   </header>
-                  <ul className="prj-gauge">
+                  <ul className="pl-gauge">
                     {gauges.map((row) => (
-                      <li className="prj-gauge__row" key={row.key}>
-                        <span className="prj-gauge__label">{row.label}</span>
-                        <span
-                          className="prj-gauge__scale"
-                          role="img"
-                          aria-label={`${row.label}: ${row.value} of ${projects.length} projects`}
-                        >
-                          <span
-                            className="prj-gauge__fill"
-                            style={{ '--w': `${Math.min(100, (row.value / projects.length) * 100)}%` } as CSSProperties}
-                          />
+                      <li key={row.key}>
+                        <span className="pl-gauge-label">{row.label}</span>
+                        <span className="pl-meter" role="img" aria-label={`${row.label}: ${row.value}${row.total ? ` of ${row.total}` : ''}`}>
+                          <i style={{ width: `${maxScale(row)}%` }} />
                         </span>
-                        <span className="prj-gauge__num">
-                          <Counter value={row.value} />
-                        </span>
+                        <b>{row.value}</b>
                       </li>
                     ))}
                   </ul>
                 </section>
               )}
 
-              {ledProjects.length > 0 && (
-                <section
-                  className="ui-panel prj-side-panel prj-rise"
-                  aria-labelledby="prj-leaders-title"
-                  style={{ '--i': 6 } as CSSProperties}
-                >
-                  <header className="prj-side__head">
-                    <h2 className="prj-side__title" id="prj-leaders-title">
-                      Team leaders
-                    </h2>
-                    <span className="prj-side__meta">
-                      <Counter value={ledProjects.length} />
-                    </span>
+              {leaders.length > 0 && (
+                <section className="pl-card" aria-labelledby="pl-leaders-title">
+                  <header className="pl-card-head">
+                    <h2 className="pl-card-title" id="pl-leaders-title">Team leaders</h2>
+                    <span className="pl-count">{leaders.length}</span>
                   </header>
-                  <ul className="prj-leaders">
-                    {ledProjects.map(({ project, leader }) => (
+                  <ul className="pl-leaders">
+                    {leaders.map(({ project, leader }) => (
                       <li key={project._id}>
-                        <Link className="prj-leader" to={`/projects/${project._id}`}>
-                          <span className="prj-lead__plate prj-lead__plate--round" aria-hidden="true">
-                            {leader?.profileImage ? (
-                              <img src={leader.profileImage} alt="" />
-                            ) : (
-                              initialOf(leader?.name)
-                            )}
-                          </span>
-                          <span className="prj-leader__text">
-                            <span className="prj-leader__name">{leader?.name}</span>
-                            <span className="prj-leader__project">{project.name}</span>
+                        <Link className="pl-leader-row" to={`/projects/${project._id}`}>
+                          <Face person={leader} size={34} />
+                          <span className="pl-leader-text">
+                            <strong>{leader?.name || 'Not assigned'}</strong>
+                            <span>{project.name}</span>
                           </span>
                         </Link>
                       </li>

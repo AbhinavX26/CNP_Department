@@ -587,6 +587,57 @@ export default function Notifications() {
       ? 'No notifications in the last 14 days'
       : `${volume.window} ${volume.window === 1 ? 'notification' : 'notifications'} in the last 14 days, ${volume.today} today`;
 
+  /* ── Stat tiles ── */
+  const statTiles = [
+    {
+      label: 'Notifications',
+      value: total,
+      note: total === 1 ? '1 total' : `${total} total`,
+      tone: 'deep',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
+          <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Unread',
+      value: unreadCount,
+      note: unreadCount === 0 ? 'All caught up' : `${unreadCount} unread`,
+      tone: 'blue',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 8v4l3 3" />
+        </svg>
+      ),
+    },
+    {
+      label: 'Today',
+      value: volume.today,
+      note: volume.window > 0 ? `${volume.window} in 14 days` : 'None in 14 days',
+      tone: 'sky',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="18" rx="2" />
+          <path d="M16 2v4M8 2v4M3 10h18" />
+        </svg>
+      ),
+    },
+    {
+      label: familiesPresent.length === 1 ? 'Category' : 'Categories',
+      value: familiesPresent.length,
+      note: familiesPresent.map((f) => FAMILY_LABEL[f.family]).join(', ') || 'None yet',
+      tone: 'mist',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M4 6h16M4 12h16M4 18h7" />
+        </svg>
+      ),
+    },
+  ];
+
   return (
     <div className="ntf">
       <header className="ui-page-head ntf-pagehead">
@@ -616,6 +667,25 @@ export default function Notifications() {
         </div>
       </header>
 
+      {!loading && !error && (
+        <section className="ntf-tiles" aria-label="Notification summary">
+          {statTiles.map(({ label, value, note, tone, icon }) => (
+            <div key={label} className={`ntf-tile ntf-tile--${tone}`}>
+              <span className="ntf-tile__icon">{icon}</span>
+              <span className="ntf-tile__value">{value}</span>
+              <span className="ntf-tile__label">{label}</span>
+              <span className="ntf-tile__note">{note}</span>
+            </div>
+          ))}
+        </section>
+      )}
+
+      {loading && (
+        <div className="ntf-tiles" aria-hidden="true">
+          {[0, 1, 2, 3].map((i) => <span key={i} className="ntf-tile ntf-tile--skel" />)}
+        </div>
+      )}
+
       {error ? (
         <div className="ntf-error">
           <div className="ui-notice ui-notice--error" role="alert">
@@ -628,7 +698,8 @@ export default function Notifications() {
           </div>
         </div>
       ) : (
-        <section className={`ui-panel ntf-inbox${isReading ? ' is-reading' : ''}`} aria-label="Notification inbox">
+        <div className={`ntf-inbox${isReading ? ' is-reading' : ''}`} aria-label="Notification inbox">
+          <div className="ntf-list-card">
           <div className="ntf-bar">
             <div className="ntf-filters">
               <div className="ui-seg ntf-seg" role="group" aria-label="Filter by read state">
@@ -883,6 +954,8 @@ export default function Notifications() {
                 </ul>
               )}
             </div>
+          </div>
+          </div>
 
             {selected && !loading && (
               <aside className="ntf-pane" aria-label="Selected notification">
@@ -963,8 +1036,7 @@ export default function Notifications() {
                 </article>
               </aside>
             )}
-          </div>
-        </section>
+        </div>
       )}
     </div>
   );
