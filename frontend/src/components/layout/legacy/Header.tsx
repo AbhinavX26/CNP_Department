@@ -101,7 +101,7 @@ export function Header() {
   };
 
   return (
-    <header className="app-header">
+    <header className={`app-header${dropdownOpen ? ' has-notif-open' : ''}`}>
       <h1 className="header-title">{getPageTitle()}</h1>
       <div className="header-actions">
         {user && (
@@ -111,40 +111,20 @@ export function Header() {
         )}
         <div style={{ position: 'relative' }} ref={dropdownRef}>
           <button
+            type="button"
+            className="notif-inbox-button"
             onClick={toggleDropdown}
-            style={{
-              position: 'relative',
-              fontSize: '1.2rem',
-              cursor: 'pointer',
-              padding: '8px',
-              background: dropdownOpen ? 'var(--bg-card-2)' : 'var(--bg)',
-              borderRadius: '50%',
-              color: 'var(--text-muted)',
-              border: '1px solid var(--border)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              transition: 'all 0.2s',
-            }}
-            title="Notifications"
-            aria-label="Notifications"
+            title="Inbox"
+            aria-label={unreadCount > 0 ? `Inbox, ${unreadCount} unread notifications` : 'Inbox'}
+            aria-expanded={dropdownOpen}
+            aria-controls="notifications-panel"
           >
-            🔔
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9ZM10 21h4" />
+            </svg>
+            <span>Inbox</span>
             {unreadCount > 0 && (
-              <span
-                style={{
-                  position: 'absolute',
-                  top: '-2px',
-                  right: '-2px',
-                  background: 'var(--warn)',
-                  color: 'white',
-                  borderRadius: '10px',
-                  padding: '2px 5px',
-                  fontSize: '10px',
-                  fontWeight: 700,
-                  lineHeight: 1,
-                }}
-              >
+              <span className="notif-inbox-count" aria-hidden="true">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
@@ -153,6 +133,7 @@ export function Header() {
           {/* Notification Dropdown Popover */}
           {dropdownOpen && (
             <div
+              id="notifications-panel"
               style={{
                 position: 'absolute',
                 top: 'calc(100% + 10px)',
