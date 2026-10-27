@@ -30,7 +30,7 @@ export const DEVELOPERS: Developer[] = [
   {
     id: 'dev-3',
     name: 'Nisarg Priyadarshi',
-    designation: 'Backend Developer | Database Designee',
+    designation: 'Backend Developer | Database Designer',
     photo: '/team/dev-3.png',
     bio: 'Designs how clubs, projects, members and events are stored and kept consistent.',
   },
