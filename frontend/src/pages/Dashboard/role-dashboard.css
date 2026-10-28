@@ -21,7 +21,8 @@
   align-items: start;
   gap: 22px;
 }
-.role-dashboard-grid > .card {
+.role-dashboard-grid > .card,
+.role-dashboard-sidebar > .card {
   min-width: 0;
   margin: 0;
   padding: 22px;
@@ -30,34 +31,38 @@
   background: var(--color-sheet);
   box-shadow: var(--shadow-card);
 }
-.role-dashboard-grid > .card:hover {
+.role-dashboard-grid > .card:hover,
+.role-dashboard-sidebar > .card:hover {
   border-color: var(--color-rule-2);
   box-shadow: var(--shadow-lift);
 }
-.role-dashboard-grid > .card .card-title {
+.role-dashboard-grid > .card .card-title,
+.role-dashboard-sidebar > .card .card-title {
   color: var(--color-ink);
   font-size: 19px;
   font-weight: 680;
   letter-spacing: -0.035em;
   line-height: 1.25;
 }
-.role-dashboard-grid > .card .card-header {
+.role-dashboard-grid > .card .card-header,
+.role-dashboard-sidebar > .card .card-header {
   align-items: center;
   margin-bottom: 17px;
 }
-.role-dashboard-grid > .card .card-body {
+.role-dashboard-grid > .card .card-body,
+.role-dashboard-sidebar > .card .card-body {
   color: var(--color-ink-2);
 }
 .role-dashboard-grid button {
   min-height: 44px;
 }
 .role-dashboard-grid--coordinator {
-  grid-template-areas: "primary requests" "events account";
+  grid-template-areas: "primary sidebar" "events sidebar";
 }
 .role-dashboard-grid--coordinator > .card:nth-child(1) { grid-area: primary; }
-.role-dashboard-grid--coordinator > .card:nth-child(2) { grid-area: requests; }
+.role-dashboard-grid--coordinator > .role-dashboard-sidebar { grid-area: sidebar; }
+.role-dashboard-sidebar { display: grid; min-width: 0; gap: 22px; }
 .role-dashboard-grid--coordinator > .card:nth-child(3) { grid-area: events; }
-.role-dashboard-grid--coordinator > .card:nth-child(4) { grid-area: account; }
 .role-dashboard-grid--mentor {
   grid-template-areas: "primary account";
 }
@@ -82,7 +87,9 @@
     grid-template-columns: minmax(0, 1fr);
     gap: 17px;
   }
-  .role-dashboard-grid--coordinator,
+  .role-dashboard-grid--coordinator {
+    grid-template-areas: "primary" "sidebar" "events";
+  }
   .role-dashboard-grid--club-admin {
     grid-template-areas: "primary" "requests" "events" "account";
   }
@@ -95,7 +102,8 @@
 }
 @media (max-width: 760px) {
   .staff-dash { gap: 17px; }
-  .role-dashboard-grid > .card { padding: 18px; }
+  .role-dashboard-grid > .card,
+.role-dashboard-sidebar > .card { padding: 18px; }
 }
 @media (max-width: 560px) {
   .staff-dash { gap: 16px; }
@@ -106,5 +114,6 @@
     padding-inline: 9px;
     font-size: 11px;
   }
-  .role-dashboard-grid > .card { padding: 16px; }
+  .role-dashboard-grid > .card,
+.role-dashboard-sidebar > .card { padding: 16px; }
 }

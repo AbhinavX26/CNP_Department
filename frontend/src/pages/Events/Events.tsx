@@ -6,10 +6,11 @@ import { EventForm } from '../../components/events/EventForm';
 import { EventCrest } from '../../components/events/EventCrest';
 import { isEventPast, localDayStartIso, partitionEvents, useLocalDay } from '../../eventDate';
 import { usePageLoading } from '../../context/LoadingContext';
-import { Counter, DateTile, KindGlyph } from '../../components/ui/vis';
+import { Counter, KindGlyph } from '../../components/ui/vis';
 import { Tooltip } from '../../components/ui/Tooltip';
 import './events.css';
 import './events-theme.css';
+import { Select } from '../../components/common/Select';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const DAY_MS = 86_400_000;
@@ -218,55 +219,15 @@ function WeekBars({ weeks }: { weeks: WeekBucket[] }) {
  * pinned at its end, the event at its distance (clamped at 8 slots), the day
  * count beside it. Past events mirror the same rule.
  */
-function CountdownMark({ date, today }: { date: Date; today: Date }) {
-  const diff = Math.round((startOfDay(date) - startOfDay(today)) / DAY_MS);
-  const past = diff < 0;
-  const step = Math.min(8, Math.abs(diff));
-  const slot = 10;
-  const width = slot * 8;
-  const rawToday = past ? width : 0;
-  const rawEvent = past ? width - step * slot : step * slot;
-  // Keep both strokes inside the viewBox so an edge day still shows its mark.
-  const todayX = Math.min(Math.max(rawToday, 0.75), width - 0.75);
-  const eventX = Math.min(Math.max(rawEvent, 1.5), width - 1.5);
-  const label = relativeDay(date, today);
 
+/** The date as one rounded tile: green while still ahead, orange once it has happened. */
+function DayChip({ date, past, size = 'sm' }: { date: Date; past: boolean; size?: 'sm' | 'lg' }) {
   return (
-    <Tooltip
-      label={`${label} · ${date.toLocaleDateString(undefined, {
-        weekday: 'long',
-        day: 'numeric',
-        month: 'long',
-      })}`}
-    >
-      <span className={`evt-count${past ? ' is-past' : ''}`} role="img" aria-label={label}>
-        <svg
-          className="evt-count__rule"
-          width={width}
-          height={14}
-          viewBox={`0 0 ${width} 14`}
-          aria-hidden="true"
-          focusable="false"
-        >
-          <line className="evt-count__base" x1="0" y1="13" x2={width} y2="13" />
-          {Array.from({ length: 9 }).map((_, i) => (
-            <line
-              key={i}
-              className="evt-count__tick"
-              x1={i * slot}
-              y1={i === 0 || i === 8 ? 8 : 10}
-              x2={i * slot}
-              y2="13"
-            />
-          ))}
-          <line className="evt-count__now" x1={todayX} y1="4" x2={todayX} y2="13" />
-          <line className="evt-count__event" x1={eventX} y1="2" x2={eventX} y2="13" />
-        </svg>
-        <span className="evt-count__num" aria-hidden="true">
-          {diff === 0 ? 'Today' : `${Math.abs(diff)}d`}
-        </span>
-      </span>
-    </Tooltip>
+    <span className={`evt-chip-date evt-chip-date--${size}${past ? ' is-past' : ''}`} aria-hidden="true">
+      <small>{date.toLocaleDateString(undefined, { weekday: 'short' })}</small>
+      <b>{date.getDate()}</b>
+      <small>{date.toLocaleDateString(undefined, size === 'lg' ? { month: 'short', year: 'numeric' } : { month: 'short' })}</small>
+    </span>
   );
 }
 
@@ -287,10 +248,6 @@ function EventTicket({ event, canManage, onOpen, onEdit }: TicketProps) {
 
   return (
     <li className={`evt-ticket${past ? ' is-past' : ''}`}>
-      <span className="evt-ticket__time" aria-hidden="true">
-        {clock || 'TBD'}
-      </span>
-
       <div className="evt-ticket__body">
         <button
           type="button"
@@ -298,22 +255,25 @@ function EventTicket({ event, canManage, onOpen, onEdit }: TicketProps) {
           aria-label={`${event.title}, ${club}${clock ? `, ${clock}` : ''}${event.location ? `, ${event.location}` : ''}${past ? ', past' : ''}`}
           onClick={e => onOpen(event, e.currentTarget)}
         >
-          <EventCrest name={club} logo={clubLogoOf(event)} size={22} />
+          <EventCrest name={club} logo={clubLogoOf(event)} size={40} />
           <span className="evt-ticket__main">
             <span className="evt-ticket__title" title={event.title}>
               {event.title}
             </span>
             <span className="evt-ticket__meta">
+              <span className="evt-ticket__when">
+                <Icon className="evt-i evt-i--xs">{MARK.clock}</Icon>
+                {clock || 'Time TBD'}
+              </span>
               {event.location && (
                 <span className="evt-ticket__venue">
                   <Icon className="evt-i evt-i--xs">{MARK.pin}</Icon>
                   <span className="ui-truncate">{event.location}</span>
                 </span>
               )}
-              <span className="evt-ticket__club ui-truncate">{club}</span>
             </span>
+            <span className="evt-ticket__club ui-truncate">{club}</span>
           </span>
-          <span className="evt-ticket__who ui-truncate">{club}</span>
           {past && <span className="evt-ticket__flag">Past</span>}
           <span className="evt-ticket__go" aria-hidden="true">
             <Icon className="evt-i evt-i--sm">{MARK.arrow}</Icon>
@@ -370,17 +330,22 @@ function DayNodeHead({
   today: Date;
   isToday: boolean;
 }) {
+  const past = date ? isEventPast(date.toISOString()) && !isToday : false;
   return (
     <header className="evt-daynode">
       <div className="evt-daynode__plate">
-        {date ? (
-          <DateTile date={date} size="sm" tone={isToday ? 'accent' : 'plain'} />
-        ) : (
-          <span className="evt-daynode__tbd">TBD</span>
-        )}
-        {date && <span className="evt-daynode__rel">{relativeDay(date, today)}</span>}
+        {date ? <DayChip date={date} past={past} /> : <span className="evt-daynode__tbd">TBD</span>}
+        <span className="evt-daynode__text">
+          {date && <span className="evt-daynode__rel">{relativeDay(date, today)}</span>}
+          {date && (
+            <span className="evt-daynode__full">
+              {date.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}
+            </span>
+          )}
+        </span>
         <span className="evt-daynode__count">
           <Counter value={count} />
+          <span className="ui-visually-hidden"> {count === 1 ? 'event' : 'events'}</span>
         </span>
       </div>
     </header>
@@ -982,9 +947,8 @@ export default function Events() {
               <label className="ui-visually-hidden" htmlFor="evt-club-filter">
                 Filter by club
               </label>
-              <select
+              <Select
                 id="evt-club-filter"
-                className="ui-field ui-field--select"
                 value={selectedClubFilter}
                 onChange={e => {
                   setSelectedClubFilter(e.target.value);
@@ -997,8 +961,7 @@ export default function Events() {
                     {c.name}
                   </option>
                 ))}
-              </select>
-              <Icon className="evt-i evt-i--sm">{MARK.down}</Icon>
+              </Select>
             </div>
           )}
 
@@ -1341,24 +1304,21 @@ export default function Events() {
                 </p>
               )}
 
-              <div className="evt-stub">
-                <div className="evt-stub__date">
+              <div className="evt-dlg">
+                <aside className={`evt-dlg__date${detailIsPast ? ' is-past' : ''}`}>
                   {detailDate ? (
-                    <DateTile date={detailDate} size="lg" tone={detailIsPast ? 'plain' : 'accent'} />
+                    <DayChip date={detailDate} past={detailIsPast} size="lg" />
                   ) : (
                     <span className="evt-stub__tbd">TBD</span>
                   )}
-                  <span className="evt-stub__time">
+                  <span className="evt-dlg__time">
                     <Icon className="evt-i evt-i--xs">{MARK.clock}</Icon>
                     {detailDate ? timeLabel(detailDate) : 'Time TBD'}
                   </span>
-                  {detailDate && <CountdownMark date={detailDate} today={todayDate} />}
-                </div>
+                  {detailDate && <span className="evt-dlg__rel">{relativeDay(detailDate, todayDate)}</span>}
+                </aside>
 
-                <div className="evt-stub__body">
-                  <span className="evt-stub__notch evt-stub__notch--top" aria-hidden="true" />
-                  <span className="evt-stub__notch evt-stub__notch--bottom" aria-hidden="true" />
-
+                <div className="evt-dlg__main">
                   <dl className="evt-facts">
                     <div className="evt-fact">
                       <dt>
@@ -1371,9 +1331,9 @@ export default function Events() {
                       <dt>Organiser</dt>
                       <dd>
                         {detailOrganiser?.name || 'Not recorded'}
-                        {detailOrganiser?.role
-                          ? ` · ${String(detailOrganiser.role).replace(/_/g, ' ')}`
-                          : ''}
+                        {detailOrganiser?.role ? (
+                          <span className="evt-fact__sub">{String(detailOrganiser.role).replace(/_/g, ' ')}</span>
+                        ) : null}
                       </dd>
                     </div>
                     <div className="evt-fact">
@@ -1391,7 +1351,10 @@ export default function Events() {
                   </dl>
 
                   {detailEvent.description && (
-                    <p className="evt-detail__desc">{detailEvent.description}</p>
+                    <div className="evt-dlg__about">
+                      <p className="evt-dlg__label">About this event</p>
+                      <p className="evt-detail__desc">{detailEvent.description}</p>
+                    </div>
                   )}
 
                   {(detailEvent.eventLink || detailEvent.relatedDocument?.url) && (

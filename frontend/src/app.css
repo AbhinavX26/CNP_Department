@@ -130,7 +130,8 @@ body {
   height: var(--header-height);
   display: flex;
   align-items: center;
-  padding: 0 24px;
+  justify-content: center;
+  padding: 0;
   font-weight: 700;
   font-size: 1.1rem;
   color: var(--text);
@@ -4952,6 +4953,13 @@ input[type="number"]:focus {
   background: var(--color-accent);
   box-shadow: 0 0 0 4px var(--color-accent-glow);
 }
+.main-sidebar .brand-logo {
+  flex: none;
+  width: min(100%, 170px);
+  height: 50px;
+  object-fit: contain;
+  background: transparent;
+}
 .main-nav-btn.active::before { background: var(--color-accent); }
 .main-nav-btn:focus-visible { outline-color: var(--color-focus); }
 .main-content { background: var(--color-paper); }
@@ -4968,6 +4976,10 @@ input[type="number"]:focus {
 .student-dash-overview-attention li::before,
 .student-dash-notification-count,
 .student-dash-notification-dot { background: var(--color-accent); }
+.student-dash-header .student-dash-notification-count {
+  background: #fff;
+  color: var(--color-graphite);
+}
 .student-dash-header-actions .btn-primary {
   background: var(--color-accent);
   color: var(--color-accent-ink);
@@ -5028,4 +5040,60 @@ input[type="number"]:focus {
   letter-spacing: 0.1em;
   line-height: 1.4;
   text-transform: uppercase;
+}
+
+/* Sidebar scrollbar · Cobalt
+   A slim, always-visible rail so it is obvious the list scrolls. The track is a
+   faint graphite groove, the thumb a muted rail-ink that lights to the cobalt
+   signal on hover and drag. Arrow buttons are removed. Only tokens, so it
+   follows the dark theme too. */
+.main-sidebar .nav-links {
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+/* Chromium, Safari, Edge: draw it ourselves. */
+.main-sidebar .nav-links::-webkit-scrollbar {
+  width: 12px;
+}
+.main-sidebar .nav-links::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.main-sidebar .nav-links::-webkit-scrollbar-track {
+  margin-block: var(--space-xs);
+  border: 4px solid transparent;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--color-graphite-ink) 7%, transparent);
+  background-clip: padding-box;
+}
+.main-sidebar .nav-links::-webkit-scrollbar-thumb {
+  min-height: var(--space-xl);
+  border: 3px solid transparent;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--color-graphite-muted) 55%, transparent);
+  background-clip: padding-box;
+  transition: background-color var(--dur-short) var(--ease-in-out);
+}
+.main-sidebar .nav-links::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-2);
+  background-clip: padding-box;
+}
+.main-sidebar .nav-links::-webkit-scrollbar-thumb:active {
+  background: var(--color-accent);
+  background-clip: padding-box;
+}
+.main-sidebar .nav-links::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox, and any engine without ::-webkit-scrollbar. Chrome 121+ would let
+   scrollbar-color override the rules above, so it is scoped away from it. */
+@supports not selector(::-webkit-scrollbar) {
+  .main-sidebar .nav-links {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--color-graphite-muted) 55%, transparent)
+      color-mix(in oklch, var(--color-graphite-ink) 7%, transparent);
+  }
 }

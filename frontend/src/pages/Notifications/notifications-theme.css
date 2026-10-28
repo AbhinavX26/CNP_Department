@@ -1,0 +1,201 @@
+/* Notifications. Same ink, blue and navy-to-blue gradient as the dashboard, clubs and projects.
+   Unread is a blue edge, approvals are green, rejections orange. Layout and behaviour are unchanged. */
+.ntfx {
+  --nx-ink: #122549; --nx-muted: #5f6f8d; --nx-faint: #8a97b2; --nx-line: #e4ebf7; --nx-blue: #0462d3; --nx-wash: #deecfd;
+  display: flex; flex-direction: column; gap: 20px; max-width: 1320px; margin: 0 auto; color: var(--nx-ink);
+}
+.ntfx *, .ntfx *::before, .ntfx *::after { box-sizing: border-box; }
+.ntfx-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 14px 24px; }
+.ntfx-title { margin: 0; font-size: 32px; font-weight: 800; letter-spacing: -.02em; line-height: 1.1; }
+.ntfx-sub { margin: 6px 0 0; font-size: 14.5px; color: var(--nx-muted); }
+.ntfx-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 18px; border: 0; border-radius: 11px; font: inherit; font-size: 13.5px; font-weight: 600; cursor: pointer; transition: filter .15s ease; }
+.ntfx-btn--solid { background: linear-gradient(135deg, #0c1a47, #0462d3); color: #fff; }
+.ntfx-btn--solid:hover:not(:disabled) { filter: brightness(1.12); }
+.ntfx-btn:disabled { opacity: .5; cursor: default; }
+.ntfx-btn:focus-visible { outline: 2px solid var(--nx-blue); outline-offset: 2px; }
+
+.ntfx-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 14px; }
+.ntfx-tile { display: flex; flex-direction: column; min-width: 0; padding: 16px 18px 15px; border-radius: 16px; }
+.ntfx-tile-value { font-size: 30px; font-weight: 800; line-height: 1.05; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.ntfx-tile-label { margin-top: 4px; font-size: 14px; font-weight: 600; }
+.ntfx-tile-note { margin-top: 4px; font-size: 12px; font-weight: 600; }
+.ntfx-tile--deep { background: linear-gradient(145deg, #0c1a47, #0b4fb5); color: #fff; }
+.ntfx-tile--blue { background: linear-gradient(145deg, #0b4fb5, #4c98f5); color: #fff; }
+.ntfx-tile--sky { background: linear-gradient(145deg, #9cc4fa, #d3e5ff); }
+.ntfx-tile--mist { background: linear-gradient(145deg, #dbe9ff, #f3f7ff); }
+.ntfx-tile--deep .ntfx-tile-note, .ntfx-tile--blue .ntfx-tile-note { color: #cfe3ff; }
+.ntfx-tile--sky .ntfx-tile-note, .ntfx-tile--mist .ntfx-tile-note { color: #0b4fa3; }
+
+/* Inbox card */
+.ntfx .ntfx-inbox { border: 1px solid var(--nx-line); border-radius: 18px; background: #fff; box-shadow: 0 10px 28px -16px rgba(18,37,73,.22); overflow: hidden; animation: none; }
+.ntfx .ntf-bar { padding: 14px 18px; background: #fff; border-bottom: 1px solid var(--nx-line); border-radius: 0; }
+.ntfx .ntf-filters { gap: 10px; }
+.ntfx .ui-seg { display: inline-flex; padding: 3px; border: 0; border-radius: 12px; background: #eaf1fc; gap: 2px; }
+.ntfx .ntf-seg button { height: 32px; padding: 0 14px; border: 0; border-radius: 9px; background: transparent; font-size: 13px; font-weight: 600; color: var(--nx-muted); display: inline-flex; align-items: center; gap: 6px; }
+.ntfx .ntf-seg button[aria-pressed='true'] { background: #fff; color: var(--nx-ink); box-shadow: 0 1px 3px rgba(12,26,71,.14); }
+.ntfx .ntf-seg__count { display: inline-grid; place-items: center; min-width: 22px; height: 20px; padding: 0 6px; border-radius: 999px; background: #dbe6f6; color: var(--nx-muted); font-size: 11.5px; font-weight: 700; }
+.ntfx .ntf-seg button[aria-pressed='true'] .ntf-seg__count { background: linear-gradient(135deg, #0c1a47, #0462d3); color: #fff; }
+.ntfx .ntf-filter .ui-btn { height: 38px; padding: 0 14px; border: 0; border-radius: 11px; background: #eaf1fc; color: #0b4fa3; font-weight: 600; }
+.ntfx .ntf-filter .ui-btn:hover { background: #deecfd; }
+.ntfx .ntf-menu { border: 1px solid var(--nx-line); border-radius: 14px; box-shadow: 0 16px 36px -14px rgba(18,37,73,.35); background: #fff; }
+.ntfx .ntf-menu__bar > span { background: linear-gradient(90deg, #0c1a47, #0462d3); }
+
+.ntfx .ntf-body { border-radius: 0; }
+.ntfx .ntf-column { border-right: 1px solid var(--nx-line); }
+.ntfx .ntf-day { padding: 14px 18px 8px; background: #f6f9fe; }
+.ntfx .ntf-day__label { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--nx-muted); }
+.ntfx .ntf-day__count { display: inline-grid; place-items: center; min-width: 20px; height: 18px; padding: 0 6px; border-radius: 999px; background: #e3ecfa; color: var(--nx-muted); font-size: 11px; font-weight: 700; }
+.ntfx .ntf-day::after { background: #e3ecfa; }
+
+.ntfx .ntf-row { border-bottom: 1px solid var(--nx-line); background: #fff; }
+.ntfx .ntf-row:hover { background: #f6f9fe; }
+.ntfx .ntf-row.is-selected { background: #eaf3ff; }
+.ntfx .ntf-row::before { display: none; }
+.ntfx .ntf-row.is-unread::after, .ntfx .ntf-row.is-selected::after { content: ''; position: absolute; left: 0; top: 10px; bottom: 10px; width: 4px; border-radius: 0 4px 4px 0; background: linear-gradient(180deg, #0c1a47, #0462d3 60%, #6db2ff); }
+.ntfx .ntf-row.is-selected:not(.is-unread)::after { background: #b9d2f5; }
+.ntfx .ntf-row { position: relative; }
+.ntfx .ntf-row__flag { display: none; }
+.ntfx .ntf-mark { display: grid; place-items: center; width: 42px; height: 42px; flex: none; border: 0; border-radius: 12px; background: linear-gradient(145deg, #dbe9ff, #f3f7ff); color: #0b4fa3; }
+.ntfx .ntf-row.is-unread .ntf-mark { background: linear-gradient(145deg, #0c1a47, #0b4fb5); color: #fff; }
+.ntfx .ntf-mark.is-positive { background: rgba(31,157,99,.14); color: #0d6b41; }
+.ntfx .ntf-mark.is-negative { background: rgba(238,132,28,.16); color: #8a4a05; }
+.ntfx .ntf-row.is-unread .ntf-mark.is-positive { background: rgba(31,157,99,.9); color: #fff; }
+.ntfx .ntf-row.is-unread .ntf-mark.is-negative { background: rgba(238,132,28,.95); color: #fff; }
+.ntfx .ntf-row__title { font-size: 14.5px; font-weight: 600; color: var(--nx-ink); }
+.ntfx .ntf-row.is-unread .ntf-row__title { font-weight: 800; }
+.ntfx .ntf-row__meta { font-size: 13px; color: var(--nx-muted); }
+.ntfx .ntf-row__time { font-size: 12.5px; color: var(--nx-faint); }
+.ntfx .ntf-row.is-unread .ntf-row__time { color: var(--nx-blue); font-weight: 700; }
+.ntfx .ntf-tool { border-radius: 9px; color: var(--nx-muted); }
+.ntfx .ntf-tool:hover { background: #eaf1fc; color: var(--nx-blue); }
+
+/* Reading pane */
+.ntfx .ntf-pane { background: linear-gradient(180deg, #f6f9fe, #fff 220px); }
+.ntfx .ntf-record { padding: 24px 26px; }
+.ntfx .ntf-plate { display: grid; place-items: center; width: 56px; height: 56px; border: 0; border-radius: 16px; background: linear-gradient(145deg, #0c1a47, #0b4fb5); color: #fff; }
+.ntfx .ntf-plate.is-positive { background: rgba(31,157,99,.9); }
+.ntfx .ntf-plate.is-negative { background: rgba(238,132,28,.95); }
+.ntfx .ntf-record__kind { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--nx-blue); }
+.ntfx .ntf-record__title { font-size: 22px; font-weight: 800; letter-spacing: -.02em; color: var(--nx-ink); }
+.ntfx .ntf-state { padding: 4px 12px; border: 0; border-radius: 999px; background: #eef2f9; color: var(--nx-muted); font-size: 12px; font-weight: 700; }
+.ntfx .ntf-state.is-unread { background: linear-gradient(135deg, #cfe3ff, #e9f2ff); color: #0b4fa3; }
+.ntfx .ntf-record__note { padding: 14px 16px; border: 1px solid var(--nx-line); border-radius: 12px; background: #fff; color: var(--nx-ink); line-height: 1.6; }
+.ntfx .ntf-grid { gap: 10px; border: 0; background: transparent; }
+.ntfx .ntf-fact { padding: 12px 14px; border: 1px solid var(--nx-line); border-radius: 12px; background: #fff; }
+.ntfx .ntf-fact__label { font-size: 11.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--nx-muted); }
+.ntfx .ntf-fact__mark { color: var(--nx-blue); }
+.ntfx .ntf-fact__value { font-size: 14.5px; font-weight: 700; color: var(--nx-ink); overflow-wrap: anywhere; }
+.ntfx .ntf-quote { margin: 0; padding: 14px 16px; border: 0; border-left: 4px solid #0462d3; border-radius: 0 12px 12px 0; background: #eef5ff; }
+.ntfx .ntf-quote.is-negative { border-left-color: rgba(238,132,28,.9); background: rgba(238,132,28,.1); }
+.ntfx .ntf-quote__label { font-size: 11.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--nx-muted); }
+.ntfx .ntf-quote__text { font-size: 15px; line-height: 1.6; color: var(--nx-ink); }
+.ntfx .ntf-record__foot { gap: 8px; border-top: 1px solid var(--nx-line); }
+.ntfx .ntf-record__foot .ui-btn { height: 38px; padding: 0 16px; border-radius: 11px; font-weight: 600; }
+.ntfx .ntf-record__foot .ui-btn--primary { border: 0; background: linear-gradient(135deg, #0c1a47, #0462d3); color: #fff; }
+.ntfx .ntf-record__foot .ui-btn--primary:hover { filter: brightness(1.12); }
+.ntfx .ntf-record__foot .ui-btn--quiet { border: 0; background: #eaf1fc; color: #0b4fa3; }
+.ntfx .ntf-back { color: var(--nx-muted); }
+.ntfx .ui-empty { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 44px 16px; text-align: center; }
+.ntfx .ui-empty__mark { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 12px; background: var(--nx-wash); color: var(--nx-blue); }
+.ntfx .ntf-error .ui-notice { border-radius: 12px; }
+
+@media (max-width: 959px) {
+  .ntfx-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .ntfx .ntf-column { border-right: 0; }
+}
+@media (max-width: 560px) {
+  .ntfx { gap: 16px; }
+  .ntfx-title { font-size: 26px; }
+  .ntfx .ntf-record { padding: 18px 16px; }
+}
+@media (prefers-reduced-motion: reduce) { .ntfx-btn { transition: none; } }
+
+/* Row grid: the old unread flag is hidden, so the hit area is mark + text. */
+.ntfx .ntf-row__hit { grid-template-columns: 42px minmax(0, 1fr); column-gap: 14px; align-items: center; padding: 14px 6px 14px 20px; }
+.ntfx .ntf-row__aside { padding: 14px 16px 14px 0; align-items: flex-end; }
+.ntfx .ntf-row__text { gap: 3px; }
+@media (max-width: 560px) {
+  .ntfx .ntf-row__hit { grid-template-columns: 38px minmax(0, 1fr); padding-left: 16px; }
+  .ntfx .ntf-mark { width: 38px; height: 38px; }
+}
+
+/* Keep inbox list and selected notification in separate, balanced cards. */
+.ntfx { width: 100%; max-width: 1480px; }
+.ntfx .ntfx-inbox {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, .8fr);
+  align-items: start;
+  gap: 0 20px;
+  width: 100%;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+  container-type: normal;
+}
+.ntfx .ntfx-inbox > .ntf-bar {
+  grid-column: 1;
+  grid-row: 1;
+  width: 100%;
+  border: 1px solid var(--nx-line);
+  border-bottom: 1px solid var(--nx-line);
+  border-radius: 18px 18px 0 0;
+}
+.ntfx .ntfx-inbox > .ntf-body { display: contents; }
+.ntfx .ntfx-inbox > .ntf-body > .ntf-column {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--nx-line);
+  border-top: 0;
+  border-radius: 0 0 18px 18px;
+  background: #fff;
+}
+.ntfx .ntfx-inbox > .ntf-body.is-solo > .ntf-column { grid-column: 1 / -1; }
+.ntfx .ntfx-inbox > .ntf-body > .ntf-pane {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid var(--nx-line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 10px 28px -16px rgba(18,37,73,.22);
+  overflow: hidden;
+}
+.ntfx .ntf-pane { position: sticky; top: 12px; }
+.ntfx .ntf-record {
+  max-height: calc(100dvh - 10rem);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+.ntfx .ntf-list { max-height: none; overflow: visible; }
+@media (max-width: 1059px) {
+  .ntfx .ntfx-inbox { display: block; }
+  .ntfx .ntfx-inbox > .ntf-body {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 16px;
+    width: 100%;
+  }
+  .ntfx .ntfx-inbox > .ntf-body > .ntf-column,
+  .ntfx .ntfx-inbox > .ntf-body.is-solo > .ntf-column {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .ntfx .ntfx-inbox > .ntf-body > .ntf-pane {
+    grid-column: 1;
+    grid-row: auto;
+    position: static;
+  }
+  .ntfx .ntf-pane { position: static; }
+}
+@media (max-width: 959px) {
+  .ntfx .ntfx-inbox > .ntf-body > .ntf-pane { display: none; }
+  .ntfx .ntfx-inbox > .ntf-body.is-reading > .ntf-pane { display: block; }
+  .ntfx .ntf-inbox.is-reading .ntf-bar { display: none; }
+}
+@media (prefers-reduced-motion: reduce) { .ntfx .ntf-record { animation: none; } }

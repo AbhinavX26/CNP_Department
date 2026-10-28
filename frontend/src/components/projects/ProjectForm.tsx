@@ -1,5 +1,6 @@
 import { useEffect, useId, useState } from 'react';
 import { api } from '../../services/api';
+import { Select } from '../common/Select';
 
 export function ProjectForm({ onSave, onCancel }: { onSave: () => void; onCancel: () => void }) {
   const [formData, setFormData] = useState({
@@ -100,9 +101,8 @@ export function ProjectForm({ onSave, onCancel }: { onSave: () => void; onCancel
                 <label className="ui-label" htmlFor={`${fieldId}-status`}>
                   Initial status
                 </label>
-                <select
+                <Select
                   id={`${fieldId}-status`}
-                  className="ui-field ui-field--select"
                   value={formData.status}
                   onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                   disabled={loading}
@@ -110,7 +110,7 @@ export function ProjectForm({ onSave, onCancel }: { onSave: () => void; onCancel
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                   <option value="completed">Completed</option>
-                </select>
+                </Select>
               </div>
             </div>
 

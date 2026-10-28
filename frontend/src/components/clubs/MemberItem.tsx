@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
 import '../../pages/Clubs/clubs.css';
+import { Select } from '../common/Select';
 
 function initials(name: string) {
   return name
@@ -94,16 +95,15 @@ export function MemberItem({ m, clubId, canManage, onRefresh }: { m: any, clubId
       {isEditing ? (
         <form className="cdx-member-form" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
           <label className="ui-visually-hidden" htmlFor={`member-type-${m._id}`}>Membership type</label>
-          <select
+          <Select
             id={`member-type-${m._id}`}
-            className="cdx-input"
             value={membershipType}
             onChange={e => setMembershipType(e.target.value)}
             disabled={loading}
           >
             <option value="member">Member</option>
             <option value="core_team">Core team</option>
-          </select>
+          </Select>
           {membershipType === 'core_team' && (
             <>
               <label className="ui-visually-hidden" htmlFor={`member-position-${m._id}`}>Position</label>

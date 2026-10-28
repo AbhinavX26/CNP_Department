@@ -2,10 +2,11 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { api } from '../../services/api';
 import { usePageLoading } from '../../context/LoadingContext';
-import { AvatarStack, Counter, KindGlyph, Segments } from '../../components/ui/vis';
+import { Counter, KindGlyph } from '../../components/ui/vis';
 import { Tooltip } from '../../components/ui/Tooltip';
 import { OpsOverlay } from './OpsOverlay';
 import './ops.css';
+import { ComboInput, Select } from '../../components/common/Select';
 
 interface InventoryPerson {
   _id?: string;
@@ -169,31 +170,48 @@ function RefreshIcon() {
   );
 }
 
-function ChevronDownIcon() {
+function IssuedIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <path d="m6 9 6 6 6-6" />
+      <path d="M12 4v10M8 10l4 4 4-4M5 19h14" />
     </svg>
   );
 }
 
-interface BinProps {
+function AlertIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M12 4 3.5 19h17L12 4Z" />
+      <path d="M12 10v4M12 16.6v.4" />
+    </svg>
+  );
+}
+
+function LayersIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="M12 4 3 9l9 5 9-5-9-5Z" />
+      <path d="m3 14 9 5 9-5" />
+    </svg>
+  );
+}
+
+interface ShelfRowProps {
   item: InventoryItem;
-  index: number;
   onAdjust: (item: InventoryItem) => void;
   onEdit: (item: InventoryItem) => void;
   onRemove: (item: InventoryItem) => void;
 }
 
 /**
- * One shelf cell. The fill is the reading: available stock against the item's
- * own total, drawn from the floor of the well. The dashed line is the item's
- * own reorder floor, so the policy is visible instead of explained.
+ * One row of the shelf directory. The meter is the reading: available stock against
+ * the item's own total. The tick is the item's own reorder floor, so the policy is
+ * visible instead of explained.
  */
-function Bin({ item, index, onAdjust, onEdit, onRemove }: BinProps) {
+function ShelfRow({ item, onAdjust, onEdit, onRemove }: ShelfRowProps) {
   const state = stockState(item);
   const ratio = ratioOf(item);
-  const threshold = thresholdOf(item);
+  const floor = item.minimumStock ?? 0;
   const facts = [
     `${item.availableQuantity} of ${item.totalQuantity} on the shelf`,
     state === 'low' ? 'low stock' : state === 'out' ? 'out of stock' : null,
@@ -206,80 +224,50 @@ function Bin({ item, index, onAdjust, onEdit, onRemove }: BinProps) {
     .join(', ');
 
   return (
-    <li
-      className={`ops-bin ops-bin--${state}`}
-      style={{ ...rise(index), '--ops-fill': ratio, '--ops-low': threshold } as CSSProperties}
-      aria-label={facts}
-      role="group"
-    >
-      <div className="ops-bin__top">
-        <span className="ops-bin__glyph" aria-hidden="true">
-          <KindGlyph kind="inventory" size={14} />
+    <li className={`mr-row inv-row inv-row--${state}`} aria-label={facts} role="group">
+      <span className="mr-cell mr-who">
+        <span className="mr-face inv-face" aria-hidden="true">
+          <KindGlyph kind="inventory" size={18} />
         </span>
-        <span
-          className="ops-bin__name"
-          title={item.description ? `${item.name} — ${item.description}` : item.name}
-        >
-          {item.name}
-        </span>
-        {state !== 'ok' && (
-          <span className={`ops-bin__state ops-bin__state--${state}`}>
-            <span className="ops-bin__dot" aria-hidden="true" />
-            {state === 'low' ? 'Low' : 'Out'}
+        <span className="mr-who-text">
+          <span className="mr-item" title={item.description ? `${item.name} — ${item.description}` : item.name}>
+            {item.name}
           </span>
-        )}
-        <div className="ops-bin__actions">
-          <button
-            type="button"
-            className="ui-icon-btn"
-            aria-label={`Adjust stock for ${item.name}`}
-            title="Adjust stock"
-            onClick={() => onAdjust(item)}
-          >
-            <RestockIcon />
-          </button>
-          <button
-            type="button"
-            className="ui-icon-btn"
-            aria-label={`Edit ${item.name}`}
-            title="Edit item"
-            onClick={() => onEdit(item)}
-          >
-            <EditIcon />
-          </button>
-          <button
-            type="button"
-            className="ui-icon-btn ops-icon--danger"
-            aria-label={`Delete ${item.name}`}
-            title="Delete item"
-            onClick={() => onRemove(item)}
-          >
-            <TrashIcon />
-          </button>
-        </div>
-      </div>
-
-      <div
-        className="ops-bin__well"
-        role="img"
-        aria-label={`${item.availableQuantity} of ${item.totalQuantity} available. Low under ${threshold + 1}.`}
-        title={`${item.availableQuantity} of ${item.totalQuantity} available · low under ${threshold + 1}`}
-      >
-        <span className="ops-bin__fill" aria-hidden="true" />
-        <span className="ops-bin__line" aria-hidden="true" />
-        <span className="ops-bin__hover" aria-hidden="true">
-          {[item.category, item.location ? `Shelf ${item.location}` : null, formatDay(item.updatedAt || item.createdAt)]
-            .filter(Boolean)
-            .join(' · ')}
+          <span className="mr-sub">
+            {[item.category, item.location ? `Shelf ${item.location}` : null].filter(Boolean).join(' · ') || 'No category'}
+          </span>
         </span>
-      </div>
-
-      <div className="ops-bin__base">
-        <span className="ops-bin__qty">
-          {item.availableQuantity}
-          <span className="ops-bin__of"> / {item.totalQuantity}</span>
+      </span>
+      <span className="mr-cell mr-stock">
+        <span
+          className={`mr-meter${state !== 'ok' ? ' is-short' : ''}`}
+          role="img"
+          aria-label={`${item.availableQuantity} of ${item.totalQuantity} available${floor > 0 ? `, low at ${floor}` : ''}`}
+          title={`${item.availableQuantity} of ${item.totalQuantity} available${floor > 0 ? ` · low at ${floor}` : ''} · updated ${formatDay(item.updatedAt || item.createdAt)}`}
+        >
+          <i style={{ width: `${ratio * 100}%` }} />
+          {floor > 0 ? <b style={{ left: `${thresholdOf(item) * 100}%` }} /> : null}
         </span>
-      </div>
+        <span className="mr-nums">
+          <strong>{item.availableQuantity}</strong>
+          <em>/</em>
+          {item.totalQuantity}
+        </span>
+      </span>
+      <span className="mr-cell">
+        <span className={`mr-pill inv-pill--${state}`}>{state === 'ok' ? 'In stock' : state === 'low' ? 'Low' : 'Out'}</span>
+      </span>
+      <span className="mr-cell mr-actions">
+        <button type="button" className="ui-icon-btn" aria-label={`Adjust stock for ${item.name}`} title="Adjust stock" onClick={() => onAdjust(item)}>
+          <RestockIcon />
+        </button>
+        <button type="button" className="ui-icon-btn" aria-label={`Edit ${item.name}`} title="Edit item" onClick={() => onEdit(item)}>
+          <EditIcon />
+        </button>
+        <button type="button" className="ui-icon-btn ops-icon--danger" aria-label={`Delete ${item.name}`} title="Delete item" onClick={() => onRemove(item)}>
+          <TrashIcon />
+        </button>
+      </span>
     </li>
   );
 }
@@ -552,32 +540,48 @@ export default function Inventory() {
     ? `${items.length}`
     : `${filteredItems.length} of ${items.length}`;
 
+  const stockPct = totals.totalUnits > 0 ? Math.round((totals.availableUnits / totals.totalUnits) * 100) : 0;
+  const filtersActive = query.trim().length > 0 || category !== 'all';
+  const issuedMap = new Map<string, { id: string; name: string; units: number }>();
+  allocations.forEach((allocation) => {
+    const id = allocation.projectId?._id || 'unknown';
+    const entry = issuedMap.get(id) ?? { id, name: allocation.projectId?.name || 'Unknown project', units: 0 };
+    entry.units += allocation.materialRequestId?.quantity || allocation.quantity || 1;
+    issuedMap.set(id, entry);
+  });
+  const issuedByProject = Array.from(issuedMap.values())
+    .sort((a, b) => b.units - a.units)
+    .slice(0, 6);
+  const maxIssued = issuedByProject[0]?.units ?? 0;
+  const restockList = items
+    .filter((item) => stockState(item) !== 'ok')
+    .sort((a, b) => severity[stockState(a)] - severity[stockState(b)] || ratioOf(a) - ratioOf(b))
+    .slice(0, 6);
+
   return (
-    <div className="ops-page">
-      <header className="ui-page-head ops-rise" style={rise(0)}>
-        <div className="ui-page-head__text">
-          <h1 className="ui-title">Inventory</h1>
+    <div className="ops-page mr">
+      <header className="mr-head">
+        <div>
+          <h1 className="mr-title">Inventory</h1>
+          <p className="mr-sub-head">What the store room holds, what has been issued to projects, and what is running low.</p>
         </div>
-        <div className="ui-page-actions ops-head-tools">
-          <div className="ui-search ops-search">
+        <div className="mr-tools">
+          <label className="mr-search">
             <SearchIcon />
-            <label className="ui-visually-hidden" htmlFor="ops-inventory-search">Search inventory</label>
             <input
-              id="ops-inventory-search"
-              className="ui-field"
               type="search"
               placeholder="Search items"
+              aria-label="Search inventory by name, category or shelf"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={loading}
             />
-          </div>
+          </label>
           {categories.length > 0 && (
             <div className="ops-select ops-filter">
               <label className="ui-visually-hidden" htmlFor="ops-inventory-category">Filter by category</label>
-              <select
+              <Select
                 id="ops-inventory-category"
-                className="ui-field ui-field--select"
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
                 disabled={loading}
@@ -586,180 +590,147 @@ export default function Inventory() {
                 {categories.map((value) => (
                   <option key={value} value={value}>{value}</option>
                 ))}
-              </select>
-              <ChevronDownIcon />
+              </Select>
             </div>
           )}
-          <button type="button" className="ui-btn ui-btn--primary" onClick={openCreate} disabled={loading}>
+          <button type="button" className="mr-btn" onClick={openCreate} disabled={loading}>
             <PlusIcon />
             Add item
           </button>
         </div>
       </header>
 
-      <div className="ops-body">
-        {error && (
-          <div className="ui-notice ui-notice--error" role="alert">
-            <div className="ui-grow">
-              <p>Inventory could not be loaded.</p>
-              <p className="ops-note">{error}</p>
-            </div>
-            <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={loadData}>Retry</button>
-          </div>
-        )}
+      {error && (
+        <div className="mr-state" role="alert">
+          <p className="mr-state-title">Inventory could not be loaded</p>
+          <p className="mr-state-text">{error}</p>
+          <button type="button" className="mr-btn mr-btn--quiet" onClick={loadData}>Retry</button>
+        </div>
+      )}
 
-        {loading ? (
-          <div className="ops-stack" aria-busy="true">
-            <div className="ops-console ops-console--skel" aria-hidden="true">
-              {[0, 1, 2].map((n) => (
-                <div className="ops-console__cell" key={n}>
-                  <div className="ui-skel ops-skel-line ops-skel-line--sm" />
-                  <div className="ui-skel ops-skel-line ops-skel-line--value" />
-                  <div className="ui-skel ops-skel-line ops-skel-line--rail" />
-                </div>
-              ))}
+      {loading ? (
+        <div className="mr-loading" aria-busy="true">
+          <div className="mr-tiles">
+            {[0, 1, 2, 3].map((n) => (
+              <span key={n} className="mr-skel mr-skel--tile" />
+            ))}
+          </div>
+          <span className="mr-skel mr-skel--table" />
+          <span className="ui-visually-hidden" role="status">Loading inventory</span>
+        </div>
+      ) : items.length === 0 ? (
+        <div className="mr-state">
+          <span className="mr-state-mark"><BoxIcon /></span>
+          <p className="mr-state-title">The store room is empty</p>
+          <p className="mr-state-text">Add the first item so project teams can request it.</p>
+          <button type="button" className="mr-btn" onClick={openCreate}>
+            <PlusIcon />
+            Add the first item
+          </button>
+        </div>
+      ) : (
+        <>
+          <section className="mr-tiles" aria-label="Store room totals">
+            <div className="mr-tile mr-tile--deep inv-tile">
+              <span className="mr-tile-icon"><BoxIcon /></span>
+              <span className="mr-tile-value"><Counter value={totals.availableUnits} /></span>
+              <span className="mr-tile-label">On the shelf</span>
+              <span className="mr-tile-note">of {totals.totalUnits} units · {stockPct}%</span>
+              <span
+                className="inv-tile-bar"
+                role="img"
+                aria-label={`${totals.availableUnits} of ${totals.totalUnits} units on the shelf`}
+              >
+                <i style={{ width: `${stockPct}%` }} />
+              </span>
             </div>
-            <div className="ops-region" aria-hidden="true">
-              <div className="ops-region__head">
-                <div className="ui-skel ops-skel-line ops-skel-line--head" />
-              </div>
-              <div className="ops-bins">
-                {[0, 1, 2, 3, 4, 5].map((n) => (
-                  <div className="ops-bin ops-bin--skel" key={n}>
-                    <div className="ui-skel ops-skel-line" />
-                    <div className="ui-skel ops-skel-well" />
-                    <div className="ui-skel ops-skel-line ops-skel-line--sm" />
+            <div className="mr-tile mr-tile--blue inv-tile">
+              <span className="mr-tile-icon"><IssuedIcon /></span>
+              <span className="mr-tile-value"><Counter value={totals.allocatedUnits} /></span>
+              <span className="mr-tile-label">Issued</span>
+              <span className="mr-tile-note">
+                {totals.projectNames.length} {totals.projectNames.length === 1 ? 'project' : 'projects'}
+              </span>
+            </div>
+            <div className="mr-tile mr-tile--sky inv-tile">
+              <span className="mr-tile-icon"><AlertIcon /></span>
+              <span className="mr-tile-value"><Counter value={totals.lowItems.length} /></span>
+              <span className="mr-tile-label">Low or out</span>
+              <span className="mr-tile-note">
+                {totals.lowItems.length > 0 ? 'At or below their reorder floor' : 'Every item above its floor'}
+              </span>
+            </div>
+            <div className="mr-tile mr-tile--mist inv-tile">
+              <span className="mr-tile-icon"><LayersIcon /></span>
+              <span className="mr-tile-value"><Counter value={items.length} /></span>
+              <span className="mr-tile-label">{items.length === 1 ? 'Item' : 'Items'}</span>
+              <span className="mr-tile-note">
+                {categories.length} {categories.length === 1 ? 'category' : 'categories'}
+              </span>
+            </div>
+          </section>
+
+          <div className="mr-layout">
+            <div className="mr-main">
+              <section className="mr-card ops-rise" style={rise(1)} aria-labelledby="ops-shelf-title">
+                <header className="mr-card-head">
+                  <div>
+                    <h2 className="mr-card-title" id="ops-shelf-title">Shelves</h2>
+                    <p className="mr-card-sub">
+                      {filtersActive ? `${shelfCount} items match` : 'Emptiest first'}
+                    </p>
                   </div>
-                ))}
-              </div>
-            </div>
-            <span className="ui-visually-hidden" role="status">Loading inventory</span>
-          </div>
-        ) : items.length === 0 ? (
-          <div className="ui-empty">
-            <span className="ui-empty__mark"><BoxIcon /></span>
-            <p className="ui-empty__title">The store room is empty</p>
-            <p className="ui-empty__text">Add the first item so project teams can request it.</p>
-            <button type="button" className="ui-btn ui-btn--primary ui-btn--sm" onClick={openCreate}>
-              <PlusIcon />
-              Add the first item
-            </button>
-          </div>
-        ) : (
-          <>
-            <section className="ops-console ops-rise" style={rise(1)} aria-label="Store room totals">
-              <div className="ops-console__cell ops-console__cell--first">
-                <span className="ops-console__label">On the shelf</span>
-                <span className="ops-console__num">
-                  <Counter value={totals.availableUnits} />
-                  <span className="ops-console__of">of {totals.totalUnits}</span>
-                </span>
-                <Segments
-                  value={totals.availableUnits}
-                  total={totals.totalUnits}
-                  segments={18}
-                  tone="accent"
-                  className="ops-console__scale"
-                  ariaLabel={`${totals.availableUnits} of ${totals.totalUnits} units on the shelf`}
-                />
-              </div>
+                  <div className="mr-card-tools">
+                    {filtersActive && (
+                      <button
+                        type="button"
+                        className="mr-link"
+                        onClick={() => {
+                          setQuery('');
+                          setCategory('all');
+                        }}
+                      >
+                        Clear filters
+                      </button>
+                    )}
+                    <span className="mr-count">{filteredItems.length}</span>
+                    <Tooltip label={`Updated ${formatStamp(totals.lastUpdated)}`}>
+                      <button
+                        type="button"
+                        className="ui-icon-btn"
+                        aria-label="Refresh inventory"
+                        onClick={loadData}
+                        disabled={loading}
+                      >
+                        <RefreshIcon />
+                      </button>
+                    </Tooltip>
+                  </div>
+                </header>
 
-              <div className="ops-console__cell">
-                <span className="ops-console__label">Issued</span>
-                <span className="ops-console__num">
-                  <Counter value={totals.allocatedUnits} />
-                  <span className="ops-console__of">units</span>
-                </span>
-                {totals.projectNames.length > 0 ? (
-                  <AvatarStack
-                    people={totals.projectNames.map((name) => ({ name }))}
-                    max={5}
-                    size="sm"
-                    className="ops-console__stack"
-                  />
+                {filteredItems.length > 0 ? (
+                  <ul className="mr-rows inv-rows">
+                    <li className="mr-row mr-row--head" aria-hidden="true">
+                      <span>Item</span><span>Stock, with reorder floor</span><span>Status</span><span />
+                    </li>
+                    {filteredItems.map((item) => (
+                      <ShelfRow
+                        key={item._id}
+                        item={item}
+                        onAdjust={openRestock}
+                        onEdit={openEdit}
+                        onRemove={openRemove}
+                      />
+                    ))}
+                  </ul>
                 ) : (
-                  <span className="ops-console__empty" aria-hidden="true" />
-                )}
-              </div>
-
-              <div className="ops-console__cell">
-                <Tooltip label="Items at or below their own reorder floor">
-                  <span className="ops-console__label ops-console__label--hint" tabIndex={0}>
-                    Low
-                  </span>
-                </Tooltip>
-                <span className="ops-console__num">
-                  <Counter value={totals.lowItems.length} />
-                  <span className="ops-console__of">items</span>
-                </span>
-                <span
-                  className="ops-ticks"
-                  role="img"
-                  aria-label={totals.lowItems.length
-                    ? `Low: ${totals.lowItems.map((item) => item.name).join(', ')}`
-                    : 'No low items'}
-                >
-                  {totals.lowItems.length > 0
-                    ? totals.lowItems.slice(0, 8).map((item) => (
-                        <span
-                          className="ops-ticks__cell is-on"
-                          key={item._id}
-                          title={`${item.name} · ${item.availableQuantity} of ${item.totalQuantity}`}
-                        />
-                      ))
-                    : Array.from({ length: 8 }, (_, n) => (
-                        <span className="ops-ticks__cell" key={n} aria-hidden="true" />
-                      ))}
-                  {totals.lowItems.length > 8 ? (
-                    <span className="ops-ticks__more">+{totals.lowItems.length - 8}</span>
-                  ) : null}
-                </span>
-              </div>
-            </section>
-
-            <section className="ops-region ops-rise" style={rise(2)} aria-labelledby="ops-shelf-title">
-              <header className="ops-region__head">
-                <div className="ops-region__titles">
-                  <h2 className="ops-region__title" id="ops-shelf-title">Shelves</h2>
-                  <span className="ops-region__n">{shelfCount}</span>
-                </div>
-                <div className="ops-region__tools">
-                  <Tooltip label={`Updated ${formatStamp(totals.lastUpdated)}`}>
+                  <div className="mr-empty">
+                    <span className="mr-state-mark"><SearchIcon /></span>
+                    <p className="mr-state-title">No items match</p>
+                    <p className="mr-state-text">Nothing on the shelves matches that search.</p>
                     <button
                       type="button"
-                      className="ui-icon-btn"
-                      aria-label="Refresh inventory"
-                      onClick={loadData}
-                      disabled={loading}
-                    >
-                      <RefreshIcon />
-                    </button>
-                  </Tooltip>
-                </div>
-              </header>
-
-              {filteredItems.length > 0 ? (
-                <ul className="ops-bins">
-                  {filteredItems.map((item, index) => (
-                    <Bin
-                      key={item._id}
-                      item={item}
-                      index={index}
-                      onAdjust={openRestock}
-                      onEdit={openEdit}
-                      onRemove={openRemove}
-                    />
-                  ))}
-                </ul>
-              ) : (
-                <div className="ops-empty-wrap">
-                  <div className="ui-empty">
-                    <span className="ui-empty__mark"><SearchIcon /></span>
-                    <p className="ui-empty__title">No items match</p>
-                    <p className="ui-empty__text">Nothing on the shelves matches that search.</p>
-                    <button
-                      type="button"
-                      className="ui-btn ui-btn--quiet ui-btn--sm"
+                      className="mr-btn mr-btn--quiet mr-btn--sm"
                       onClick={() => {
                         setQuery('');
                         setCategory('all');
@@ -768,62 +739,117 @@ export default function Inventory() {
                       Clear filters
                     </button>
                   </div>
-                </div>
-              )}
-            </section>
+                )}
+              </section>
 
-            <section className="ui-panel ops-rise" style={rise(3)} aria-labelledby="ops-alloc-title">
-              <header className="ui-panel__head">
-                <div className="ui-panel__titles">
-                  <h2 className="ui-panel__title" id="ops-alloc-title">Allocations</h2>
-                  <span className="ui-panel__meta">{allocations.length}</span>
-                </div>
-                <Tooltip label="Each approval deducts the request once and records it here">
-                  <span className="ops-info" tabIndex={0} aria-label="How allocations are recorded">i</span>
-                </Tooltip>
-              </header>
-              <div className="ui-panel__body ui-panel__body--flush">
+              <section className="mr-card ops-rise" style={rise(2)} aria-labelledby="ops-alloc-title">
+                <header className="mr-card-head">
+                  <div>
+                    <h2 className="mr-card-title" id="ops-alloc-title">Allocations</h2>
+                    <p className="mr-card-sub">Each approval deducts the request once and records it here</p>
+                  </div>
+                  <span className="mr-count">{allocations.length}</span>
+                </header>
                 {allocations.length > 0 ? (
-                  <ul className="ui-rows ops-allocs">
+                  <ul className="mr-rows inv-allocs">
+                    <li className="mr-row mr-row--head" aria-hidden="true">
+                      <span>Item</span><span>Allocated by</span><span>Date</span>
+                    </li>
                     {allocations.map((allocation) => (
-                      <li className="ui-row ops-alloc" key={allocation._id}>
-                        <span className="ops-alloc__delta">
-                          −{allocation.materialRequestId?.quantity || allocation.quantity || 1}
+                      <li className="mr-row" key={allocation._id}>
+                        <span className="mr-cell mr-who">
+                          <span className="mr-face inv-delta" aria-hidden="true">
+                            −{allocation.materialRequestId?.quantity || allocation.quantity || 1}
+                          </span>
+                          <span className="mr-who-text">
+                            <span className="mr-item">{allocation.inventoryItemId?.name || 'Deleted item'}</span>
+                            <span
+                              className="mr-sub"
+                              title={[
+                                allocation.projectId?.name,
+                                allocation.allocatedBy?.name ? `by ${allocation.allocatedBy.name}` : null,
+                                formatStamp(allocation.allocatedAt),
+                              ].filter(Boolean).join(' · ')}
+                            >
+                              {allocation.projectId?.name || 'Unknown project'}
+                            </span>
+                          </span>
                         </span>
-                        <div className="ui-row__main">
-                          <p className="ui-row__title">
-                            {allocation.inventoryItemId?.name || 'Deleted item'}
-                          </p>
-                          <p
-                            className="ui-row__sub"
-                            title={[
-                              allocation.projectId?.name,
-                              allocation.allocatedBy?.name
-                                ? `by ${allocation.allocatedBy.name}`
-                                : null,
-                              formatStamp(allocation.allocatedAt),
-                            ].filter(Boolean).join(' · ')}
-                          >
-                            {allocation.projectId?.name || 'Unknown project'}
-                          </p>
-                        </div>
-                        <span className="ops-alloc__when">
-                          {formatDay(allocation.allocatedAt)}
+                        <span className="mr-cell mr-by">{allocation.allocatedBy?.name || '—'}</span>
+                        <span className="mr-cell mr-date">{formatDay(allocation.allocatedAt)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="mr-empty">
+                    <span className="mr-state-mark"><BoxIcon /></span>
+                    <p className="mr-state-title">No allocations yet</p>
+                    <p className="mr-state-text">Stock leaves the store room when a request is approved.</p>
+                  </div>
+                )}
+              </section>
+            </div>
+
+            <aside className="mr-side" aria-label="Store room summary">
+              <section className="mr-card ops-rise" style={rise(2)} aria-labelledby="inv-restock-title">
+                <header className="mr-card-head">
+                  <div>
+                    <h2 className="mr-card-title" id="inv-restock-title">Needs restocking</h2>
+                    <p className="mr-card-sub">Select an item to adjust its stock</p>
+                  </div>
+                  <span className="mr-count">{totals.lowItems.length}</span>
+                </header>
+                {restockList.length > 0 ? (
+                  <ul className="mr-list">
+                    {restockList.map((item) => (
+                      <li key={item._id}>
+                        <button type="button" className="mr-list-row" onClick={() => openRestock(item)}>
+                          <span className="mr-list-text">
+                            <span className="mr-list-name">{item.name}</span>
+                            <span className="mr-list-sub">{item.location ? `Shelf ${item.location}` : item.category || 'No shelf set'}</span>
+                          </span>
+                          <span className={`mr-pill inv-pill--${stockState(item)}`}>
+                            {item.availableQuantity} / {item.totalQuantity}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="mr-note">Every item is above its reorder floor.</p>
+                )}
+              </section>
+
+              <section className="mr-card ops-rise" style={rise(3)} aria-labelledby="inv-issued-title">
+                <header className="mr-card-head">
+                  <div>
+                    <h2 className="mr-card-title" id="inv-issued-title">Issued by project</h2>
+                    <p className="mr-card-sub">Units allocated so far</p>
+                  </div>
+                  <span className="mr-count">{totals.allocatedUnits}</span>
+                </header>
+                {issuedByProject.length > 0 ? (
+                  <ul className="mr-ranks">
+                    {issuedByProject.map((entry) => (
+                      <li key={entry.id}>
+                        <span className="mr-rank inv-rank">
+                          <span className="mr-rank-name">{entry.name}</span>
+                          <span className="mr-meter mr-meter--thin" aria-hidden="true">
+                            <i style={{ width: `${maxIssued ? Math.round((entry.units / maxIssued) * 100) : 0}%` }} />
+                          </span>
+                          <b>{entry.units}</b>
                         </span>
                       </li>
                     ))}
                   </ul>
                 ) : (
-                  <div className="ops-empty">
-                    <p className="ops-empty__title">No allocations yet</p>
-                    <p>Stock leaves the store room when a request is approved.</p>
-                  </div>
+                  <p className="mr-note">Nothing has been issued yet.</p>
                 )}
-              </div>
-            </section>
-          </>
-        )}
-      </div>
+              </section>
+            </aside>
+          </div>
+        </>
+      )}
 
       {formOpen && (
         <OpsOverlay onClose={closeForm}>
@@ -862,21 +888,13 @@ export default function Inventory() {
 
                   <div>
                     <label className="ui-label" htmlFor="ops-item-category">Category</label>
-                    <input
+                    <ComboInput
                       id="ops-item-category"
-                      className="ui-field"
-                      type="text"
-                      list="ops-item-categories"
                       value={formData.category}
-                      onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                      autoComplete="off"
+                      onChange={(value) => setFormData({ ...formData, category: value })}
+                      suggestions={categories}
                       placeholder="Optional"
                     />
-                    <datalist id="ops-item-categories">
-                      {categories.map((value) => (
-                        <option key={value} value={value} />
-                      ))}
-                    </datalist>
                   </div>
 
                   <div>
