@@ -395,225 +395,226 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
           <div
             className="ui-overlay"
             onMouseDown={(event) => {
-            if (event.target === event.currentTarget) closeModal();
-          }}
-        >
-          <div
-            className="ui-modal ui-modal--wide"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby={`${fieldId}-title`}
+              if (event.target === event.currentTarget) closeModal();
+            }}
           >
-            <header className="ui-modal__head">
-              <div>
-                <h2 className="ui-h2" id={`${fieldId}-title`}>
-                  Request materials
-                </h2>
-              </div>
-              <button
-                type="button"
-                className="ui-icon-btn"
-                onClick={closeModal}
-                disabled={submitting}
-                aria-label="Close"
-              >
-                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                </svg>
-              </button>
-            </header>
-
-            <form onSubmit={handleSubmit}>
-              <div className="ui-modal__body ui-stack">
-                {submitError && (
-                  <div className="ui-notice ui-notice--error" role="alert">
-                    {submitError}
-                  </div>
-                )}
-                {submitSuccess && (
-                  <div className="ui-notice prj-notice--ok" role="status">
-                    {submitSuccess}
-                  </div>
-                )}
-
+            <div
+              className="ui-modal ui-modal--wide"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={`${fieldId}-title`}
+            >
+              <header className="ui-modal__head">
                 <div>
-                  <label className="ui-label" htmlFor={`${fieldId}-item`}>
-                    Material from central inventory
-                  </label>
-                  {loadingInventory ? (
-                    <span className="ui-skel" style={{ display: 'block', height: 40 }} />
-                  ) : (
-                    <select
-                      id={`${fieldId}-item`}
-                      className="ui-field ui-field--select"
-                      value={selectedItemId}
-                      onChange={(e) => {
-                        setSelectedItemId(e.target.value);
-                        setQuantity(1);
-                      }}
-                      required
-                      disabled={submitting}
-                    >
-                      <option value="" disabled>
-                        Choose an item
-                      </option>
-                      {inventoryItems.map((item) => (
-                        <option key={item._id} value={item._id} disabled={item.availableQuantity <= 0}>
-                          {item.name}
-                          {item.category ? ` (${item.category})` : ''}
-                          {item.availableQuantity > 0
-                            ? ` · ${item.availableQuantity} available`
-                            : ' · Out of stock'}
-                        </option>
-                      ))}
-                    </select>
-                  )}
+                  <h2 className="ui-h2" id={`${fieldId}-title`}>
+                    Request materials
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  className="ui-icon-btn"
+                  onClick={closeModal}
+                  disabled={submitting}
+                  aria-label="Close"
+                >
+                  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                  </svg>
+                </button>
+              </header>
 
-                  {selectedItem && (
-                    <div className="prj-stock">
-                      <div className="prj-stock__top">
-                        <span className={`ui-tag ${selectedItem.availableQuantity > 0 ? 'is-positive' : 'is-negative'}`}>
-                          {selectedItem.availableQuantity > 0
-                            ? `${selectedItem.availableQuantity} units available`
-                            : 'Out of stock'}
-                        </span>
-                        {selectedItem.location && <span className="ui-meta">{selectedItem.location}</span>}
-                      </div>
-                      {selectedItem.description && (
-                        <p className="prj-stock__text">{selectedItem.description}</p>
-                      )}
+              <form onSubmit={handleSubmit}>
+                <div className="ui-modal__body ui-stack">
+                  {submitError && (
+                    <div className="ui-notice ui-notice--error" role="alert">
+                      {submitError}
                     </div>
                   )}
-                </div>
+                  {submitSuccess && (
+                    <div className="ui-notice prj-notice--ok" role="status">
+                      {submitSuccess}
+                    </div>
+                  )}
 
-                <div className="ui-form-row ui-form-row--2">
                   <div>
-                    <label className="ui-label" htmlFor={`${fieldId}-specs`}>
-                      Specifications <span className="prj-label__hint">optional</span>
+                    <label className="ui-label" htmlFor={`${fieldId}-item`}>
+                      Material from central inventory
                     </label>
-                    <input
-                      id={`${fieldId}-specs`}
-                      type="text"
-                      className="ui-field"
-                      placeholder="e.g. 5V 2-channel relay module"
-                      value={specifications}
-                      onChange={(e) => setSpecifications(e.target.value)}
-                      disabled={submitting}
-                    />
+                    {loadingInventory ? (
+                      <span className="ui-skel" style={{ display: 'block', height: 40 }} />
+                    ) : (
+                      <select
+                        id={`${fieldId}-item`}
+                        className="ui-field ui-field--select"
+                        value={selectedItemId}
+                        onChange={(e) => {
+                          setSelectedItemId(e.target.value);
+                          setQuantity(1);
+                        }}
+                        required
+                        disabled={submitting}
+                      >
+                        <option value="" disabled>
+                          Choose an item
+                        </option>
+                        {inventoryItems.map((item) => (
+                          <option key={item._id} value={item._id} disabled={item.availableQuantity <= 0}>
+                            {item.name}
+                            {item.category ? ` (${item.category})` : ''}
+                            {item.availableQuantity > 0
+                              ? ` · ${item.availableQuantity} available`
+                              : ' · Out of stock'}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {selectedItem && (
+                      <div className="prj-stock">
+                        <div className="prj-stock__top">
+                          <span className={`ui-tag ${selectedItem.availableQuantity > 0 ? 'is-positive' : 'is-negative'}`}>
+                            {selectedItem.availableQuantity > 0
+                              ? `${selectedItem.availableQuantity} units available`
+                              : 'Out of stock'}
+                          </span>
+                          {selectedItem.location && <span className="ui-meta">{selectedItem.location}</span>}
+                        </div>
+                        {selectedItem.description && (
+                          <p className="prj-stock__text">{selectedItem.description}</p>
+                        )}
+                      </div>
+                    )}
                   </div>
+
+                  <div className="ui-form-row ui-form-row--2">
+                    <div>
+                      <label className="ui-label" htmlFor={`${fieldId}-specs`}>
+                        Specifications <span className="prj-label__hint">optional</span>
+                      </label>
+                      <input
+                        id={`${fieldId}-specs`}
+                        type="text"
+                        className="ui-field"
+                        placeholder="e.g. 5V 2-channel relay module"
+                        value={specifications}
+                        onChange={(e) => setSpecifications(e.target.value)}
+                        disabled={submitting}
+                      />
+                    </div>
+                    <div>
+                      <label className="ui-label" htmlFor={`${fieldId}-qty`}>
+                        Quantity
+                      </label>
+                      <input
+                        id={`${fieldId}-qty`}
+                        type="number"
+                        className="ui-field"
+                        min="1"
+                        max={maxAvailable || 1}
+                        value={quantity}
+                        onChange={(e) => setQuantity(e.target.value === '' ? '' : Math.max(1, Number(e.target.value)))}
+                        required
+                        disabled={submitting}
+                      />
+                      {Number(quantity) > maxAvailable && maxAvailable > 0 && (
+                        <p className="ui-error">
+                          Requested quantity exceeds the {maxAvailable} units in stock.
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="ui-label" htmlFor={`${fieldId}-qty`}>
-                      Quantity
+                    <label className="ui-label" htmlFor={`${fieldId}-reason`}>
+                      Reason
                     </label>
-                    <input
-                      id={`${fieldId}-qty`}
-                      type="number"
-                      className="ui-field"
-                      min="1"
-                      max={maxAvailable || 1}
-                      value={quantity}
-                      onChange={(e) => setQuantity(e.target.value === '' ? '' : Math.max(1, Number(e.target.value)))}
+                    <textarea
+                      id={`${fieldId}-reason`}
+                      className="ui-field ui-field--area"
+                      rows={3}
+                      placeholder="What milestone or experiment needs this material?"
+                      value={reason}
+                      onChange={(e) => setReason(e.target.value)}
                       required
                       disabled={submitting}
                     />
-                    {Number(quantity) > maxAvailable && maxAvailable > 0 && (
-                      <p className="ui-error">
-                        Requested quantity exceeds the {maxAvailable} units in stock.
-                      </p>
-                    )}
+                  </div>
+
+                  <div className="ui-form-row ui-form-row--2">
+                    <div>
+                      <label className="ui-label" htmlFor={`${fieldId}-doc`}>
+                        Document <span className="prj-label__hint">optional</span>
+                      </label>
+                      <input
+                        id={`${fieldId}-doc`}
+                        type="file"
+                        className="prj-file"
+                        accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                        onChange={handleDocumentChange}
+                        disabled={submitting}
+                      />
+                      {documentFile && (
+                        <div className="prj-file-chip prj-file-chip--selected">
+                          <FileMark />
+                          <span className="ui-truncate">{documentFile.name}</span>
+                          <span className="ui-meta">{(documentFile.size / 1024).toFixed(1)} KB</span>
+                          <button type="button" className="ui-icon-btn" onClick={() => setDocumentFile(null)} aria-label="Remove document">
+                            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                              <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
+                            </svg>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <label className="ui-label" htmlFor={`${fieldId}-photo`}>
+                        Reference photo <span className="prj-label__hint">optional</span>
+                      </label>
+                      <input
+                        id={`${fieldId}-photo`}
+                        type="file"
+                        className="prj-file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={handleImageChange}
+                        disabled={submitting}
+                      />
+                      {imagePreview && (
+                        <div className="prj-attach">
+                          <img src={imagePreview} alt="Component preview" />
+                          <button
+                            type="button"
+                            className="ui-btn ui-btn--ghost ui-btn--sm"
+                            onClick={() => {
+                              setImageFile(null);
+                              setImagePreview(null);
+                            }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="ui-label" htmlFor={`${fieldId}-reason`}>
-                    Reason
-                  </label>
-                  <textarea
-                    id={`${fieldId}-reason`}
-                    className="ui-field ui-field--area"
-                    rows={3}
-                    placeholder="What milestone or experiment needs this material?"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    required
-                    disabled={submitting}
-                  />
-                </div>
-
-                <div className="ui-form-row ui-form-row--2">
-                  <div>
-                    <label className="ui-label" htmlFor={`${fieldId}-doc`}>
-                      Document <span className="prj-label__hint">optional</span>
-                    </label>
-                    <input
-                      id={`${fieldId}-doc`}
-                      type="file"
-                      className="prj-file"
-                      accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                      onChange={handleDocumentChange}
-                      disabled={submitting}
-                    />
-                    {documentFile && (
-                      <div className="prj-file-chip prj-file-chip--selected">
-                        <FileMark />
-                        <span className="ui-truncate">{documentFile.name}</span>
-                        <span className="ui-meta">{(documentFile.size / 1024).toFixed(1)} KB</span>
-                        <button type="button" className="ui-icon-btn" onClick={() => setDocumentFile(null)} aria-label="Remove document">
-                          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                            <path d="m6 6 12 12M18 6 6 18" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" />
-                          </svg>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                  <div>
-                    <label className="ui-label" htmlFor={`${fieldId}-photo`}>
-                      Reference photo <span className="prj-label__hint">optional</span>
-                    </label>
-                    <input
-                      id={`${fieldId}-photo`}
-                      type="file"
-                      className="prj-file"
-                      accept="image/jpeg,image/png,image/webp"
-                      onChange={handleImageChange}
-                      disabled={submitting}
-                    />
-                    {imagePreview && (
-                      <div className="prj-attach">
-                        <img src={imagePreview} alt="Component preview" />
-                        <button
-                          type="button"
-                          className="ui-btn ui-btn--ghost ui-btn--sm"
-                          onClick={() => {
-                            setImageFile(null);
-                            setImagePreview(null);
-                          }}
-                        >
-                          Remove
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              <footer className="ui-modal__foot">
-                <button type="button" className="ui-btn ui-btn--ghost" onClick={closeModal} disabled={submitting}>
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="ui-btn ui-btn--primary"
-                  disabled={submitting || Number(quantity) > maxAvailable || maxAvailable <= 0}
-                >
-                  {submitting ? 'Submitting…' : 'Submit request'}
-                </button>
-              </footer>
-            </form>
-          </div>
-        </div>,
-        document.body
-      )}
+                <footer className="ui-modal__foot">
+                  <button type="button" className="ui-btn ui-btn--ghost" onClick={closeModal} disabled={submitting}>
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="ui-btn ui-btn--primary"
+                    disabled={submitting || Number(quantity) > maxAvailable || maxAvailable <= 0}
+                  >
+                    {submitting ? 'Submitting…' : 'Submit request'}
+                  </button>
+                </footer>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
     </section>
   );
 }
+

@@ -1,4 +1,5 @@
 import { LandingPoints, type LandingPoint } from './LandingPoints';
+import { PhotoTrack, PROJECT_PHOTOS } from './PhotoTrack';
 
 const SMC_POINTS: LandingPoint[] = [
   {
@@ -120,6 +121,9 @@ export function LandingSections() {
         </div>
       </section>
 
+      {/* ── 1st Photo Slide after Clubs · Club Gallery ────────────────────── */}
+      <PhotoTrack id="h1" title="Club Gallery" startIndex={0} />
+
       {/* ── GUIITAR Projects · head, screen, supports, the vision panel ────── */}
       <section className="landing-projects" id="projects">
         <div className="landing-container">
@@ -183,6 +187,9 @@ export function LandingSections() {
           </figure>
         </div>
       </section>
+
+      {/* ── 2nd Photo Slide after Projects · Project Gallery ──────────────── */}
+      <PhotoTrack id="h2" title="Project Gallery" photos={PROJECT_PHOTOS} />
 
       {/* ── How we help · the calendar, then four ruled answers ────────────── */}
       <section className="landing-how" id="how">

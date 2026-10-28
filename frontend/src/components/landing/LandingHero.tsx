@@ -1,132 +1,128 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
-interface LandingHeroProps {
-  signedIn: boolean;
-}
-
-const SCREENS = [
-  {
-    id: 'dashboard',
-    label: 'Dashboard',
-    src: '/screens/dashboard.webp',
-    alt: 'The CNP Department student dashboard: clubs joined, upcoming club events and unread notifications.',
-    caption: 'Clubs, projects and the next club events, on one student dashboard.',
-  },
-  {
-    id: 'clubs',
-    label: 'Clubs',
-    src: '/screens/clubs.webp',
-    alt: 'The clubs directory, listing each Student Managed Club with its faculty coordinator.',
-    caption: 'Every club, its members and its faculty coordinator in one directory.',
-  },
-  {
-    id: 'projects',
-    label: 'Projects',
-    src: '/screens/projects.webp',
-    alt: 'The projects hub, listing active projects with their status and team leader.',
-    caption: 'Active projects with their status and the student leading each team.',
-  },
+const HERO_PHOTOS = [
+  { src: '/photos/photo-8.jpg', alt: 'Campus events and outdoor club' },
+  { src: '/photos/project-1.png', alt: 'Robotics rover project team' },
+  { src: '/photos/photo-2.jpg', alt: 'Chess tournament club' },
+  { src: '/photos/project-3.jpg', alt: '3D printing prototyping lab' },
+  { src: '/photos/photo-5.jpg', alt: 'Basketball sports club' },
+  { src: '/photos/project-2.png', alt: 'Library project collaboration' },
 ];
 
-/**
- * Stage: the words on five columns, the product on seven. The frame's own tab bar
- * switches between the three views a student actually sees.
- */
+const HT = [
+  // [left%, top%, width_vw, height_vh, tx, ty, rot, index]
+  // Dynamic Floating Collage: 6 photos elegantly distributed around the center card with natural spacing & zero overlap
+  [3.5, 9, 14, 22, -0.9, -0.7, -2.5, 0],     // Top-Left outer
+  [18.5, 3, 12.5, 20, -0.4, -1, 1.5, 1],     // Top-Left inner (tucked cleanly above-left of core)
+  [4.5, 65, 17, 23, -0.85, 0.6, -2, 2],      // Bottom-Left
+  [76.5, 8, 17, 22, 0.9, -0.7, 2.5, 3],      // Top-Right outer
+  [68.5, 72, 14, 20, 0.4, 1, 1.5, 4],        // Bottom-Right inner (tucked cleanly below-right of core)
+  [76.5, 38.5, 17, 22, 0.9, 0, -1.5, 5],     // Mid-Right flank
+];
+
+interface LandingHeroProps {
+  signedIn?: boolean;
+}
+
 export function LandingHero({ signedIn }: LandingHeroProps) {
-  const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
-  const [held, setHeld] = useState(false);
+  const heroRef = useRef<HTMLElement>(null);
+  const coreRef = useRef<HTMLDivElement>(null);
+  const tilesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    SCREENS.forEach((screen) => {
-      const image = new Image();
-      image.src = screen.src;
-    });
+    const rm = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (rm) return;
+
+    const hero = heroRef.current;
+    const core = coreRef.current;
+    const tilesEl = tilesRef.current;
+    if (!hero || !core || !tilesEl) return;
+
+    const tl = tilesEl.children as HTMLCollectionOf<HTMLElement>;
+    let busy = false;
+
+    function upd() {
+      busy = false;
+      if (!hero || !core || !tl) return;
+      const vh = window.innerHeight;
+      const heroRect = hero.getBoundingClientRect();
+      const p = Math.min(Math.max((76 - heroRect.top) / (hero.offsetHeight - vh || 1), 0), 1);
+
+      for (let i = 0; i < tl.length; i++) {
+        const t = HT[i];
+        if (!t || !tl[i]) continue;
+        tl[i].style.transform = `translate(${t[4] * p * 50}vw, ${t[5] * p * 50}vh) rotate(${t[6] * (1 + p * 1.2)}deg) scale(${1 + p * 0.3})`;
+        tl[i].style.opacity = String(Math.max(1 - p * 1.05, 0));
+      }
+      // Smooth Hermite S-curve fade for hero core text card
+      const fadeProgress = Math.min(Math.max((p - 0.15) / 0.85, 0), 1);
+      const coreOpacity = 1 - (fadeProgress * fadeProgress * (3 - 2 * fadeProgress));
+      core.style.transform = `scale(${1 + p * 0.12})`;
+      core.style.opacity = String(Number(coreOpacity.toFixed(3)));
+    }
+
+    function sc() {
+      if (!busy) {
+        busy = true;
+        requestAnimationFrame(upd);
+      }
+    }
+
+    window.addEventListener('scroll', sc, { passive: true });
+    window.addEventListener('resize', sc);
+    upd();
+
+    return () => {
+      window.removeEventListener('scroll', sc);
+      window.removeEventListener('resize', sc);
+    };
   }, []);
 
-  useEffect(() => {
-    if (paused || held) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    const timer = window.setInterval(() => setActive((i) => (i + 1) % SCREENS.length), 6400);
-    return () => window.clearInterval(timer);
-  }, [paused, held]);
-
-  const screen = SCREENS[active];
-
   return (
-    <section className="landing-hero" id="top">
-      <div className="landing-container landing-hero-grid">
-        <div className="landing-hero-copy scroll-reveal">
-          <h1>Welcome to the CNP Department</h1>
-          <p className="landing-hero-line">Clubs and projects, organised, resourced and seen.</p>
-          <div className="landing-hero-actions">
-            <Link className="key key--primary" to={signedIn ? '/dashboard' : '/login'}>
-              {signedIn ? 'Open dashboard' : 'Log in'}
-            </Link>
-            <a className="key key--quiet" href="#clubs">
-              See what&rsquo;s inside
-            </a>
-          </div>
-        </div>
-
-        <div
-          className="landing-stage scroll-reveal scroll-reveal--scale scroll-reveal--delay-1"
-          onMouseEnter={() => setPaused(true)}
-          onMouseLeave={() => setPaused(false)}
-          onFocusCapture={() => setPaused(true)}
-          onBlurCapture={() => setPaused(false)}
-        >
-          <div className="landing-stage-frame">
-            <div className="landing-stage-bar">
-              <div className="landing-stage-tabs" role="tablist" aria-label="Product views">
-                {SCREENS.map((s, i) => (
-                  <button
-                    key={s.id}
-                    type="button"
-                    role="tab"
-                    id={`stage-tab-${s.id}`}
-                    aria-selected={i === active}
-                    aria-controls="stage-view"
-                    tabIndex={i === active ? 0 : -1}
-                    className={`landing-stage-tab${i === active ? ' is-active' : ''}`}
-                    onClick={() => setActive(i)}
-                  >
-                    {s.label}
-                  </button>
-                ))}
-              </div>
-              <span className="landing-stage-role">Student view</span>
-              <button
-                type="button"
-                className="landing-stage-hold"
-                aria-pressed={held}
-                onClick={() => setHeld((value) => !value)}
+    <section className="hero" id="hero" ref={heroRef}>
+      <div>
+        <div id="tiles" ref={tilesRef}>
+          {HT.map((t, idx) => {
+            const photo = HERO_PHOTOS[idx % HERO_PHOTOS.length];
+            return (
+              <div
+                key={idx}
+                className="ph"
+                style={{
+                  left: `${t[0]}%`,
+                  top: `${t[1]}%`,
+                  width: `${t[2]}vw`,
+                  height: `${t[3]}vh`,
+                  transform: `rotate(${t[6]}deg)`,
+                }}
               >
-                {held ? 'Play' : 'Pause'}
-                <span className="visually-hidden"> the view rotation</span>
-              </button>
-            </div>
-
-            <div className="landing-stage-view" id="stage-view" role="tabpanel" aria-labelledby={`stage-tab-${screen.id}`}>
-              <img
-                key={screen.id}
-                className="landing-stage-img"
-                src={screen.src}
-                alt={screen.alt}
-                width={1440}
-                height={900}
-                loading="eager"
-                fetchPriority="high"
-                decoding="async"
-              />
-              <span className="landing-stage-corner" aria-hidden="true" />
-            </div>
-
-            <div className="landing-stage-foot">
-              <p className="landing-stage-caption" aria-live="polite">{screen.caption}</p>
-            </div>
-          </div>
+                <img
+                  src={photo.src}
+                  alt={photo.alt}
+                  loading="eager"
+                  decoding="async"
+                />
+              </div>
+            );
+          })}
+        </div>
+        <div className="core" id="core" ref={coreRef}>
+          <div className="logo">CNP</div>
+          <h1>Welcome to the CNP Department</h1>
+          <p>Clubs and projects, organised, resourced and seen.</p>
+          {signedIn ? (
+            <Link className="btn" to="/dashboard">
+              Open dashboard
+            </Link>
+          ) : (
+            <Link className="btn" to="/login">
+              Log in
+            </Link>
+          )}
+          <a className="btn ghost" href="#clubs">
+            See what’s inside
+          </a>
         </div>
       </div>
     </section>
