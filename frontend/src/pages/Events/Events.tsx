@@ -10,6 +10,7 @@ import { Counter, KindGlyph } from '../../components/ui/vis';
 import { Tooltip } from '../../components/ui/Tooltip';
 import './events.css';
 import './events-theme.css';
+import { Select } from '../../components/common/Select';
 
 const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 const DAY_MS = 86_400_000;
@@ -946,9 +947,8 @@ export default function Events() {
               <label className="ui-visually-hidden" htmlFor="evt-club-filter">
                 Filter by club
               </label>
-              <select
+              <Select
                 id="evt-club-filter"
-                className="ui-field ui-field--select"
                 value={selectedClubFilter}
                 onChange={e => {
                   setSelectedClubFilter(e.target.value);
@@ -961,8 +961,7 @@ export default function Events() {
                     {c.name}
                   </option>
                 ))}
-              </select>
-              <Icon className="evt-i evt-i--sm">{MARK.down}</Icon>
+              </Select>
             </div>
           )}
 

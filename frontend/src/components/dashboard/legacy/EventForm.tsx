@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../../../services/api';
+import { Select } from '../../common/Select';
 
 export interface EventFormProps {
   clubId?: string;
@@ -154,8 +155,7 @@ export function EventForm({ clubId, availableClubs, event, onSave, onCancel }: E
           {availableClubs && availableClubs.length > 1 && !event && (
             <div className="auth-field" style={{ margin: 0 }}>
               <label>Select Organizing Club</label>
-              <select
-                className="input"
+              <Select
                 value={selectedClubId}
                 onChange={e => setSelectedClubId(e.target.value)}
                 required
@@ -166,7 +166,7 @@ export function EventForm({ clubId, availableClubs, event, onSave, onCancel }: E
                     {c.name}
                   </option>
                 ))}
-              </select>
+              </Select>
             </div>
           )}
 

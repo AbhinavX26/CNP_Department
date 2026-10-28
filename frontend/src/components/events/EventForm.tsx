@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { api } from '../../services/api';
 import '../../pages/Events/events.css';
+import { Select } from '../common/Select';
 
 export interface EventFormProps {
   clubId?: string;
@@ -166,9 +167,8 @@ export function EventForm({ clubId, availableClubs, event, onSave, onCancel }: E
             <label className="ui-label" htmlFor="evt-field-club">
               Organising club
             </label>
-            <select
+            <Select
               id="evt-field-club"
-              className="ui-field ui-field--select"
               value={selectedClubId}
               onChange={e => setSelectedClubId(e.target.value)}
               required
@@ -181,7 +181,7 @@ export function EventForm({ clubId, availableClubs, event, onSave, onCancel }: E
                   {c.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         )}
 
