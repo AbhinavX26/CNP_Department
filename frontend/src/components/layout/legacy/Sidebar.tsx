@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { NAV_GROUPS } from '../Sidebar';
 
@@ -49,10 +49,9 @@ export function Sidebar() {
 
   return (
     <nav className="main-sidebar">
-      <div className="brand">
-        <div className="dot"></div>
-        <span>CNP Portal</span>
-      </div>
+      <Link to="/" className="brand" aria-label="CNP Department homepage">
+        <img className="brand-logo" src="/branding/cnp-community-emblem.png?v=4" alt="" />
+      </Link>
 
       <nav className="nav-links" aria-label="Main navigation">
         {NAV_GROUPS.map((group) => {

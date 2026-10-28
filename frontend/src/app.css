@@ -130,7 +130,8 @@ body {
   height: var(--header-height);
   display: flex;
   align-items: center;
-  padding: 0 24px;
+  justify-content: center;
+  padding: 0;
   font-weight: 700;
   font-size: 1.1rem;
   color: var(--text);
@@ -4952,6 +4953,13 @@ input[type="number"]:focus {
   background: var(--color-accent);
   box-shadow: 0 0 0 4px var(--color-accent-glow);
 }
+.main-sidebar .brand-logo {
+  flex: none;
+  width: min(100%, 170px);
+  height: 50px;
+  object-fit: contain;
+  background: transparent;
+}
 .main-nav-btn.active::before { background: var(--color-accent); }
 .main-nav-btn:focus-visible { outline-color: var(--color-focus); }
 .main-content { background: var(--color-paper); }
@@ -4968,6 +4976,10 @@ input[type="number"]:focus {
 .student-dash-overview-attention li::before,
 .student-dash-notification-count,
 .student-dash-notification-dot { background: var(--color-accent); }
+.student-dash-header .student-dash-notification-count {
+  background: #fff;
+  color: var(--color-graphite);
+}
 .student-dash-header-actions .btn-primary {
   background: var(--color-accent);
   color: var(--color-accent-ink);

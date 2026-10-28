@@ -124,29 +124,43 @@ export default function About() {
           <h1 className="ab-title"><em>Meet Our</em><br />Developers</h1>
         </div>
         <p className="ab-brief">
-          CNP Portal brings the department&rsquo;s Student Managed Clubs and GUIITAR projects onto one platform.
-          Students join clubs and projects, coordinators and mentors review requests, and everyone follows events and
-          notices in one place. It was designed and built end to end by the four students below.
+          Meet the four developers of the CNP Department who gave everything they had into planning, plotting and bringing this idea to life. 
+          They used their time and energy to make this project a reality. Their efforts and dedication have lead to the fruition of this project.
+          
         </p>
       </header>
 
       <ul className="ab-grid">
         {DEVELOPERS.map((dev) => (
           <li key={dev.id}>
-            <button
-              type="button"
-              className="ab-card"
-              onClick={(e) => show(dev, e.currentTarget)}
-              aria-haspopup="dialog"
-              aria-label={`${dev.name}, ${dev.designation}. Open profile`}
-            >
-              <Portrait dev={dev} className="ab-card-img" />
-              <span className="ab-card-veil" aria-hidden="true" />
-              <span className="ab-card-tag">
-                <strong>{dev.name}</strong>
-                <span>{dev.designation}</span>
-              </span>
-            </button>
+            <div className="ab-card-wrap">
+              <button
+                type="button"
+                className="ab-card"
+                onClick={(e) => show(dev, e.currentTarget)}
+                aria-haspopup="dialog"
+                aria-label={`${dev.name}, ${dev.designation}. Open profile`}
+              >
+                <Portrait dev={dev} className="ab-card-img" />
+                <span className="ab-card-veil" aria-hidden="true" />
+                <span className="ab-card-tag">
+                  <strong>{dev.name}</strong>
+                  <span>{dev.designation}</span>
+                </span>
+              </button>
+              <div className="ab-card-footer" role="group" aria-label={`${dev.name} social profiles`}>
+                {dev.links?.github ? (
+                  <a href={dev.links.github} target="_blank" rel="noreferrer">GitHub</a>
+                ) : (
+                  <span aria-disabled="true" title="Add this developer's GitHub URL in developers.ts">GitHub</span>
+                )}
+                {dev.links?.linkedin ? (
+                  <a href={dev.links.linkedin} target="_blank" rel="noreferrer">LinkedIn</a>
+                ) : (
+                  <span aria-disabled="true" title="Add this developer's LinkedIn URL in developers.ts">LinkedIn</span>
+                )}
+              </div>
+            </div>
           </li>
         ))}
       </ul>

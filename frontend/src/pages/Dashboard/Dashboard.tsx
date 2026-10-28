@@ -11,6 +11,24 @@ import { usePageLoading } from '../../context/LoadingContext';
 import LoadingScreen from '../../components/LoadingScreen';
 import './role-dashboard.css';
 
+const STAFF_HONORIFICS = new Set([
+  'dr', 'doctor', 'mr', 'mister', 'mrs', 'ms', 'miss', 'prof', 'professor',
+  'rev', 'reverend', 'hon', 'honorable', 'honourable', 'sir', 'dame', 'mx',
+  'er', 'engineer', 'capt', 'captain', 'col', 'colonel', 'gen', 'general',
+  'lt', 'lieutenant', 'major',
+]);
+
+function staffGreetingName(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return name;
+
+  const title = parts[0].replace(/[.,]+$/, '');
+  if (parts.length > 1 && STAFF_HONORIFICS.has(title.toLowerCase())) {
+    return `${title[0].toUpperCase()}${title.slice(1).toLowerCase()}. ${parts[parts.length - 1]}`;
+  }
+  return parts[0];
+}
+
 export default function Dashboard() {
   const { user } = useAuth();
   const { setPageLoading } = usePageLoading();
@@ -141,6 +159,7 @@ export default function Dashboard() {
 
   if (loading) return <LoadingScreen isReady={!loading} />;
   if (!user) return null;
+  const greetingName = staffGreetingName(user.name);
 
   let roleLabel = 'Dashboard';
   let roleIntro = '';
@@ -194,7 +213,7 @@ export default function Dashboard() {
             {roleLabel} · {new Date().toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric' })}
           </p>
           <h2 className="student-dash-title">
-            Welcome back, <span className="student-dash-title-accent">{user.name.trim().split(/\s+/)[0] || user.name}</span>
+            Welcome back, <span className="student-dash-title-accent">{greetingName}</span>
           </h2>
           <p className="student-dash-lede">{roleIntro}</p>
         </div>
@@ -396,6 +415,7 @@ export default function Dashboard() {
             </div>
           </div>
 
+          <div className="role-dashboard-sidebar">
           {/* Pending Join Requests */}
           <div className="card" style={{ display: 'flex', flexDirection: 'column' }}>
             <div className="card-header" style={{ marginBottom: '16px' }}>
@@ -469,6 +489,42 @@ export default function Dashboard() {
                 <div className="empty-state" style={{ margin: 'auto', width: '100%' }}>No clubs assigned yet.</div>
               )}
             </div>
+          </div>
+
+          {/* Profile & Notifications Card */}
+          <div className="card">
+            <div className="card-header" style={{ marginBottom: '16px' }}>
+              <h3 className="card-title">Profile & Notifications</h3>
+            </div>
+            <div className="card-body">
+              <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>Unread Notifications</div>
+                  <div style={{ fontSize: '13px', color: 'var(--text-faint)' }}>Stay updated with administrative alerts</div>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {unreadNotifications > 0 && <span className="badge badge-student" style={{ background: 'var(--warn-soft)', color: 'var(--warn)', padding: '6px 12px' }}>{unreadNotifications} New</span>}
+                  <button className="btn btn-sm btn-outline" onClick={() => navigate('/notifications')}>View All</button>
+                </div>
+              </div>
+              
+              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {user.profileImage ? (
+                    <img src={user.profileImage} alt={user.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary-glow)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
+                      {user.name.charAt(0)}
+                    </div>
+                  )}
+                  <div>
+                    <UserDisplay user={user} showEmail={false} />
+                  </div>
+                </div>
+                <button className="btn btn-sm btn-outline" onClick={() => navigate('/profile')}>Edit Profile</button>
+              </div>
+            </div>
+          </div>
           </div>
 
           {/* University Events */}
@@ -578,40 +634,7 @@ export default function Dashboard() {
             </div>
           </div>
 
-          {/* Profile & Notifications Card */}
-          <div className="card">
-            <div className="card-header" style={{ marginBottom: '16px' }}>
-              <h3 className="card-title">Profile & Notifications</h3>
-            </div>
-            <div className="card-body">
-              <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div>
-                  <div style={{ fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>Unread Notifications</div>
-                  <div style={{ fontSize: '13px', color: 'var(--text-faint)' }}>Stay updated with administrative alerts</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  {unreadNotifications > 0 && <span className="badge badge-student" style={{ background: 'var(--warn-soft)', color: 'var(--warn)', padding: '6px 12px' }}>{unreadNotifications} New</span>}
-                  <button className="btn btn-sm btn-outline" onClick={() => navigate('/notifications')}>View All</button>
-                </div>
-              </div>
-              
-              <div style={{ borderTop: '1px solid var(--border)', paddingTop: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  {user.profileImage ? (
-                    <img src={user.profileImage} alt={user.name} style={{ width: '40px', height: '40px', borderRadius: '50%', objectFit: 'cover' }} />
-                  ) : (
-                    <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--primary-glow)', color: 'var(--primary)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
-                      {user.name.charAt(0)}
-                    </div>
-                  )}
-                  <div>
-                    <UserDisplay user={user} showEmail={false} />
-                  </div>
-                </div>
-                <button className="btn btn-sm btn-outline" onClick={() => navigate('/profile')}>Edit Profile</button>
-              </div>
-            </div>
-          </div>
+
         </div>
       )}
 

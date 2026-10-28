@@ -11,6 +11,7 @@ import { ProjectJoinRequests } from '../../components/projects/ProjectJoinReques
 import { usePageLoading } from '../../context/LoadingContext';
 import './projects.css';
 import './project-details.css';
+import '../../components/projects/project-panels.css';
 
 interface ProjectPerson {
   _id?: string;
