@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth, isProfileComplete } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import { AuthStory, type AuthSlide } from './AuthStory';
@@ -104,6 +104,15 @@ export default function Login() {
         />
 
         <div className="auth-panel">
+          <div className="auth-panel__top">
+            <Link to="/" className="auth-back-btn" aria-label="Back to Homepage">
+              <svg viewBox="0 0 24 24" fill="none" width="14" height="14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                <path d="M19 12H5m6-6-6 6 6 6" />
+              </svg>
+              <span>Back to Homepage</span>
+            </Link>
+          </div>
+
           <div className="auth-panel__inner">
             <header className="auth-head">
               <h2 className="auth-head__title">Welcome back</h2>

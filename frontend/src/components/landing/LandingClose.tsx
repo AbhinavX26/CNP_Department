@@ -14,9 +14,15 @@ export function LandingClose({ signedIn }: LandingCloseProps) {
         </div>
 
         <div className="landing-close-action scroll-reveal scroll-reveal--delay-1">
-          <Link className="key key--primary key--lg" to={signedIn ? '/dashboard' : '/login'}>
-            {signedIn ? 'Open dashboard' : 'Log in'}
-          </Link>
+          {signedIn ? (
+            <Link className="key key--primary key--lg" to="/dashboard">
+              Open dashboard
+            </Link>
+          ) : (
+            <Link className="key key--primary key--lg" to="/login">
+              Log in
+            </Link>
+          )}
           <p className="landing-close-note">One sign-in for students, faculty and administrators.</p>
         </div>
       </div>
