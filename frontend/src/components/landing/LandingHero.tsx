@@ -2,12 +2,12 @@ import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 const HERO_PHOTOS = [
-  { src: '/photos/photo-8.jpg', alt: 'Campus events and outdoor club' },
-  { src: '/photos/project-1.png', alt: 'Robotics rover project team' },
+  { src: '/photos/X1.jpeg', alt: 'NCC cadets ceremony and parade' },
+  { src: '/photos/X2.jpeg', alt: 'Students celebrating at campus cultural fest' },
   { src: '/photos/photo-2.jpg', alt: 'Chess tournament club' },
-  { src: '/photos/project-3.jpg', alt: '3D printing prototyping lab' },
-  { src: '/photos/photo-5.jpg', alt: 'Basketball sports club' },
-  { src: '/photos/project-2.png', alt: 'Library project collaboration' },
+  { src: '/photos/X3.jpeg', alt: 'GSFC University event celebration on stage' },
+  { src: '/photos/X4.jpeg', alt: 'Volleyball sports match on campus court' },
+  { src: '/photos/X5.jpeg', alt: 'Student and faculty collaboration meeting' },
 ];
 
 const HT = [

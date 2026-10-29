@@ -105,10 +105,10 @@ export function LandingSections() {
           <figure className="landing-shot landing-shot--clubs scroll-reveal scroll-reveal--scale scroll-reveal--delay-2">
             <div className="landing-shot-frame">
               <img
-                src="/screens/clubs-detail.webp"
-                alt="The clubs board: Photography Club as the lead club with its core-team split, then Coding Club and Robotics Club, each with its faculty coordinator."
-                width={725}
-                height={402}
+                src="/screens/ClubsBoard.png"
+                alt="The clubs board: club directory, member stats, coordinators, and active memberships."
+                width={1917}
+                height={862}
                 loading="lazy"
                 decoding="async"
               />
@@ -122,7 +122,7 @@ export function LandingSections() {
       </section>
 
       {/* ── 1st Photo Slide after Clubs · Club Gallery ────────────────────── */}
-      <PhotoTrack id="h1" title="Club Gallery" startIndex={0} />
+      <PhotoTrack id="h1" title="Some Snapshots" startIndex={0} />
 
       {/* ── GUIITAR Projects · head, screen, supports, the vision panel ────── */}
       <section className="landing-projects" id="projects">
@@ -145,7 +145,7 @@ export function LandingSections() {
             <figure className="landing-shot landing-shot--projects scroll-reveal scroll-reveal--scale">
               <div className="landing-shot-frame">
                 <img
-                  src="/screens/projects-detail.webp"
+                  src="/screens/ProjectsBoard.png"
                   alt="The projects ledger: Campus Energy Monitor, Autonomous Rover and Smart Irrigation System, each with its status, team and leader."
                   width={784}
                   height={352}
@@ -188,8 +188,8 @@ export function LandingSections() {
         </div>
       </section>
 
-      {/* ── 2nd Photo Slide after Projects · Project Gallery ──────────────── */}
-      <PhotoTrack id="h2" title="Project Gallery" photos={PROJECT_PHOTOS} />
+      {/* ── 2nd Photo Slide after Projects · Snapshots once more ─────────── */}
+      <PhotoTrack id="h2" title="Snapshots once more" photos={PROJECT_PHOTOS} />
 
       {/* ── How we help · the calendar, then four ruled answers ────────────── */}
       <section className="landing-how" id="how">
@@ -198,7 +198,7 @@ export function LandingSections() {
             <figure className="landing-shot landing-shot--events scroll-reveal scroll-reveal--scale">
               <div className="landing-shot-frame">
                 <img
-                  src="/screens/events-detail.webp"
+                  src="/screens/EventsBoard.png"
                   alt="The club events calendar for October 2026, with upcoming and past events marked and the next three events listed beside it."
                   width={725}
                   height={530}
@@ -210,7 +210,7 @@ export function LandingSections() {
             </figure>
 
             <div className="landing-how-copy scroll-reveal scroll-reveal--delay-1">
-              <h2>Managing clubs and projects, together</h2>
+              <h2>Managing clubs and projects, together</h2><br />
               <p className="landing-lead">
                 Clubs, projects, events, notifications and material requests, handled in one place.
               </p>
