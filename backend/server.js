@@ -37,10 +37,18 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // ─── Middleware ───────────────────────────────────────────────────────────────
-// Allow requests from the React dev server (Vite default: 5173)
+// Allow requests from local frontend (Vite default: 5173, CRA: 3000) and
+// the production frontend configured via process.env.CLIENT_URL (e.g. Vercel deployment).
+// Missing CLIENT_URL safely falls back to local origins only; arbitrary origins are rejected.
+const defaultOrigins = ['http://localhost:5173', 'http://localhost:3000'];
+const configuredOrigins = process.env.CLIENT_URL
+  ? process.env.CLIENT_URL.split(',').map((origin) => origin.trim().replace(/\/+$/, '')).filter(Boolean)
+  : [];
+const allowedOrigins = Array.from(new Set([...defaultOrigins, ...configuredOrigins]));
+
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'http://localhost:3000'],
+    origin: allowedOrigins,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
     credentials: true,
   })
