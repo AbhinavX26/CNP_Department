@@ -99,7 +99,7 @@ export function EventCard({
                 flexShrink: 0,
               }}
             >
-              🏛
+              {clubName.charAt(0).toUpperCase()}
             </div>
           )}
           <div style={{ minWidth: 0 }}>
@@ -164,14 +164,12 @@ export function EventCard({
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px', fontSize: '13px', color: 'var(--text-muted)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ color: 'var(--primary)', fontSize: '14px' }}>📅</span>
             <span>
               <strong style={{ color: 'var(--text)' }}>Date:</strong> {dateTimeDisplay}
             </span>
           </div>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ color: 'var(--warn)', fontSize: '14px' }}>📍</span>
             <span>
               <strong style={{ color: 'var(--text)' }}>Location:</strong> {event.location}
             </span>
@@ -199,7 +197,6 @@ export function EventCard({
         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: 'auto', marginBottom: canManage ? '14px' : '0' }}>
           {event.eventLink && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-              <span>🔗</span>
               <a
                 href={event.eventLink}
                 target="_blank"
@@ -217,7 +214,6 @@ export function EventCard({
 
           {event.relatedDocument?.url && (
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-              <span>📎</span>
               <a
                 href={event.relatedDocument.url}
                 target="_blank"

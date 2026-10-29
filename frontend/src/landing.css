@@ -547,6 +547,7 @@
 
 .landing-clubs-copy { min-width: 0; }
 .landing-clubs-copy h2 { max-width: 14ch; }
+.landing-clubs-copy .landing-lead { margin-top: var(--space-lg); }
 
 /* ── Points · details under the row ──────────────────────────────────────── */
 
@@ -662,7 +663,7 @@
   object-fit: cover;
   object-position: top left;
 }
-.landing-shot--clubs .landing-shot-frame img { aspect-ratio: 725 / 402; }
+.landing-shot--clubs .landing-shot-frame img { aspect-ratio: 1917 / 862; }
 .landing-shot--projects .landing-shot-frame img { aspect-ratio: 784 / 352; }
 .landing-shot--events .landing-shot-frame img { aspect-ratio: 725 / 530; }
 

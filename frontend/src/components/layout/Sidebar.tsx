@@ -1,6 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 
 /**
  * Destinations, one row each. `icon` is a key into NAV_ICON_PATHS (it used to hold
@@ -80,9 +79,7 @@ interface SidebarProps {
 
 export function Sidebar({ onClose }: SidebarProps = {}) {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const isDark = theme === 'dark';
 
   if (!user) return null;
 
@@ -153,46 +150,6 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
             <span className="rail-role">{roleLabel(user.role)}</span>
           </span>
         </div>
-
-        {/* Appearance is a preference, not a destination: it lives with the
-            account row, remembers the choice, and never follows the device. */}
-        <button
-          type="button"
-          className="rail-theme"
-          role="switch"
-          aria-checked={isDark}
-          aria-label="Dark mode"
-          title={isDark ? 'Switch to light' : 'Switch to dark'}
-          onClick={toggleTheme}
-        >
-          <span className="rail-theme__glyph" aria-hidden="true">
-            {isDark ? (
-              <svg viewBox="0 0 24 24" fill="none" focusable="false">
-                <path
-                  d="M20 14.2A8 8 0 0 1 9.8 4a8.2 8.2 0 1 0 10.2 10.2Z"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" fill="none" focusable="false">
-                <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.7" />
-                <path
-                  d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                />
-              </svg>
-            )}
-          </span>
-          <span className="rail-theme__label">{isDark ? 'Dark' : 'Light'}</span>
-          <span className="rail-theme__track" aria-hidden="true">
-            <span className="rail-theme__knob" />
-          </span>
-        </button>
 
         <button type="button" className="rail-signout" onClick={handleSignOut}>
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
