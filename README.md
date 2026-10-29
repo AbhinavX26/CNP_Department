@@ -22,14 +22,6 @@ The platform provides a unified public showcase and distinct, role-tailored work
 
 ---
 
-<p align="center">
-  <img src="docs/gifs/tour.gif" alt="CNP Department Platform Tour" width="100%" />
-  <br/>
-  <sub>Interactive live tour: student dashboard, keyboard command palette, club directory, and events calendar.</sub>
-</p>
-
----
-
 ## Table of Contents
 
 - [Problem Statement & Objectives](#problem-statement--objectives)
@@ -64,10 +56,6 @@ The platform provides a unified public showcase and distinct, role-tailored work
   - [Project Updates & Mentor Feedback](#project-updates--mentor-feedback)
 - [Cloudinary Media Storage Integration](#cloudinary-media-storage-integration)
 - [REST API Reference](#rest-api-reference)
-- [Production Deployment Guide](#production-deployment-guide)
-  - [MongoDB Atlas](#1-mongodb-atlas-database)
-  - [Render (Backend API)](#2-render-backend-web-service)
-  - [Vercel (Frontend SPA)](#3-vercel-frontend-deployment)
 - [Testing & Quality Assurance](#testing--quality-assurance)
 - [Troubleshooting & Common Pitfalls](#troubleshooting--common-pitfalls)
 - [Future Improvements](#future-improvements)
@@ -653,9 +641,6 @@ cd backend
 | `npm run seed` | Flushes development collections and seeds fresh demo data for all five roles. |
 | `npm run backfill` | Executes idempotent schema backfill script for missing document attributes (`minimumStock`, `Notification.kind`). |
 | `npm test` | Runs the full Vitest backend test suite (278 tests across 15 files) using an ephemeral in-memory MongoDB database. |
-| `npm run test:watch` | Runs Vitest in interactive watch mode for backend TDD. |
-| `npm run test:coverage` | Generates a backend V8 statement, branch, and function code coverage report. |
-| `npm run test:cloudinary` | Runs an isolated verification test against configured Cloudinary credentials. |
 
 ### Frontend Scripts (`frontend/package.json`)
 
@@ -669,10 +654,6 @@ cd frontend
 | `npm run build` | Compiles TypeScript (`tsc`) and generates an optimized production build in `dist/`. |
 | `npm run preview` | Locally serves the production build generated in `dist/` for verification. |
 | `npm test` | Executes the Vitest frontend test suite (100 tests) in a JSDOM environment. |
-| `npm run test:watch` | Runs Vitest in watch mode for frontend component and helper testing. |
-| `npm run test:coverage` | Generates a frontend V8 test coverage report. |
-
----
 
 ## Authentication & Authorization
 
@@ -1025,69 +1006,6 @@ Base API Path: `/api` (All responses follow `{ success: boolean, message?: strin
 
 ---
 
-## Production Deployment Guide
-
-### 1. MongoDB Atlas Database
-1. Create a free or dedicated cluster on [MongoDB Atlas](https://www.mongodb.com/cloud/atlas).
-2. Under **Database Access**, create a database user with `readWriteAnyDatabase` privileges.
-3. Under **Network Access**, add IP address `0.0.0.0/0` (allow access from anywhere) to permit connections from dynamic cloud application containers.
-4. Click **Connect** → **Drivers** (Node.js) and copy the connection string:
-   ```text
-   mongodb+srv://<username>:<password>@cluster0.abcde.mongodb.net/cnp_department?retryWrites=true&w=majority
-   ```
-5. Replace `<password>` with your database user password and specify `cnp_department` as the database name.
-
----
-
-### 2. Render (Backend Web Service)
-1. Sign in to [Render](https://render.com/) and click **New +** → **Web Service**.
-2. Connect your Git repository.
-3. Configure the service settings:
-   - **Name:** `cnp-department-api`
-   - **Root Directory:** `backend`
-   - **Runtime:** `Node`
-   - **Build Command:** `npm install`
-   - **Start Command:** `npm start`
-4. Add the following **Environment Variables** in Render's dashboard:
-   - `NODE_ENV`: `production`
-   - `PORT`: `5000`
-   - `MONGODB_URI`: *Your MongoDB Atlas connection URI*
-   - `JWT_SECRET`: *Your secure random 64-character secret*
-   - `JWT_EXPIRES_IN`: `7d`
-   - `CLIENT_URL`: `https://your-frontend-app.vercel.app` *(update once frontend is deployed)*
-   - `REGISTRATION_ROLES`: `student`
-   - `CLOUDINARY_CLOUD_NAME`: *Your Cloudinary cloud name*
-   - `CLOUDINARY_API_KEY`: *Your Cloudinary API key*
-   - `CLOUDINARY_API_SECRET`: *Your Cloudinary API secret*
-5. Deploy the web service. Once healthy, your API endpoint will be available at:
-   `https://cnp-department-api.onrender.com`
-
----
-
-### 3. Vercel (Frontend Deployment)
-1. Sign in to [Vercel](https://vercel.com/) and click **Add New...** → **Project**.
-2. Import your Git repository.
-3. Configure project settings:
-   - **Framework Preset:** `Vite`
-   - **Root Directory:** Click Edit and select `frontend`
-   - **Build Command:** `npm run build`
-   - **Output Directory:** `dist`
-4. Add the following **Environment Variable**:
-   - `VITE_API_URL`: `https://cnp-department-api.onrender.com/api` *(no trailing slash)*
-5. Configure client-side routing rewrites:
-   Create a file named [`frontend/vercel.json`](frontend/vercel.json) if not already present:
-   ```json
-   {
-     "rewrites": [
-       { "source": "/(.*)", "destination": "/index.html" }
-     ]
-   }
-   ```
-6. Click **Deploy**. Vercel will build the TypeScript code and deploy your SPA.
-7. Return to Render and update the backend's `CLIENT_URL` variable with your live Vercel URL (e.g., `https://cnp-department.vercel.app`).
-
----
-
 ## Testing & Quality Assurance
 
 The repository includes **378 automated tests** covering HTTP contracts, role matrices, race-condition defenses, and state machines.
@@ -1098,21 +1016,6 @@ cd backend  && npm test     # 278 passed in ~25s
 cd ../frontend && npm test  # 100 passed in ~5s
 ```
 
-### Test Strategy & Architecture
-
-| Target | Test Runner | Test Environment | HTTP Engine | Database Engine | Tests | Coverage |
-|---|---|---|---|---|---|---|
-| **Backend API** | Vitest 5 | Node.js (Native ESM) | Supertest 7 | `mongodb-memory-server` | 278 | 74% Statements / 83% Functions |
-| **Frontend Core** | Vitest 5 | JSDOM | Stubbed `fetch` | None (Isolated) | 100 | 96% Statements / 99% Lines |
-
-### Key Invariants Verified by Tests
-- **Role Gate Enforcement:** Every mutating endpoint is tested against all 5 roles to verify that students cannot create clubs, coordinators cannot mutate projects outside their scope, and only project admins can approve material requests.
-- **Race Condition Prevention:** Verified that concurrent join requests for the same student and club trigger partial unique index duplicate key errors (`409 Conflict`) rather than duplicate active memberships.
-- **Stock Arithmetic Integrity:** Validates that inventory quantities never become fractional or negative, and that deleting an item with active allocations is rejected with `409 Conflict`.
-- **Stateless 401 Recovery:** Verifies that expired credentials trigger a custom unauthorized event, purge `cnp_auth_token` from `localStorage`, and redirect cleanly without UI freezes.
-- **Profile Completeness Validation:** Asserts that incomplete student profiles cannot perform state mutations.
-
----
 
 ## Troubleshooting & Common Pitfalls
 
@@ -1146,19 +1049,6 @@ cd ../frontend && npm test  # 100 passed in ~5s
   VITE_API_URL=http://localhost:5001/api
   ```
 
-### 5. Cloudinary Upload Failure: `Must supply api_key`
-- **Cause:** Missing or incorrect Cloudinary credentials.
-- **Fix:** If testing uploads, verify `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET` in `backend/.env`. If you do not have Cloudinary credentials, the application will function normally using fallback placeholder graphics.
-
-### 6. MongoDB Index Build Failure (`E11000 duplicate key error`)
-- **Cause:** Building the new partial unique index on `JoinRequest` will fail if an existing development database already has duplicate pending requests.
-- **Fix:** Run the deduplication aggregation query or reset your local development database via:
-  ```bash
-  cd backend && npm run seed
-  ```
-
----
-
 ## Future Improvements
 
 - **Multi-Document Replica Set Transactions:** Replace compensating rollback logic in approval workflows with native MongoDB multi-document transactions (`session.withTransaction()`).
@@ -1184,4 +1074,4 @@ cd ../frontend && npm test  # 100 passed in ~5s
 ### License
 This project is licensed under the **ISC License**. See [`backend/package.json`](backend/package.json) for details.
 
-Developed for the **Centre for Networked Programmes (CNP)**, GSFC University, Vadodara, Gujarat, India.
+Developed for the **Club and project department(CNP)**, GSFC University, Vadodara, Gujarat, India.
