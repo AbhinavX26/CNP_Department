@@ -27,7 +27,7 @@ export const DEVELOPERS: Developer[] = [
     designation: 'Frontend Developer | Project Planner',
     photo: '/team/dev-2.jpeg',
     bio: 'The planner and plotter, Abhinav made the inner frontend by creating every all the dashboard and components for each and every role. Planning the project as well as main frontend was his contribution, along with error handling of the website.',
-    links: { github: 'https://github.com/AbhinavX26', linkedin: 'www.linkedin.com/in/abhinav-nair-4a1601369' },
+    links: { github: 'https://github.com/AbhinavX26', linkedin: 'https://in.linkedin.com/in/abhinav-nair-4a1601369' },
   },
   {
     id: 'dev-3',
@@ -35,7 +35,7 @@ export const DEVELOPERS: Developer[] = [
     designation: 'Backend Developer | Database Designer',
     photo: '/team/dev-3.png',
     bio: 'Backend engineer and database designer, Nisarg made sure that every feature of the website functioned the way it was meant to. Bringing the planning and features to life, he made sure the website worked in intended ways and the data stored remained safe.',
-    links: { github: 'https://github.com/Nisarg-Priyadarshi', linkedin: 'www.linkedin.com/in/nisarg-priyadarshi-92a25b379' },
+    links: { github: 'https://github.com/Nisarg-Priyadarshi', linkedin: 'https://in.linkedin.com/in/nisarg-priyadarshi-92a25b379' },
   },
   {
     id: 'dev-4',

@@ -1,0 +1,203 @@
+/* Loader: a small laptop on a frosted-glass backdrop.
+   Lives beside LoadingScreen (imported by it) so the scene is styled in every layout. */
+
+@keyframes lp-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes lp-fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+@keyframes lp-scroll {
+  from { transform: translateY(0); }
+  to { transform: translateY(-50%); }
+}
+@keyframes lp-bar-wait {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 1; }
+}
+@keyframes lp-pop {
+  from { opacity: 0; transform: scale(0.82); }
+  to { opacity: 1; transform: scale(1); }
+}
+@keyframes lp-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+/* ── Backdrop: see-through, blurred ──────────────────────────────────────── */
+
+.shell-loader {
+  position: fixed;
+  inset: 0;
+  /* Above the route rail, which is `--z-toast + 10`. */
+  z-index: calc(var(--z-toast, 1000) + 20);
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  overflow: hidden;
+  background: rgba(14, 26, 52, 0.28);
+  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  backdrop-filter: blur(14px) saturate(1.15);
+  animation: lp-fade 160ms ease-out both;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .shell-loader { background: rgba(14, 26, 52, 0.78); }
+}
+
+/* The app is already mounted underneath while this fades. */
+.shell-loader.is-leaving {
+  pointer-events: none;
+  animation: lp-fade-out 220ms ease-in-out both;
+}
+
+.shell-loader--inline {
+  position: relative;
+  inset: auto;
+  min-height: 60vh;
+  z-index: auto;
+}
+
+/* ── Laptop ──────────────────────────────────────────────────────────────── */
+
+.lp {
+  --lp-green: #3dff8a;
+  width: 168px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  filter: drop-shadow(0 14px 26px rgba(4, 10, 28, 0.38));
+}
+
+.lp__lid {
+  width: 128px;
+  aspect-ratio: 16 / 10;
+  padding: 5px;
+  background: #1b2434;
+  border-radius: 9px 9px 3px 3px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+}
+
+.lp__screen {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #031008;
+  box-shadow: inset 0 0 14px rgba(61, 255, 138, 0.14);
+}
+
+/* Faint scanlines. */
+.lp__screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.22) 0 1px, transparent 1px 3px);
+  pointer-events: none;
+}
+
+.lp-code {
+  position: absolute;
+  inset: 0;
+  padding: 4px 5px;
+  overflow: hidden;
+  font: 600 6px/8px ui-monospace, 'SFMono-Regular', Menlo, Consolas, monospace;
+  letter-spacing: 0.02em;
+  color: var(--lp-green);
+  text-shadow: 0 0 4px rgba(61, 255, 138, 0.7);
+  white-space: pre;
+  transition: opacity 120ms ease-out;
+}
+.lp-code__track {
+  animation: lp-scroll 2.4s linear infinite;
+}
+.lp-code__col {
+  display: flex;
+  flex-direction: column;
+}
+.lp-code__line:nth-child(3n) { opacity: 0.55; }
+.lp-code__line:nth-child(5n) { opacity: 0.8; }
+
+/* Smile: hidden until ready. */
+.lp__face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  opacity: 0;
+}
+.lp__eye { fill: var(--lp-green); }
+.lp__mouth {
+  fill: none;
+  stroke: var(--lp-green);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+}
+.lp__face { filter: drop-shadow(0 0 3px rgba(61, 255, 138, 0.8)); }
+
+/* Ready: the code stops dead and the screen becomes a smile. */
+.lp.is-done .lp-code { opacity: 0; }
+.lp.is-done .lp-code__track { animation-play-state: paused; }
+.lp.is-done .lp__face {
+  opacity: 1;
+  animation: lp-pop 160ms ease-out both;
+}
+.lp.is-done .lp__mouth { animation: lp-draw 200ms ease-out 40ms both; }
+
+.lp__base {
+  width: 168px;
+  height: 7px;
+  margin-top: -1px;
+  background: linear-gradient(#c3ccdc, #8d98ad);
+  border-radius: 1px 1px 10px 10px;
+  position: relative;
+}
+.lp__base::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  width: 30px;
+  height: 3px;
+  transform: translateX(-50%);
+  background: #6e7a90;
+  border-radius: 0 0 4px 4px;
+}
+
+/* ── Progress ────────────────────────────────────────────────────────────── */
+
+.lp__bar {
+  width: 128px;
+  height: 3px;
+  margin-top: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.28);
+}
+.lp__fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--lp-green);
+  box-shadow: 0 0 6px rgba(61, 255, 138, 0.8);
+  transition: width 200ms ease-out;
+}
+.lp__bar.is-waiting .lp__fill { animation: lp-bar-wait 1s ease-in-out infinite; }
+
+/* ── Reduced motion: still code, still bar ───────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .shell-loader,
+  .shell-loader.is-leaving { animation-duration: 1ms; }
+  .lp-code__track,
+  .lp__bar.is-waiting .lp__fill,
+  .lp.is-done .lp__face,
+  .lp.is-done .lp__mouth { animation: none; }
+  .lp.is-done .lp__mouth { stroke-dashoffset: 0; }
+  .lp__fill { transition: none; }
+}

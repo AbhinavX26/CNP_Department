@@ -1,0 +1,737 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Sign in · the diary
+   Thin white smoke clears to a closed diary (dark gradient cover, emblem). The cover
+   swings open, pages flip fast, and two pages settle: a printed welcome on the left,
+   a ruled page written in pen on the right.
+
+   Every end state is written under data-phase="open"; the keyframes only travel to it.
+   `data-instant` (reduced motion, Skip, tests) switches every animation off.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#app:has(.dy-stage) {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #060b1d;
+}
+
+.dy-stage {
+  /* Geometry. One book height drives the page width, the ruling and the type. */
+  --bk-h: min(700px, calc(100dvh - 56px));
+  --bk-w: min(calc(var(--bk-h) * 1.5), calc(100vw - 32px));
+  --inset: 14px;
+  --gap: 12px;
+  --line: calc((var(--bk-h) - 2 * var(--inset)) / 17);
+
+  /* Paper and ink. */
+  --paper: #fbf8f0;
+  --paper-edge: #e6dec9;
+  --rule: #c9d7ec;
+  --margin: rgba(226, 104, 104, 0.5);
+  --pen: #17307e;
+  --pen-soft: #2a3f93;
+  --pen-red: #bf2f2f;
+  --pencil: #8b95ad;
+  --print: #122549;
+  --print-muted: #4d5b78;
+  --navy: #0c1a47;
+  --blue: #0462d3;
+
+  --dy-hand: 'Caveat', 'Segoe Print', 'Bradley Hand', 'Chalkboard SE', 'Comic Sans MS', cursive;
+  --dy-ease: cubic-bezier(0.45, 0.05, 0.25, 1);
+
+  --cloud-a: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='900' viewBox='0 0 1400 900'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0032 0.0058' numOctaves='5' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 2.3 -0.52'/%3E%3C/filter%3E%3Crect width='1400' height='900' filter='url(%23n)'/%3E%3C/svg%3E");
+  --cloud-b: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='900' viewBox='0 0 1400 900'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0042 0.0072' numOctaves='5' seed='23' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 2.2 -0.48'/%3E%3C/filter%3E%3Crect width='1400' height='900' filter='url(%23n)'/%3E%3C/svg%3E");
+  --cloud-c: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1400' height='900' viewBox='0 0 1400 900'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25' color-interpolation-filters='sRGB'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.0028 0.0050' numOctaves='5' seed='41' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 2.4 -0.58'/%3E%3C/filter%3E%3Crect width='1400' height='900' filter='url(%23n)'/%3E%3C/svg%3E");
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 .45  0 0 0 0 .38  0 0 0 0 .25  0 0 0 .55 -.22'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)'/%3E%3C/svg%3E");
+  --leather: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260'%3E%3Cfilter id='l'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.55' numOctaves='3' seed='11' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 1.1 -.35'/%3E%3C/filter%3E%3Crect width='260' height='260' filter='url(%23l)'/%3E%3C/svg%3E");
+
+  position: relative;
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  padding: 28px 16px;
+  overflow: clip;
+  isolation: isolate;
+  color: var(--print);
+  font-family: var(--font-body, system-ui, sans-serif);
+  background:
+    radial-gradient(1100px 640px at 50% 38%, rgba(18, 56, 140, 0.55), transparent 70%),
+    radial-gradient(900px 500px at 12% 100%, rgba(4, 98, 211, 0.18), transparent 70%),
+    linear-gradient(180deg, #0a1230 0%, #060b1d 100%);
+  -webkit-font-smoothing: antialiased;
+}
+
+.dy-stage *,
+.dy-stage *::before,
+.dy-stage *::after { box-sizing: border-box; }
+
+/* ── The scene ───────────────────────────────────────────────────────────── */
+
+.dy-scene {
+  position: relative;
+  width: var(--bk-w);
+  height: var(--bk-h);
+  transition: filter 900ms ease;
+}
+/* Seen through the smoke the diary is soft; it sharpens as the smoke leaves. */
+.dy-stage[data-phase='smoke'] .dy-scene { filter: blur(12px); }
+
+.dy-book {
+  position: absolute;
+  inset: 0;
+  perspective: 2600px;
+  transform: translateX(-25%);
+}
+.dy-stage[data-phase='opening'] .dy-book { animation: dy-slide 1000ms cubic-bezier(0.5, 0, 0.2, 1) both; }
+.dy-stage[data-phase='open'] .dy-book { transform: none; }
+
+@keyframes dy-slide {
+  from { transform: translateX(-25%); }
+  to { transform: translateX(0); }
+}
+
+/* The desk shadow and the back board. */
+.dy-shadow {
+  position: absolute;
+  left: 3%;
+  right: 3%;
+  bottom: -26px;
+  height: 44px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.6), transparent);
+  filter: blur(10px);
+  clip-path: inset(-60px -60px -60px 50%);
+}
+.dy-stage[data-phase='opening'] .dy-shadow { animation: dy-shadow-open 1000ms cubic-bezier(0.5, 0, 0.2, 1) both; }
+.dy-stage[data-phase='open'] .dy-shadow { clip-path: inset(-60px); }
+@keyframes dy-shadow-open {
+  from { clip-path: inset(-60px -60px -60px 50%); }
+  to { clip-path: inset(-60px); }
+}
+
+.dy-board {
+  position: absolute;
+  left: 50%;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 0;
+  border-radius: 3px 16px 16px 3px;
+  background: linear-gradient(145deg, #0a1538, #0a2f78 72%, #0b4fb5);
+  box-shadow: 0 34px 60px -24px rgba(0, 0, 0, 0.7), inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+}
+
+/* ── Leaves ──────────────────────────────────────────────────────────────── */
+
+.dy-leaf {
+  --z-closed: calc(60 - var(--i, 0));
+  --z-open: calc(10 + var(--i, 0));
+  --dur: 560ms;
+  --delay: calc(520ms + var(--i, 0) * 120ms);
+  position: absolute;
+  left: 50%;
+  top: var(--inset);
+  width: calc(50% - var(--gap));
+  height: calc(100% - 2 * var(--inset));
+  z-index: var(--z-closed);
+  transform-origin: 0 50%;
+  transform-style: preserve-3d;
+  transform: rotateY(0deg);
+}
+.dy-leaf--cover {
+  --z-closed: 100;
+  --z-open: 5;
+  --dur: 1000ms;
+  --delay: 0ms;
+  top: 0;
+  width: 50%;
+  height: 100%;
+}
+.dy-stage[data-phase='opening'] .dy-leaf { animation: dy-flip var(--dur) var(--dy-ease) var(--delay) both; }
+.dy-stage[data-phase='open'] .dy-leaf { transform: rotateY(-180deg); z-index: var(--z-open); }
+
+@keyframes dy-flip {
+  0% { transform: rotateY(0deg); z-index: var(--z-closed); }
+  49.9% { z-index: var(--z-closed); }
+  50% { z-index: var(--z-open); }
+  100% { transform: rotateY(-180deg); z-index: var(--z-open); }
+}
+
+.dy-face {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+.dy-face--back { transform: rotateY(180deg); }
+
+/* A face in motion darkens a little, like paper turning away from the light. */
+.dy-face::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(90deg, rgba(10, 18, 48, 0.5), rgba(10, 18, 48, 0.05));
+  opacity: 0;
+}
+.dy-stage[data-phase='opening'] .dy-face::after { animation: dy-shade var(--dur) ease-in-out var(--delay) both; }
+@keyframes dy-shade {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 0.38; }
+}
+
+/* Paper leaves: ruled, margin, a shade at the spine, a faint grain. */
+.dy-leaf:not(.dy-leaf--cover) .dy-face {
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(90deg, rgba(60, 44, 12, 0.2), rgba(60, 44, 12, 0) 8%),
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--line) - 1px), var(--rule) calc(var(--line) - 1px), var(--rule) var(--line)),
+    var(--grain);
+  border-radius: 2px 8px 8px 2px;
+  box-shadow: inset -1px 0 0 var(--paper-edge);
+}
+.dy-leaf:not(.dy-leaf--cover) .dy-face--back {
+  border-radius: 8px 2px 2px 8px;
+  box-shadow: inset 1px 0 0 var(--paper-edge);
+  background-image:
+    linear-gradient(270deg, rgba(60, 44, 12, 0.2), rgba(60, 44, 12, 0) 8%),
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--line) - 1px), var(--rule) calc(var(--line) - 1px), var(--rule) var(--line)),
+    var(--grain);
+}
+/* The page the welcome note lands on: plain, no lines. */
+.dy-leaf:not(.dy-leaf--cover) .dy-face--back:empty {
+  background-image: linear-gradient(270deg, rgba(60, 44, 12, 0.22), rgba(60, 44, 12, 0) 9%), var(--grain);
+  border-radius: 8px 2px 2px 8px;
+}
+.dy-leaf:not(.dy-leaf--cover) .dy-face::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 13%;
+  width: 2px;
+  background: var(--margin);
+}
+.dy-leaf:not(.dy-leaf--cover) .dy-face--back:empty::before { display: none; }
+
+/* What is written on them. */
+.dy-notes { position: absolute; inset: 0; }
+.dy-notes__line {
+  position: absolute;
+  left: var(--x);
+  top: calc(var(--line) * (var(--r) - 1) + var(--line) * 0.12);
+  margin: 0;
+  white-space: nowrap;
+  font: 600 calc(var(--line) * 0.62) / 1 var(--dy-hand);
+  color: var(--pen-soft);
+  opacity: 0.88;
+  transform: rotate(var(--rot));
+  transform-origin: left center;
+}
+.dy-notes__doodle {
+  position: absolute;
+  right: 12%;
+  top: calc(var(--line) * (var(--r) - 1));
+  width: calc(var(--line) * 1.5);
+  color: var(--pen-red);
+  opacity: 0.8;
+}
+.dy-doodle { display: block; width: 100%; height: auto; }
+
+/* ── The cover ───────────────────────────────────────────────────────────── */
+
+.dy-cover,
+.dy-cover-m__book {
+  background:
+    radial-gradient(120% 80% at 24% 6%, rgba(255, 255, 255, 0.18), transparent 56%),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0) 9%),
+    linear-gradient(90deg, transparent 5.2%, rgba(255, 255, 255, 0.13) 6%, transparent 7.4%),
+    linear-gradient(145deg, #0c1a47 0%, #0b3f9c 58%, #0462d3 118%);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08), inset -3px 0 0 rgba(0, 0, 0, 0.25);
+}
+.dy-cover-m__book { position: relative; }
+.dy-cover { border-radius: 4px 16px 16px 4px; }
+.dy-cover::before,
+.dy-cover-m__book::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: var(--leather);
+  background-size: 260px 260px;
+  mix-blend-mode: soft-light;
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.dy-cover-art { position: absolute; inset: 0; }
+.dy-cover-art__stitch {
+  position: absolute;
+  inset: 5% 5% 5% 11%;
+  border: 2px dashed rgba(170, 205, 255, 0.4);
+  border-radius: 10px;
+}
+.dy-cover-art__emblem {
+  position: absolute;
+  left: 53%;
+  top: 44%;
+  width: 66%;
+  height: auto;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.5));
+  user-select: none;
+}
+.dy-cover-art__title {
+  position: absolute;
+  left: 11%;
+  right: 5%;
+  bottom: 11%;
+  margin: 0;
+  text-align: center;
+  font: 600 clamp(9px, calc(var(--bk-h) * 0.0165), 12px) / 1.6 var(--font-body, system-ui, sans-serif);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #cfe3ff;
+}
+.dy-cover-art__title span { color: #6db2ff; }
+
+/* The inside of the cover is the left board once it has swung open. */
+.dy-inside {
+  border-radius: 4px 16px 16px 4px;
+  background:
+    radial-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1.6px) 0 0 / 14px 14px,
+    linear-gradient(145deg, #0a1538, #0a2f78 72%, #0b4fb5);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07), inset 14px 0 28px -10px rgba(0, 0, 0, 0.5);
+}
+
+/* ── Left page: printed, no lines ────────────────────────────────────────── */
+
+.dy-page {
+  position: absolute;
+  top: var(--inset);
+  bottom: var(--inset);
+}
+.dy-page--left {
+  left: var(--gap);
+  width: calc(50% - var(--gap));
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 7% 0 5%;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+}
+.dy-stage[data-phase='opening'] .dy-page--left { animation: dy-write 560ms ease-out 1500ms both; }
+.dy-stage[data-phase='open'] .dy-page--left { opacity: 1; }
+@keyframes dy-write {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+.dy-plate {
+  display: grid;
+  place-items: center;
+  padding: calc(var(--bk-h) * 0.017) calc(var(--bk-h) * 0.034);
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 120% at 20% 0%, rgba(255, 255, 255, 0.16), transparent 60%),
+    linear-gradient(135deg, #0c1a47, #0b3f9c 62%, #0462d3);
+  box-shadow: 0 12px 24px -12px rgba(12, 26, 71, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+.dy-plate img {
+  display: block;
+  width: auto;
+  height: calc(var(--bk-h) * 0.078);
+  user-select: none;
+}
+
+.dy-welcome {
+  margin: calc(var(--bk-h) * 0.03) 0 calc(var(--bk-h) * 0.02);
+  font: 800 clamp(26px, calc(var(--bk-h) * 0.056), 40px) / 1.12 var(--font-display, var(--font-body, system-ui, sans-serif));
+  letter-spacing: -0.02em;
+  color: var(--navy);
+  text-wrap: balance;
+}
+.dy-brief {
+  max-width: 31ch;
+  margin: 0;
+  font: 400 clamp(12.5px, calc(var(--bk-h) * 0.02), 14.5px) / 1.65 var(--font-body, system-ui, sans-serif);
+  color: var(--print-muted);
+  text-wrap: pretty;
+}
+.dy-call {
+  margin: calc(var(--bk-h) * 0.03) 0 0;
+  font: 650 clamp(13.5px, calc(var(--bk-h) * 0.0225), 16px) / 1.45 var(--font-body, system-ui, sans-serif);
+  color: #0b4fa3;
+  text-wrap: balance;
+}
+
+/* ── Right page: ruled, written in pen ───────────────────────────────────── */
+
+.dy-page--right {
+  left: 50%;
+  width: calc(50% - var(--gap));
+  z-index: 1;
+  border-radius: 2px 8px 8px 2px;
+  background-color: var(--paper);
+  background-image:
+    linear-gradient(90deg, rgba(60, 44, 12, 0.2), rgba(60, 44, 12, 0) 8%),
+    repeating-linear-gradient(to bottom, transparent 0, transparent calc(var(--line) - 1px), var(--rule) calc(var(--line) - 1px), var(--rule) var(--line)),
+    var(--grain);
+  box-shadow:
+    1px 0 0 var(--paper-edge),
+    2px 0 0 #faf6ea,
+    3px 0 0 #e1d8c2,
+    4px 0 0 #f7f2e4,
+    5px 0 0 #d8cfb8;
+}
+.dy-page--right::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 13%;
+  width: 2px;
+  background: var(--margin);
+}
+
+.dy-sheet {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: repeat(17, var(--line));
+  padding: 0 5% 0 16%;
+  margin: 0;
+  font-family: var(--dy-hand);
+}
+
+.dy-stage .dy-date {
+  grid-row: 1;
+  align-self: end;
+  justify-self: end;
+  margin: 0;
+  padding-bottom: calc(var(--line) * 0.14);
+  font: 500 calc(var(--line) * 0.6) / 1 var(--dy-hand);
+  color: var(--pencil);
+}
+
+.dy-row {
+  display: flex;
+  align-items: stretch;
+  gap: 0.35em;
+  height: var(--line);
+  min-width: 0;
+}
+.dy-row--email { grid-row: 4; }
+.dy-row--password { grid-row: 7; }
+
+.dy-stage .dy-label {
+  display: block;
+  flex: none;
+  height: var(--line);
+  margin: 0;
+  padding: calc(var(--line) * 0.16) 0 0;
+  font: 700 calc(var(--line) * 0.8) / calc(var(--line) * 0.84) var(--dy-hand);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--pen);
+}
+
+.dy-stage .dy-field {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+  height: var(--line);
+  margin: 0;
+  padding: calc(var(--line) * 0.16) 0.15em 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: 0;
+  font: 600 calc(var(--line) * 0.8) / calc(var(--line) * 0.84) var(--dy-hand);
+  letter-spacing: 0;
+  color: var(--pen);
+  caret-color: var(--blue);
+  transition: background-color 120ms ease;
+}
+.dy-stage .dy-field::placeholder { color: var(--pencil); font-weight: 500; opacity: 0.9; }
+/* A highlighter swipe marks the line being written. */
+.dy-stage .dy-field:focus {
+  background: linear-gradient(transparent 58%, rgba(255, 224, 102, 0.55) 58%, rgba(255, 224, 102, 0.55) 96%, transparent 96%);
+  border: 0;
+  box-shadow: none;
+}
+.dy-stage .dy-field:disabled { opacity: 0.6; }
+.dy-stage .dy-field:-webkit-autofill,
+.dy-stage .dy-field:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--pen);
+  transition: background-color 9999s ease-out 0s;
+}
+
+.dy-reveal {
+  flex: none;
+  align-self: flex-end;
+  display: grid;
+  place-items: center;
+  width: calc(var(--line) * 0.78);
+  height: calc(var(--line) * 0.78);
+  margin-bottom: calc(var(--line) * 0.1);
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--pencil);
+  cursor: pointer;
+  transition: color 120ms ease, background-color 120ms ease;
+}
+.dy-reveal svg { width: 62%; height: 62%; }
+.dy-reveal:hover:not(:disabled) { color: var(--blue); background: rgba(4, 98, 211, 0.1); }
+.dy-reveal:focus-visible { outline: 2px dashed var(--blue); outline-offset: 2px; }
+
+/* A wrong guess is circled in red pen on the lines between the fields and the buttons. */
+.dy-stage .dy-error {
+  grid-row: 9 / span 3;
+  align-self: start;
+  margin: 0;
+  font: 600 calc(var(--line) * 0.66) / var(--line) var(--dy-hand);
+  color: var(--pen-red);
+  transform: rotate(-0.6deg);
+}
+
+.dy-actions {
+  grid-row: 13 / span 3;
+  align-self: start;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  justify-content: center;
+  gap: var(--line) calc(var(--line) * 0.35);
+}
+
+/* Buttons are drawn, not printed: a wobbly pen outline round a few words. */
+.dy-stage .dy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--line);
+  min-width: 0;
+  padding: calc(var(--line) * 0.06) calc(var(--line) * 0.4) 0;
+  border: 2.5px solid var(--pen);
+  border-radius: 22px 7px 24px 9px / 9px 22px 7px 20px;
+  font: 700 calc(var(--line) * 0.68) / 1 var(--dy-hand);
+  letter-spacing: 0;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: transform 120ms ease, background-color 120ms ease, color 120ms ease, box-shadow 120ms ease;
+}
+.dy-stage .dy-btn--go {
+  background: var(--pen);
+  color: #fff;
+  box-shadow: 2px 3px 0 rgba(23, 48, 126, 0.25);
+}
+.dy-stage .dy-btn--home {
+  background: transparent;
+  color: var(--pen);
+}
+.dy-stage .dy-btn:hover:not(:disabled) { transform: translateY(-1px) rotate(-0.8deg); }
+.dy-stage .dy-btn--go:hover:not(:disabled) { background: #1d3a9a; box-shadow: 3px 4px 0 rgba(23, 48, 126, 0.3); }
+.dy-stage .dy-btn--home:hover { background: rgba(255, 224, 102, 0.5); }
+.dy-stage .dy-btn:active:not(:disabled) { transform: translateY(1px); box-shadow: none; }
+.dy-stage .dy-btn:focus-visible { outline: 3px dashed var(--blue); outline-offset: 3px; }
+.dy-stage .dy-btn:disabled { opacity: 0.7; cursor: progress; }
+
+.dy-pencil {
+  grid-row: 16;
+  align-self: end;
+  margin: 0;
+  padding-bottom: calc(var(--line) * 0.1);
+  text-align: center;
+  font: 500 calc(var(--line) * 0.55) / 1 var(--dy-hand);
+  color: var(--pencil);
+}
+.dy-print {
+  grid-row: 17;
+  align-self: end;
+  margin: 0;
+  padding-bottom: calc(var(--line) * 0.16);
+  text-align: center;
+  font: 500 clamp(9.5px, calc(var(--bk-h) * 0.0165), 11.5px) / 1.3 var(--font-body, system-ui, sans-serif);
+  letter-spacing: 0.04em;
+  color: #8f98ad;
+}
+
+/* ── Smoke ───────────────────────────────────────────────────────────────── */
+
+.dy-smoke {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  overflow: hidden;
+  pointer-events: none;
+}
+.dy-smoke__veil {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(120% 90% at 50% 50%, rgba(255, 255, 255, 0.62), rgba(236, 243, 255, 0.5));
+  transition: opacity 800ms ease 100ms;
+}
+.dy-smoke__drift {
+  position: absolute;
+  inset: -22%;
+}
+.dy-smoke__drift--a { animation: dy-drift-a 14s ease-in-out infinite alternate; }
+.dy-smoke__drift--b { animation: dy-drift-b 17s ease-in-out infinite alternate; }
+.dy-smoke__drift--c { animation: dy-drift-c 20s ease-in-out infinite alternate; }
+@keyframes dy-drift-a { to { transform: translate3d(3%, -2%, 0); } }
+@keyframes dy-drift-b { to { transform: translate3d(-3.5%, 2%, 0); } }
+@keyframes dy-drift-c { to { transform: translate3d(2%, 3%, 0); } }
+
+.dy-smoke__layer {
+  position: absolute;
+  inset: 0;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  transition: transform 900ms cubic-bezier(0.4, 0, 0.9, 0.5), opacity 800ms ease;
+  will-change: transform, opacity;
+}
+.dy-smoke__layer--a { background-image: var(--cloud-a); opacity: 0.8; }
+.dy-smoke__layer--b { background-image: var(--cloud-b); opacity: 0.7; }
+.dy-smoke__layer--c { background-image: var(--cloud-c); opacity: 0.65; }
+
+.dy-stage[data-phase='clearing'] .dy-smoke__veil { opacity: 0; }
+.dy-stage[data-phase='clearing'] .dy-smoke__layer { opacity: 0; }
+.dy-stage[data-phase='clearing'] .dy-smoke__layer--a { transform: translate(-36%, -6%) scale(1.25); }
+.dy-stage[data-phase='clearing'] .dy-smoke__layer--b { transform: translate(38%, 8%) scale(1.3); }
+.dy-stage[data-phase='clearing'] .dy-smoke__layer--c { transform: translate(0, -34%) scale(1.2); }
+
+.dy-skip {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  z-index: 120;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 999px;
+  background: rgba(12, 26, 71, 0.72);
+  color: #e6efff;
+  font: 600 12.5px / 1 var(--font-body, system-ui, sans-serif);
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: background-color 120ms ease;
+}
+.dy-skip:hover { background: rgba(12, 26, 71, 0.9); }
+.dy-skip:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+
+/* Reduced motion, Skip and tests: no travelling, just the finished diary. */
+.dy-stage[data-instant] *,
+.dy-stage[data-instant] *::before,
+.dy-stage[data-instant] *::after {
+  animation: none !important;
+  transition: none !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  .dy-stage *,
+  .dy-stage *::before,
+  .dy-stage *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ── Small screens: the pages stack, the cover lifts away ────────────────── */
+
+.dy-cover-m { display: none; }
+
+@media (max-width: 860px), (max-height: 540px) {
+  .dy-stage {
+    --line: 36px;
+    --bk-h: 640px;
+    place-items: start center;
+    padding: 20px 14px 56px;
+  }
+  .dy-scene { width: min(100%, 440px); height: auto; }
+  .dy-stage[data-phase='smoke'] .dy-scene { filter: none; }
+
+  .dy-book {
+    position: relative;
+    inset: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    perspective: none;
+    transform: none !important;
+    animation: none !important;
+  }
+  .dy-shadow, .dy-board, .dy-leaf { display: none; }
+
+  .dy-stage:not([data-phase='opening']):not([data-phase='open']) .dy-book { visibility: hidden; }
+  .dy-stage[data-phase='opening'] .dy-book { animation: dy-fade-in 700ms ease 300ms both !important; }
+  @keyframes dy-fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+  .dy-page {
+    position: relative;
+    inset: auto;
+    left: auto;
+    width: auto;
+    border-radius: 14px;
+    opacity: 1 !important;
+    animation: none !important;
+  }
+  .dy-page--left {
+    z-index: auto;
+    padding: 28px 22px 30px;
+    background-color: var(--paper);
+    background-image: var(--grain);
+    box-shadow: 0 18px 36px -18px rgba(0, 0, 0, 0.6);
+  }
+  .dy-plate img { height: 52px; }
+  .dy-welcome { margin: 18px 0 12px; font-size: 28px; }
+  .dy-brief { font-size: 13.5px; }
+  .dy-call { margin-top: 16px; font-size: 15px; }
+
+  .dy-page--right {
+    height: calc(17 * var(--line));
+    box-shadow: 0 18px 36px -18px rgba(0, 0, 0, 0.6);
+  }
+  .dy-sheet { padding: 0 4% 0 15%; }
+  .dy-stage .dy-label,
+  .dy-stage .dy-field { font-size: calc(var(--line) * 0.7); }
+  .dy-print { font-size: 10px; letter-spacing: 0; }
+
+  /* The closed diary, centred on the screen, until it lifts. */
+  .dy-cover-m {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+  }
+  .dy-cover-m__book {
+    width: min(74vw, 320px);
+    aspect-ratio: 0.72;
+    border-radius: 4px 16px 16px 4px;
+    overflow: hidden;
+    transform-origin: 0 50%;
+    box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.75), inset 0 0 0 1px rgba(255, 255, 255, 0.08), inset -3px 0 0 rgba(0, 0, 0, 0.25);
+  }
+  .dy-stage[data-phase='opening'] .dy-cover-m__book { animation: dy-lift 800ms cubic-bezier(0.5, 0, 0.8, 0.4) both; }
+  .dy-stage[data-phase='open'] .dy-cover-m { display: none; }
+  @keyframes dy-lift {
+    from { transform: perspective(1200px) rotateY(0deg); opacity: 1; }
+    to { transform: perspective(1200px) rotateY(-105deg); opacity: 0; }
+  }
+}
