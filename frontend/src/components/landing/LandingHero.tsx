@@ -108,7 +108,17 @@ export function LandingHero({ signedIn }: LandingHeroProps) {
           })}
         </div>
         <div className="core" id="core" ref={coreRef}>
-          <div className="logo">CNP</div>
+          <div className="hero-logo-badge">
+            <img
+              className="hero-logo"
+              src="/branding/cnp-community-emblem.png"
+              alt="CNP Department logo"
+              width={140}
+              height={62}
+              loading="eager"
+              decoding="async"
+            />
+          </div>
           <h1>Welcome to the CNP Department</h1>
           <p>Clubs and projects, organised, resourced and seen.</p>
           {signedIn ? (
