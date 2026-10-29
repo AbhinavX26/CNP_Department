@@ -612,7 +612,7 @@ export default function Notifications() {
       </header>
 
       {!error && (
-        <section className="ntfx-tiles" aria-label="Inbox at a glance">
+        <section className="ntfx-tiles" aria-label={volumeAria}>
           <div className="ntfx-tile ntfx-tile--deep">
             <span className="ntfx-tile-value">{unreadCount}</span>
             <span className="ntfx-tile-label">Unread</span>
