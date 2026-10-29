@@ -650,6 +650,9 @@
 
 .hdr-role { flex: none; }
 
+.hdr-theme { border-color: var(--color-rule-2); }
+.hdr-theme:hover { border-color: var(--color-rule); }
+
 .hdr-bell { position: relative; }
 
 .hdr-badge {

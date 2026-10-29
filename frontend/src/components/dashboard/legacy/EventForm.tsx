@@ -260,7 +260,7 @@ export function EventForm({ clubId, availableClubs, event, onSave, onCancel }: E
                   }}
                 >
                   <span style={{ fontSize: '13px', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    📎 {event.relatedDocumentName || event.relatedDocument.originalName || 'Document'}
+                    {event.relatedDocumentName || event.relatedDocument.originalName || 'Document'}
                   </span>
                   <button type="button" className="btn btn-sm btn-outline" onClick={() => setRemoveDocument(true)}>
                     Remove
