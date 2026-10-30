@@ -1,7 +1,13 @@
+import { Link } from 'react-router-dom';
 import { LANDING_LINKS } from './landingLinks';
+import type { NavItem } from './LandingNav';
+
+interface LandingFooterProps {
+  links?: NavItem[];
+}
 
 /** Colophon: who the page belongs to, its sections, and the way back to the top. */
-export function LandingFooter() {
+export function LandingFooter({ links = LANDING_LINKS }: LandingFooterProps = {}) {
   return (
     <footer className="landing-footer">
       <div className="landing-container landing-footer-inner">
@@ -12,9 +18,13 @@ export function LandingFooter() {
 
         <div className="landing-footer-rail">
           <nav className="landing-footer-links" aria-label="Sections">
-            {LANDING_LINKS.map((l) => (
-              <a key={l.href} href={l.href}>{l.label}</a>
-            ))}
+            {links.map((l) =>
+              l.to ? (
+                <Link key={l.label} to={l.to}>{l.label}</Link>
+              ) : (
+                <a key={l.label} href={l.href}>{l.label}</a>
+              )
+            )}
           </nav>
           <a className="landing-top" href="#top">
             Back to top<span aria-hidden="true">↑</span>

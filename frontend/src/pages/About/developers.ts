@@ -6,6 +6,7 @@
 export interface Developer {
   id: string;
   name: string;
+  badge: string;
   designation: string;
   photo: string;
   bio: string;
@@ -16,33 +17,37 @@ export const DEVELOPERS: Developer[] = [
   {
     id: 'dev-1',
     name: 'Dhruvi Padhiyar',
+    badge: 'TEAM LEADER & FRONTEND',
     designation: 'Team Leader | Frontend Developer',
     photo: '/team/dev-1.png',
-    bio: 'Leader of the team, Dhruvi has managed to keep the team together and on track, persistently encouraging the members to meet their deadlines and work with coordination. She was also responsible for the animated Home Page and the website testing procedures.',
+    bio: 'Leader of the team, Dhruvi kept the team coordinated and on track to meet deadlines. She led the animated landing experience and guided website testing procedures.',
     links: { github: 'https://github.com/Dhruvi-180107', linkedin: 'https://in.linkedin.com/in/dhruvi-padhiyar-63002b34a' },
   },
   {
     id: 'dev-2',
     name: 'Abhinav Nair',
+    badge: 'PROJECT PLANNER & FRONTEND',
     designation: 'Frontend Developer | Project Planner',
     photo: '/team/dev-2.jpeg',
-    bio: 'The planner and plotter, Abhinav made the inner frontend by creating every all the dashboard and components for each and every role. Planning the project as well as main frontend was his contribution, along with error handling of the website.',
+    bio: 'The planner and architect, Abhinav built the dashboard interfaces and components across student and admin roles, spearheading frontend structure and resilient error handling.',
     links: { github: 'https://github.com/AbhinavX26', linkedin: 'https://in.linkedin.com/in/abhinav-nair-4a1601369' },
   },
   {
     id: 'dev-3',
     name: 'Nisarg Priyadarshi',
+    badge: 'BACKEND & DATABASE DESIGNER',
     designation: 'Backend Developer | Database Designer',
     photo: '/team/dev-3.png',
-    bio: 'Backend engineer and database designer, Nisarg made sure that every feature of the website functioned the way it was meant to. Bringing the planning and features to life, he made sure the website worked in intended ways and the data stored remained safe.',
+    bio: 'Backend engineer and database designer, Nisarg architected the MongoDB schemas, REST endpoints, and authentication pipelines ensuring secure and reliable data flow.',
     links: { github: 'https://github.com/Nisarg-Priyadarshi', linkedin: 'https://in.linkedin.com/in/nisarg-priyadarshi-92a25b379' },
   },
   {
     id: 'dev-4',
     name: 'Vedant Mistry',
+    badge: 'BACKEND & DOCUMENTATION',
     designation: 'Backend Developer | Documentation Worker',
     photo: '/team/dev-4.png',
-    bio: 'Secondary backend helper, Vedant has been more involved in the documentation processes. He has also been helping with feature fixing and fault identification for the frontend engineers.',
-    links: { github: 'https://github.com/Vedant-1110', linkedin: ':https://www.linkedin.com/in/vedant-mistry-048b82333/' },
+    bio: 'Secondary backend engineer, Vedant managed project documentation, SRS requirements, API verification, and collaborated on feature fixing and fault identification.',
+    links: { github: 'https://github.com/Vedant-1110', linkedin: 'https://www.linkedin.com/in/vedant-mistry-048b82333/' },
   },
 ];

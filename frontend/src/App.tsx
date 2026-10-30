@@ -25,7 +25,7 @@ import LoadingScreen from './components/LoadingScreen';
 import { HTTP_ERROR_EVENT } from './services/api';
 
 /** Signed-out pages never get the loader; it belongs to the account. */
-const PUBLIC_PATH = /^\/($|login|register|error)/;
+const PUBLIC_PATH = /^\/($|login|register|about|error)/;
 
 function HttpErrorRedirect() {
   const navigate = useNavigate();
@@ -139,11 +139,8 @@ function ScrollReset() {
 }
 
 function AuthGuard() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
   if (loading) return null;
-  if (user) {
-    return <Navigate to={isProfileComplete(user) ? '/dashboard' : '/profile'} replace />;
-  }
   return <Login />;
 }
 
@@ -221,6 +218,8 @@ export default function App() {
             <Routes>
             <Route path="/login" element={<AuthGuard />} />
             <Route path="/register" element={<AuthRegisterGuard />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/about-us" element={<About />} />
             <Route path="/" element={<Landing />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>

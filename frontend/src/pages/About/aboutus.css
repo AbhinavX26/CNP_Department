@@ -1,0 +1,145 @@
+/* About us · public page at /about-us. Reuses the landing's nav, footer, keys and tokens. */
+
+.au section[id] { scroll-margin-top: 88px; }
+
+/* ── Reveal ──────────────────────────────────────────────────────────────── */
+.au-reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out);
+  transition-delay: var(--d, 0ms);
+}
+.au-reveal.is-in { opacity: 1; transform: none; }
+.au-d1 { --d: 70ms; } .au-d2 { --d: 140ms; } .au-d3 { --d: 210ms; }
+
+/* ── Type ────────────────────────────────────────────────────────────────── */
+.au .au-eyebrow {
+  display: flex; align-items: center; gap: var(--space-sm); margin-bottom: var(--space-md);
+  font: 600 var(--text-xs)/1 var(--font-display); letter-spacing: 0.14em; text-transform: uppercase;
+  color: var(--color-accent-deep);
+}
+.au .au-eyebrow::before { content: ""; width: 32px; height: 1px; background: currentColor; }
+.au .au-lead { max-width: 52ch; margin-top: var(--space-md); font-size: var(--text-lead); line-height: 1.5; color: var(--color-muted); }
+
+/* ── Hero ────────────────────────────────────────────────────────────────── */
+.au-hero {
+  padding-block: var(--section-gap-s) var(--space-3xl);
+  background: radial-gradient(ellipse 60% 70% at 18% 0%, var(--color-accent-glow), transparent 70%);
+}
+.au-hero h1 { max-width: 16ch; font-size: var(--text-display); }
+.au-actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-xl); }
+.au-actions .btn { margin: 0; }
+
+/* ── Sections ────────────────────────────────────────────────────────────── */
+.au-section { padding-block: var(--section-gap-s); }
+.au-section--tint { background: var(--color-paper-2); border-block: var(--rule-hair) solid var(--color-rule); }
+.au-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--space-xl) var(--space-2xl); align-items: start; }
+.au-copy { display: flex; flex-direction: column; gap: var(--space-md); font-size: var(--text-md); line-height: 1.7; color: var(--color-ink-2); }
+.au-head { max-width: 30ch; margin-bottom: var(--space-xl); }
+.au-head h2 { font-size: var(--text-section); }
+
+.au-chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
+.au-chips li {
+  padding: 6px 12px; border: var(--rule-hair) solid var(--color-rule-2); border-radius: var(--radius-pill);
+  font: 500 var(--text-sm)/1.2 var(--font-display); color: var(--color-ink-2); background: var(--color-paper);
+}
+.au-note {
+  padding: var(--space-md) var(--space-lg); border-left: 2px solid var(--color-accent);
+  background: var(--color-accent-wash); font-size: var(--text-sm); color: var(--color-ink);
+}
+
+/* ── Objective rows ──────────────────────────────────────────────────────── */
+.au-rows { border-top: var(--rule-hair) solid var(--color-rule-2); }
+.au-row {
+  display: grid; grid-template-columns: 56px minmax(0, 240px) minmax(0, 1fr); gap: var(--space-md) var(--space-lg); align-items: baseline;
+  padding: var(--space-lg) 0; border-bottom: var(--rule-hair) solid var(--color-rule);
+  transition: opacity var(--dur-slow) var(--ease-out), transform var(--dur-slow) var(--ease-out), background-color var(--dur-short) var(--ease-in-out), padding var(--dur-short) var(--ease-out);
+}
+.au-row:hover { background: var(--color-accent-wash); padding-inline: var(--space-md); }
+.au-row-n { font: 500 var(--text-sm)/1 var(--font-display); color: var(--color-accent-deep); }
+.au-row h3 { font-size: var(--text-xl); }
+.au-row p { color: var(--color-muted); }
+
+/* ── Team ────────────────────────────────────────────────────────────────── */
+.au-team { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: var(--space-xl) var(--space-2xl); align-items: start; }
+.au-team-copy { position: sticky; top: 120px; }
+
+.au-grid {
+  --p: 0;
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-lg);
+  width: 100%; max-width: 600px; margin-left: auto;
+}
+
+/* Scroll-driven spread. The wrapper owns the movement, the face owns the hover. */
+.au-card {
+  --rest: calc(1 - var(--p));
+  opacity: calc(0.25 + 0.75 * var(--p));
+  will-change: transform, opacity;
+}
+.au-card--top { transform: translateY(calc(var(--rest) * 56%)) rotate(calc(var(--rest) * -3deg)); }
+.au-card--bottom { transform: translateY(calc(var(--rest) * -56%)) rotate(calc(var(--rest) * 3deg)); }
+.au-card--col1.au-card--top { transform: translateY(calc(var(--rest) * 56%)) rotate(calc(var(--rest) * 3deg)); }
+.au-card--col1.au-card--bottom { transform: translateY(calc(var(--rest) * -56%)) rotate(calc(var(--rest) * -3deg)); }
+.au-card--top { z-index: 1; }
+
+.au-face {
+  position: relative; overflow: hidden; aspect-ratio: 3 / 4; cursor: default;
+  background: var(--color-graphite); color: var(--color-graphite-ink);
+  clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 0 100%);
+}
+.au-face:focus-visible { outline: 2px solid var(--color-focus); outline-offset: -2px; }
+.au-photo, .au-initials { position: absolute; inset: 0; width: 100%; height: 100%; }
+.au-photo { object-fit: cover; transition: transform 700ms var(--ease-out); }
+.au-initials {
+  display: grid; place-items: center; font: 300 56px/1 var(--font-display); letter-spacing: 0.04em;
+  background: linear-gradient(150deg, var(--color-graphite), var(--color-accent-deep) 70%, var(--color-accent-2));
+}
+
+.au-info {
+  position: absolute; inset: auto 0 0 0; display: flex; flex-direction: column; gap: 2px; padding: var(--space-xl) var(--space-md) var(--space-md);
+  background: linear-gradient(to top, color-mix(in oklch, var(--color-graphite) 94%, transparent) 72%, transparent);
+  transition: padding-top var(--dur-long) var(--ease-out);
+}
+.au-info h3 { font-size: var(--text-md); font-weight: 600; color: var(--color-graphite-ink); }
+.au-role { font: 500 var(--text-xs)/1.35 var(--font-display); color: var(--color-graphite-muted); }
+.au-extra { display: grid; grid-template-rows: 0fr; opacity: 0; transition: grid-template-rows var(--dur-long) var(--ease-out), opacity var(--dur-long) var(--ease-out); }
+.au-extra > div { min-height: 0; overflow: hidden; }
+.au-bio { padding-top: var(--space-sm); font-size: 0.8125rem; line-height: 1.5; color: var(--color-graphite-ink); }
+.au-links { display: flex; gap: var(--space-xs); padding-top: var(--space-sm); }
+.au-links a {
+  padding: 6px 12px; border: var(--rule-hair) solid var(--color-graphite-muted); border-radius: var(--radius-input);
+  font: 600 var(--text-xs)/1 var(--font-display); color: var(--color-graphite-ink);
+  transition: background-color var(--dur-short) var(--ease-in-out), border-color var(--dur-short) var(--ease-in-out);
+}
+.au-links a:hover { background: var(--color-accent); border-color: var(--color-accent); }
+.au-links a:focus-visible { outline: 2px solid var(--color-accent-2); outline-offset: 2px; }
+
+.au-face:hover .au-photo, .au-face:focus-within .au-photo { transform: scale(1.05); }
+.au-face:hover .au-extra, .au-face:focus-within .au-extra { grid-template-rows: 1fr; opacity: 1; }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
+@media (max-width: 960px) {
+  .au-split, .au-team { grid-template-columns: minmax(0, 1fr); }
+  .au-team-copy { position: static; }
+  .au-grid { margin-inline: auto; }
+  .au-row { grid-template-columns: 40px minmax(0, 1fr); }
+  .au-row p { grid-column: 2; }
+}
+@media (max-width: 560px) {
+  .au-hero { padding-block: var(--space-2xl); }
+  .au-section { padding-block: var(--space-2xl); }
+  .au-grid { gap: var(--space-sm); }
+  .au-info { padding: var(--space-lg) var(--space-xs) var(--space-xs); }
+  .au-info h3 { font-size: var(--text-sm); }
+  .au-bio { display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; font-size: var(--text-xs); }
+}
+@media (hover: none) {
+  /* Touch: the card opens on tap (focus) rather than hover. */
+  .au-face { cursor: pointer; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .au-reveal { opacity: 1; transform: none; transition: none; }
+  .au-card { opacity: 1; transform: none; will-change: auto; }
+  .au-photo, .au-extra, .au-info { transition: none; }
+}
+

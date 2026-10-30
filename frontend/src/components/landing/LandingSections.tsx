@@ -1,5 +1,8 @@
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
+import { Link } from 'react-router-dom';
 import { LandingPoints, type LandingPoint } from './LandingPoints';
-import { PhotoTrack, PROJECT_PHOTOS } from './PhotoTrack';
+import { PhotoTrack, CLUB_PHOTOS, PROJECT_PHOTOS } from './PhotoTrack';
+import { useCountUp } from '../ui/useCountUp';
 
 const SMC_POINTS: LandingPoint[] = [
   {
@@ -53,16 +56,74 @@ const ROLES = [
   { label: 'Project admins', duty: 'The portfolio, materials and inventory.', path: 'M4 4h7v7H4V4Zm9 0h7v4h-7V4ZM4 13h7v7H4v-7Zm9-3h7v10h-7V10Z' },
 ];
 
+interface StatCardProps {
+  value: number;
+  suffix?: string;
+  label: string;
+  delayMs?: number;
+}
+
+function StatCard({ value, suffix = '', label, delayMs = 0 }: StatCardProps) {
+  const [inView, setInView] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setInView(true);
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  const count = useCountUp(inView ? value : 0, 750);
+
+  return (
+    <div
+      ref={cardRef}
+      className={`landing-stat-card scroll-reveal ${inView ? 'is-in' : ''}`}
+      style={{ '--reveal-delay': `${delayMs}ms` } as CSSProperties}
+    >
+      <div className="landing-stat-num">
+        {count.toLocaleString()}{suffix}
+      </div>
+      <div className="landing-stat-label">{label}</div>
+    </div>
+  );
+}
+
 export function LandingSections() {
   return (
     <>
-      {/* ── About · the statement ─────────────────────────────────────────── */}
+      {/* ── About · the statement & animated transition after 1st slide ──── */}
       <section className="landing-about" id="about">
         <div className="landing-container">
+          <div className="landing-transition-cue scroll-reveal">
+            <span className="landing-cue-dot" aria-hidden="true" />
+            <span className="landing-cue-text">Campus Hub · GSFC University</span>
+            <span className="landing-cue-line" aria-hidden="true" />
+          </div>
+
           <h2 className="landing-statement scroll-reveal">
             The CNP Department website is the working home of two student communities at GSFC University
             <span className="landing-stop" aria-hidden="true">.</span>
           </h2>
+
+          {/* Animated counter strip revealed immediately following the 1st hero slide */}
+          <div className="landing-stats-grid">
+            <StatCard value={16} suffix="+" label="Active Student Clubs" delayMs={60} />
+            <StatCard value={25} suffix="+" label="Funded Innovation Projects" delayMs={140} />
+            <StatCard value={1200} suffix="+" label="Student Members & Leaders" delayMs={220} />
+            <StatCard value={100} suffix="%" label="Student & Faculty Driven" delayMs={300} />
+          </div>
 
           <div className="landing-about-foot scroll-reveal scroll-reveal--delay-1">
             <p className="landing-about-line">
@@ -74,7 +135,7 @@ export function LandingSections() {
                   key={role.label}
                   title={role.duty}
                   className="scroll-reveal"
-                  style={{ '--reveal-delay': `${idx * 60}ms` } as React.CSSProperties}
+                  style={{ '--reveal-delay': `${idx * 60}ms` } as CSSProperties}
                 >
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
                     <path d={role.path} />
@@ -121,8 +182,8 @@ export function LandingSections() {
         </div>
       </section>
 
-      {/* ── 1st Photo Slide after Clubs · Club Gallery ────────────────────── */}
-      <PhotoTrack id="h1" title="Some Snapshots" startIndex={0} />
+      {/* ── 1st Photo Slide after Clubs · Club Gallery with 18 Photos ──────── */}
+      <PhotoTrack id="h1" title="Campus Life & Club Snapshots" photos={CLUB_PHOTOS} />
 
       {/* ── GUIITAR Projects · head, screen, supports, the vision panel ────── */}
       <section className="landing-projects" id="projects">
@@ -161,7 +222,7 @@ export function LandingSections() {
                 <li
                   key={point.title}
                   className="scroll-reveal"
-                  style={{ '--reveal-delay': `${idx * 100}ms` } as React.CSSProperties}
+                  style={{ '--reveal-delay': `${idx * 100}ms` } as CSSProperties}
                 >
                   <span className="landing-supports-mark" aria-hidden="true" />
                   <h3>{point.title}</h3>
@@ -188,8 +249,8 @@ export function LandingSections() {
         </div>
       </section>
 
-      {/* ── 2nd Photo Slide after Projects · Snapshots once more ─────────── */}
-      <PhotoTrack id="h2" title="Snapshots once more" photos={PROJECT_PHOTOS} />
+      {/* ── 2nd Photo Slide after Projects · Innovation & Prototyping Gallery ─ */}
+      <PhotoTrack id="h2" title="Innovation & Prototyping Snapshots" photos={PROJECT_PHOTOS} />
 
       {/* ── How we help · the calendar, then four ruled answers ────────────── */}
       <section className="landing-how" id="how">
@@ -214,6 +275,14 @@ export function LandingSections() {
               <p className="landing-lead">
                 Clubs, projects, events, notifications and material requests, handled in one place.
               </p>
+              <div className="landing-how-actions">
+                <Link to="/about" className="landing-how-btn">
+                  <span>About Us</span>
+                  <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" width="16" height="16">
+                    <path d="M4 10h12M11 5l5 5-5 5" />
+                  </svg>
+                </Link>
+              </div>
             </div>
           </div>
 
@@ -222,7 +291,7 @@ export function LandingSections() {
               <li
                 key={item.title}
                 className="scroll-reveal"
-                style={{ '--reveal-delay': `${idx * 80}ms` } as React.CSSProperties}
+                style={{ '--reveal-delay': `${idx * 80}ms` } as CSSProperties}
               >
                 <h3>{item.title}</h3>
                 <p>{item.text}</p>

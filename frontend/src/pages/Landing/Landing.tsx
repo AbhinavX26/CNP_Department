@@ -225,8 +225,8 @@ export default function Landing() {
         });
       },
       {
-        threshold: [0, 0.08],
-        rootMargin: '20px 0px -20px 0px',
+        threshold: [0, 0.05],
+        rootMargin: '60px 0px -10px 0px',
       }
     );
 

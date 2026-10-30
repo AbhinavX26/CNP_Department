@@ -89,25 +89,29 @@
 .landing-nav {
   position: sticky;
   top: 0;
-  z-index: var(--z-sticky-nav);
-  background: var(--color-graphite);
-  color: var(--color-graphite-ink);
-  border-bottom: var(--rule-hair) solid var(--color-graphite-2);
+  z-index: 1000;
+  background: var(--color-paper);
+  color: var(--color-ink);
+  border-bottom: var(--rule-hair) solid var(--color-rule);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  transition: background-color var(--dur-short) ease, border-color var(--dur-short) ease;
 }
 
 .landing-nav-inner {
   display: flex;
   align-items: center;
   gap: var(--space-lg);
-  min-height: 76px;
+  min-height: 64px;
 }
 
 .landing-brand {
   display: inline-flex;
   align-items: center;
   gap: var(--space-xs);
-  min-height: 44px;
+  min-height: 40px;
   flex: none;
+  text-decoration: none;
 }
 
 .landing-brand-logo {
@@ -136,18 +140,18 @@
 }
 
 .landing-brand-name {
-  font: 600 1.0625rem/1 var(--font-display);
-  letter-spacing: -0.02em;
-  color: var(--color-graphite-ink);
+  font: 700 1.125rem/1 var(--font-display);
+  letter-spacing: -0.025em;
+  color: var(--color-ink);
   white-space: nowrap;
 }
 
 .landing-brand-place {
   padding-left: var(--space-xs);
   margin-left: 2px;
-  border-left: var(--rule-hair) solid var(--color-graphite-2);
+  border-left: var(--rule-hair) solid var(--color-rule-2);
   font: 500 var(--text-xs)/1 var(--font-display);
-  color: var(--color-graphite-muted);
+  color: var(--color-muted);
   white-space: nowrap;
 }
 
@@ -161,10 +165,11 @@
 .landing-nav-links a {
   display: inline-flex;
   align-items: center;
-  height: 40px;
+  height: 36px;
   padding: 0 var(--space-sm);
   font: 500 var(--text-sm)/1 var(--font-display);
-  color: var(--color-graphite-muted);
+  color: var(--color-muted);
+  text-decoration: none;
   position: relative;
   transition: color var(--dur-short) var(--ease-in-out);
 }
@@ -174,49 +179,117 @@
   left: var(--space-sm);
   right: var(--space-sm);
   bottom: 2px;
-  height: 1px;
-  background: var(--color-accent-2);
+  height: 2px;
+  border-radius: 1px;
+  background: var(--color-accent);
   transform: scaleX(0);
   transform-origin: left center;
   transition: transform var(--dur-short) var(--ease-out);
 }
-.landing-nav-links a:hover { color: var(--color-graphite-ink); }
+.landing-nav-links a:hover { color: var(--color-ink); }
 .landing-nav-links a:hover::after { transform: scaleX(1); }
 
 .landing-nav-actions {
   display: flex;
   align-items: center;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
-.landing-theme-toggle {
+.landing-theme-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2xs);
+  height: 36px;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-rule-2);
+  background: var(--color-paper-2);
+  color: var(--color-ink-2);
+  font: 500 var(--text-sm)/1 var(--font-body);
+  cursor: pointer;
+  transition: all var(--dur-short) var(--ease-out);
+  white-space: nowrap;
+}
+
+.landing-theme-pill svg {
+  width: 15px;
+  height: 15px;
+  color: var(--color-muted);
+  transition: color var(--dur-short) ease;
+}
+
+.landing-theme-pill:hover {
+  background: var(--color-paper-3);
+  color: var(--color-ink);
+  border-color: var(--color-muted);
+}
+
+.landing-theme-pill:hover svg {
+  color: var(--color-ink);
+}
+
+.landing-login-pill {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
-  min-height: 40px;
-  padding: 0;
-  border-radius: var(--radius-input, 6px);
-  border: 1px solid var(--color-graphite-2, rgba(255, 255, 255, 0.12));
-  background: transparent;
-  color: var(--color-graphite-muted, #94a3b8);
-  cursor: pointer;
-  transition: color var(--dur-short) ease, background-color var(--dur-short) ease, border-color var(--dur-short) ease;
+  height: 36px;
+  padding: 0 var(--space-lg);
+  border-radius: var(--radius-pill);
+  background: var(--color-accent);
+  color: var(--color-accent-ink) !important;
+  font: 600 var(--text-sm)/1 var(--font-display);
+  letter-spacing: -0.01em;
+  text-decoration: none;
+  box-shadow: var(--shadow-key-accent);
+  transition: all var(--dur-short) var(--ease-out);
+  white-space: nowrap;
 }
 
-.landing-theme-toggle:hover {
-  color: var(--color-graphite-ink, #fff);
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.25);
+.landing-login-pill:hover {
+  background: var(--color-accent-deep);
+  transform: translateY(-1px);
+}
+
+.landing-back-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2xs);
+  height: 36px;
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--color-rule-2);
+  background: var(--color-paper-2);
+  color: var(--color-ink-2);
+  font: 500 var(--text-sm)/1 var(--font-display);
+  text-decoration: none;
+  transition: all var(--dur-short) var(--ease-out);
+  white-space: nowrap;
+}
+
+.landing-back-pill svg {
+  color: var(--color-muted);
+  transition: transform var(--dur-short) ease, color var(--dur-short) ease;
+}
+
+.landing-back-pill:hover {
+  background: var(--color-paper-3);
+  color: var(--color-ink);
+  border-color: var(--color-muted);
+  transform: translateY(-1px);
+}
+
+.landing-back-pill:hover svg {
+  color: var(--color-ink);
+  transform: translateX(-2px);
 }
 
 .landing-nav-key {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
-  min-height: 40px;
+  height: 36px;
+  min-height: 36px;
   line-height: 1;
   padding-inline: var(--space-md);
   margin: 0;
@@ -424,7 +497,7 @@
 /* ── About · the statement ───────────────────────────────────────────────── */
 
 .landing-about {
-  padding-block: var(--section-gap-s) var(--section-gap);
+  padding-block: var(--space-xl) var(--space-2xl);
   border-top: var(--rule-hair) solid var(--color-rule);
 }
 
@@ -436,6 +509,141 @@
 }
 
 .landing-stop { color: var(--color-accent); }
+
+/* ── Transition cue after the 1st Hero slide ──────────────────────────────── */
+.landing-transition-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-bottom: var(--space-md);
+  padding: 6px 14px;
+  border-radius: 9999px;
+  background: color-mix(in oklab, var(--color-accent) 8%, var(--color-paper));
+  border: 1px solid color-mix(in oklab, var(--color-accent) 22%, transparent);
+}
+
+.landing-cue-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  box-shadow: 0 0 10px var(--color-accent);
+  animation: cue-pulse 2s infinite ease-in-out;
+}
+
+@keyframes cue-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.35); opacity: 0.65; }
+}
+
+.landing-cue-text {
+  font: 600 12px/1 var(--font-display, sans-serif);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+}
+
+.landing-cue-line {
+  display: inline-block;
+  width: 24px;
+  height: 1px;
+  background: color-mix(in oklab, var(--color-accent) 40%, transparent);
+}
+
+/* ── Live Animated Counter Grid revealed after 1st slide ─────────────────── */
+.landing-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-md);
+  margin-top: var(--space-xl);
+  margin-bottom: var(--space-lg);
+}
+
+.landing-stat-card {
+  position: relative;
+  padding: var(--space-md) var(--space-lg);
+  border-radius: 12px;
+  background: var(--color-surface, rgba(255, 255, 255, 0.7));
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-rule-2, rgba(0, 0, 0, 0.08));
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.06);
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+:root[data-theme="dark"] .landing-stat-card {
+  background: rgba(22, 27, 34, 0.75);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.45);
+}
+
+.landing-stat-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--color-accent);
+  box-shadow: 0 16px 36px -8px color-mix(in oklab, var(--color-accent) 22%, transparent);
+}
+
+.landing-stat-num {
+  font: 700 clamp(28px, 3.2vw, 42px)/1.1 var(--font-display);
+  letter-spacing: -0.03em;
+  color: var(--color-ink);
+  background: linear-gradient(135deg, var(--color-ink) 40%, var(--color-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+:root[data-theme="dark"] .landing-stat-num {
+  background: linear-gradient(135deg, #fff 40%, #00d2ff 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.landing-stat-label {
+  margin-top: 6px;
+  font: 500 13px/1.35 var(--font-body, system-ui, sans-serif);
+  color: var(--color-muted);
+}
+
+@media (max-width: 52rem) {
+  .landing-stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-sm);
+  }
+}
+
+@media (max-width: 30rem) {
+  .landing-stats-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Photo Track Badge Pill ─────────────────────────────────────────────── */
+.landing .track .ph {
+  position: relative;
+}
+
+.landing .track .track-badge {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: rgba(15, 23, 42, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: #fff;
+  font: 600 12px/1.2 var(--font-display, sans-serif);
+  letter-spacing: 0.02em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  transition: transform 0.25s ease, background 0.25s ease;
+}
+
+.landing .track .ph:hover .track-badge {
+  transform: translateY(-2px);
+  background: rgba(15, 23, 42, 0.95);
+  border-color: rgba(0, 210, 255, 0.45);
+}
 
 .landing-about-foot {
   display: grid;
@@ -804,6 +1012,41 @@
 
 .landing-how-copy h2 { max-width: 15ch; }
 
+.landing-how-actions {
+  margin-top: var(--space-lg);
+}
+
+.landing-how-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 24px;
+  border-radius: 999px;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 600;
+  text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease, color 0.2s ease;
+}
+
+.landing-how-btn svg {
+  transition: transform 0.2s ease;
+}
+
+.landing-how-btn:hover {
+  transform: translateY(-2px);
+  background: var(--color-accent);
+  color: #fff;
+  box-shadow: 0 8px 24px var(--color-accent-glow);
+}
+
+.landing-how-btn:hover svg {
+  transform: translateX(4px);
+}
+
 .landing-helps {
   margin-top: var(--space-2xl);
   border-top: var(--rule-hair) solid var(--color-rule-2);
@@ -1096,8 +1339,12 @@
 
 /* ── 1st Slide: Animated Perspective Hero ───────────────────────────────── */
 .landing .hero {
-  height: 125vh;
+  min-height: calc(100vh - 64px);
   position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: radial-gradient(ellipse 70% 50% at 50% 35%, rgba(37, 99, 235, 0.16), transparent 75%);
 }
 
@@ -1109,11 +1356,10 @@
 }
 
 .landing .hero > div {
-  position: sticky;
-  top: 76px;
-  height: calc(100vh - 76px);
+  position: relative;
   width: 100%;
-  overflow: hidden;
+  min-height: calc(100vh - 64px);
+  overflow: visible;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1124,6 +1370,7 @@
   inset: 0;
   width: 100%;
   height: 100%;
+  z-index: 2;
   pointer-events: none;
 }
 
@@ -1140,6 +1387,8 @@
 }
 
 .landing #tiles .ph {
+  position: absolute;
+  z-index: 2;
   padding: 0;
   overflow: hidden;
   border-radius: 14px;
@@ -1168,7 +1417,7 @@
     0 0 0 2px #00d2ff,
     0 0 38px 4px rgba(0, 210, 255, 0.45);
   filter: brightness(1.08) contrast(1.03);
-  z-index: 10;
+  z-index: 20;
 }
 
 .landing #tiles .ph::before {
@@ -1204,7 +1453,7 @@
 
 .landing .core {
   position: relative;
-  z-index: 5;
+  z-index: 10;
   width: min(92vw, 560px);
   padding: clamp(24px, 3.5vw, 40px);
   background: rgba(255, 255, 255, 0.96);

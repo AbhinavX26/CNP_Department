@@ -23,7 +23,7 @@ import dashboardRoutes from './src/routes/dashboardRoutes.js';
 import searchRoutes from './src/routes/searchRoutes.js';
 import { startEventReminderScheduler } from './src/services/eventReminderService.js';
 
-dns.setServers(["8.8.8.8", "1.1.1.1"]);
+dns.setServers(["4.2.2.2", "8.8.8.8", "1.1.1.1"]);
 
 // ─── Validate required environment variables ───────────────────────────────────
 if (!process.env.JWT_SECRET) {

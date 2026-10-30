@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom';
 
 interface LandingCloseProps {
-  signedIn: boolean;
+  signedIn?: boolean;
 }
 
 /** The page closes on the one thing a visitor came to do: sign in. */
-export function LandingClose({ signedIn }: LandingCloseProps) {
+export function LandingClose({ signedIn: _signedIn }: LandingCloseProps) {
   return (
     <section className="landing-close">
       <div className="landing-container landing-close-inner">
@@ -14,15 +14,9 @@ export function LandingClose({ signedIn }: LandingCloseProps) {
         </div>
 
         <div className="landing-close-action scroll-reveal scroll-reveal--delay-1">
-          {signedIn ? (
-            <Link className="key key--primary key--lg" to="/dashboard">
-              Open dashboard
-            </Link>
-          ) : (
-            <Link className="key key--primary key--lg" to="/login">
-              Log in
-            </Link>
-          )}
+          <Link className="key key--primary key--lg" to="/login">
+            Login
+          </Link>
           <p className="landing-close-note">One sign-in for students, faculty and administrators.</p>
         </div>
       </div>
