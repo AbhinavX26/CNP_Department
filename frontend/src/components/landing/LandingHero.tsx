@@ -11,14 +11,38 @@ const HERO_PHOTOS = [
 ];
 
 const HT = [
-  // [left%, top%, width_vw, height_vh, tx, ty, rot, index]
-  // Dynamic Floating Collage: 6 photos elegantly distributed around the center card with natural spacing & zero overlap
-  [3.5, 9, 14, 22, -0.9, -0.7, -2.5, 0],     // Top-Left outer
-  [18.5, 3, 12.5, 20, -0.4, -1, 1.5, 1],     // Top-Left inner (tucked cleanly above-left of core)
-  [4.5, 65, 17, 23, -0.85, 0.6, -2, 2],      // Bottom-Left
-  [76.5, 8, 17, 22, 0.9, -0.7, 2.5, 3],      // Top-Right outer
-  [68.5, 72, 14, 20, 0.4, 1, 1.5, 4],        // Bottom-Right inner (tucked cleanly below-right of core)
-  [76.5, 38.5, 17, 22, 0.9, 0, -1.5, 5],     // Mid-Right flank
+  // [left%, top%, width_vw, height_vh, tx, ty, rot]
+  // ── Inner Ring: physically tucked behind the edges & corners of the main CNP card ──
+  // 1. Tucked behind top-center of CNP (peeking over the top rim)
+  [41.5, 12, 17, 24, 0, -1.0, -1],
+  // 2. Tucked behind top-left shoulder of CNP
+  [24, 13, 17, 23, -0.65, -0.8, 2.5],
+  // 3. Tucked behind top-right shoulder of CNP
+  [59, 13, 17, 23, 0.65, -0.8, -2.5],
+  // 4. Tucked behind mid-left of CNP (peeking out from the left edge)
+  [20.5, 36.5, 17.5, 23.5, -0.95, -0.05, -2],
+  // 5. Tucked behind mid-right of CNP (peeking out from the right edge)
+  [62, 35.5, 17.5, 23.5, 0.95, -0.05, 2],
+  // 6. Tucked behind bottom-left of CNP
+  [24, 60, 17, 23, -0.65, 0.8, -2],
+  // 7. Tucked behind bottom-right of CNP
+  [59, 59, 17, 23, 0.65, 0.8, 2],
+  // 8. Tucked behind bottom-center of CNP (peeking under the bottom rim)
+  [41.5, 62, 17, 24, 0, 1.0, 1.5],
+
+  // ── Outer Ring: framing outer corners and flanks for full screen coverage ──
+  // 9. Far Top-Left corner
+  [3, 7, 15.5, 24, -1.0, -0.8, -3.5],
+  // 10. Far Top-Right corner
+  [81.5, 7, 15.5, 24, 1.0, -0.8, 3.5],
+  // 11. Far Mid-Left flank
+  [1.5, 37, 14.5, 23, -1.1, 0, 1.5],
+  // 12. Far Mid-Right flank
+  [84, 36, 14.5, 23, 1.1, 0, -1.5],
+  // 13. Far Bottom-Left corner
+  [3, 66, 15.5, 24, -1.0, 0.8, 3],
+  // 14. Far Bottom-Right corner
+  [81.5, 65, 15.5, 24, 1.0, 0.8, -3],
 ];
 
 interface LandingHeroProps {
