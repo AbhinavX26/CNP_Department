@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import { KindGlyph } from '../ui/vis';
 import { initialsOf, roleKind, roleLabel } from '../../pages/Profile/labels';
 import '../../pages/Profile/profile.css';
+import './select.css';
 
 export interface UserOption {
   _id: string;

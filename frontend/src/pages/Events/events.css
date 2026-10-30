@@ -215,7 +215,7 @@
   align-items: start;
 }
 @media (min-width: 75rem) {
-  .evt-month { grid-template-columns: minmax(0, 8fr) minmax(0, 4fr); }
+  .evt-month { grid-template-columns: minmax(0, 8.5fr) minmax(0, 4fr); }
   .evt-rail { position: sticky; top: var(--space-md); }
 }
 

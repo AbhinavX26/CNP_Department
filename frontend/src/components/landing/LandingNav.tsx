@@ -18,8 +18,16 @@ export function LandingNav({ signedIn }: LandingNavProps) {
     <header className="landing-nav">
       <div className="landing-nav-inner landing-container">
         <a className="landing-brand" href="#top" aria-label="CNP Department home">
-          <span className="landing-brand-mark" aria-hidden="true">C</span>
-          <span className="landing-brand-name">CNP Department</span>
+          <img
+            className="landing-brand-logo"
+            src="/branding/cnp-community-emblem.png"
+            alt="CNP"
+            width={73}
+            height={32}
+            loading="eager"
+            decoding="async"
+          />
+          <span className="landing-brand-name">Department</span>
           <span className="landing-brand-place">GSFC University</span>
         </a>
 

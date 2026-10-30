@@ -1,0 +1,119 @@
+/* Role dashboards share the student dashboard's visual language and column order. */
+.staff-dash {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 22px;
+  padding-bottom: 28px;
+}
+.staff-dash .student-dash-header-actions .btn,
+.staff-dash .student-dash-notification-link {
+  min-height: 44px;
+}
+.staff-dash :is(button, a):focus-visible {
+  outline: 3px solid var(--color-focus);
+  outline-offset: 3px;
+}
+.role-dashboard-grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1.72fr) minmax(270px, 0.88fr);
+  align-items: start;
+  gap: 22px;
+}
+.role-dashboard-grid > .card,
+.role-dashboard-sidebar > .card {
+  min-width: 0;
+  margin: 0;
+  padding: 22px;
+  border: 1px solid var(--color-rule);
+  border-radius: 20px;
+  background: var(--color-sheet);
+  box-shadow: var(--shadow-card);
+}
+.role-dashboard-grid > .card:hover,
+.role-dashboard-sidebar > .card:hover {
+  border-color: var(--color-rule-2);
+  box-shadow: var(--shadow-lift);
+}
+.role-dashboard-grid > .card .card-title,
+.role-dashboard-sidebar > .card .card-title {
+  color: var(--color-ink);
+  font-size: 19px;
+  font-weight: 680;
+  letter-spacing: -0.035em;
+  line-height: 1.25;
+}
+.role-dashboard-grid > .card .card-header,
+.role-dashboard-sidebar > .card .card-header {
+  align-items: center;
+  margin-bottom: 17px;
+}
+.role-dashboard-grid > .card .card-body,
+.role-dashboard-sidebar > .card .card-body {
+  color: var(--color-ink-2);
+}
+.role-dashboard-grid button {
+  min-height: 44px;
+}
+.role-dashboard-grid--coordinator {
+  grid-template-areas: "primary sidebar" "events sidebar";
+}
+.role-dashboard-grid--coordinator > .card:nth-child(1) { grid-area: primary; }
+.role-dashboard-grid--coordinator > .role-dashboard-sidebar { grid-area: sidebar; }
+.role-dashboard-sidebar { display: grid; min-width: 0; gap: 22px; }
+.role-dashboard-grid--coordinator > .card:nth-child(3) { grid-area: events; }
+.role-dashboard-grid--mentor {
+  grid-template-areas: "primary account";
+}
+.role-dashboard-grid--mentor > .card:nth-child(1) { grid-area: primary; }
+.role-dashboard-grid--mentor > .card:nth-child(2) { grid-area: account; }
+.role-dashboard-grid--club-admin {
+  grid-template-areas: "primary requests" "events account";
+}
+.role-dashboard-grid--club-admin > .card:nth-child(1) { grid-area: primary; }
+.role-dashboard-grid--club-admin > .card:nth-child(2) { grid-area: requests; }
+.role-dashboard-grid--club-admin > .card:nth-child(3) { grid-area: events; }
+.role-dashboard-grid--club-admin > .card:nth-child(4) { grid-area: account; }
+.role-dashboard-grid--project-admin {
+  grid-template-areas: "primary requests" "primary account";
+}
+.role-dashboard-grid--project-admin > .card:nth-child(1) { grid-area: primary; }
+.role-dashboard-grid--project-admin > .card:nth-child(2) { grid-area: requests; }
+.role-dashboard-grid--project-admin > .card:nth-child(3) { grid-area: account; }
+
+@media (max-width: 1100px) {
+  .role-dashboard-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 17px;
+  }
+  .role-dashboard-grid--coordinator {
+    grid-template-areas: "primary" "sidebar" "events";
+  }
+  .role-dashboard-grid--club-admin {
+    grid-template-areas: "primary" "requests" "events" "account";
+  }
+  .role-dashboard-grid--mentor {
+    grid-template-areas: "primary" "account";
+  }
+  .role-dashboard-grid--project-admin {
+    grid-template-areas: "primary" "requests" "account";
+  }
+}
+@media (max-width: 760px) {
+  .staff-dash { gap: 17px; }
+  .role-dashboard-grid > .card,
+.role-dashboard-sidebar > .card { padding: 18px; }
+}
+@media (max-width: 560px) {
+  .staff-dash { gap: 16px; }
+  .staff-dash .student-dash-header-actions { gap: 7px; }
+  .staff-dash .student-dash-header-actions .btn,
+  .staff-dash .student-dash-notification-link {
+    min-height: 44px;
+    padding-inline: 9px;
+    font-size: 11px;
+  }
+  .role-dashboard-grid > .card,
+.role-dashboard-sidebar > .card { padding: 16px; }
+}

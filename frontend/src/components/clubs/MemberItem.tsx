@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../services/api';
-import { RoleMark } from './RoleMark';
 import '../../pages/Clubs/clubs.css';
+import { Select } from '../common/Select';
 
 function initials(name: string) {
   return name
@@ -79,108 +79,69 @@ export function MemberItem({ m, clubId, canManage, onRefresh }: { m: any, clubId
   };
 
   return (
-    <div className={`clubs-member${isEditing ? ' is-editing' : ''}`}>
-      {student.profileImage ? (
-        <img src={student.profileImage} alt="" className="ui-avatar clubs-member__face" />
-      ) : (
-        <span className="ui-avatar clubs-member__face" aria-hidden="true">{initials(student.name || '?')}</span>
-      )}
+    <li className={`cdx-member${isEditing ? ' is-editing' : ''}`}>
+      <span className="cdx-face cdx-face--lg" aria-hidden="true">
+        {student.profileImage ? <img src={student.profileImage} alt="" /> : initials(student.name || '?')}
+      </span>
 
-      <div className="clubs-member__id">
-        <div className="clubs-member__name">{student.name || 'Unknown member'}</div>
-        <div className="clubs-member__sub">
+      <div className="cdx-member-id">
+        <strong className="cdx-member-name">{student.name || 'Unknown member'}</strong>
+        <span className="cdx-member-sub">
           {student.department || 'Student'}
           {student.semester ? ` · Semester ${student.semester}` : ''}
-        </div>
+        </span>
       </div>
 
       {isEditing ? (
-        <form
-          className="clubs-member__form"
-          onSubmit={(e) => { e.preventDefault(); handleSave(); }}
-        >
-          <div className="clubs-member__form-row">
-            <label className="ui-visually-hidden" htmlFor={`member-type-${m._id}`}>Membership type</label>
-            <span className="clubs-select">
-              <select
-                id={`member-type-${m._id}`}
-                className="ui-field ui-field--select"
-                value={membershipType}
-                onChange={e => setMembershipType(e.target.value)}
+        <form className="cdx-member-form" onSubmit={(e) => { e.preventDefault(); handleSave(); }}>
+          <label className="ui-visually-hidden" htmlFor={`member-type-${m._id}`}>Membership type</label>
+          <Select
+            id={`member-type-${m._id}`}
+            value={membershipType}
+            onChange={e => setMembershipType(e.target.value)}
+            disabled={loading}
+          >
+            <option value="member">Member</option>
+            <option value="core_team">Core team</option>
+          </Select>
+          {membershipType === 'core_team' && (
+            <>
+              <label className="ui-visually-hidden" htmlFor={`member-position-${m._id}`}>Position</label>
+              <input
+                id={`member-position-${m._id}`}
+                type="text"
+                className="cdx-input"
+                placeholder="Position, e.g. President"
+                value={position}
+                onChange={e => setPosition(e.target.value)}
                 disabled={loading}
-              >
-                <option value="member">Member</option>
-                <option value="core_team">Core team</option>
-              </select>
-            </span>
-
-            {membershipType === 'core_team' && (
-              <>
-                <label className="ui-visually-hidden" htmlFor={`member-position-${m._id}`}>Position</label>
-                <input
-                  id={`member-position-${m._id}`}
-                  type="text"
-                  className="ui-field"
-                  placeholder="Position, e.g. President"
-                  value={position}
-                  onChange={e => setPosition(e.target.value)}
-                  disabled={loading}
-                />
-              </>
-            )}
-          </div>
-
-          <div className="clubs-member__form-row">
-            <button type="submit" className="ui-btn ui-btn--primary ui-btn--sm" disabled={loading}>
-              {loading ? 'Saving…' : 'Save'}
-            </button>
-            <button
-              type="button"
-              className="ui-btn ui-btn--ghost ui-btn--sm"
-              onClick={() => {
-                setIsEditing(false);
-                setMembershipType(m.membershipType);
-                setPosition(m.position || '');
-              }}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-          </div>
+              />
+            </>
+          )}
+          <button type="submit" className="cdx-btn cdx-btn--solid" disabled={loading}>{loading ? 'Saving…' : 'Save'}</button>
+          <button
+            type="button"
+            className="cdx-btn cdx-btn--quiet"
+            onClick={() => { setIsEditing(false); setMembershipType(m.membershipType); setPosition(m.position || ''); }}
+            disabled={loading}
+          >
+            Cancel
+          </button>
         </form>
       ) : (
         <>
-          {shownPosition ? <span className="clubs-member__pos">{shownPosition}</span> : null}
+          <span className={`cdx-pill cdx-pill--${isCoreTeam ? 'core' : 'member'}`}>
+            {isCoreTeam ? (shownPosition ? `Core · ${shownPosition}` : 'Core team') : 'Member'}
+          </span>
 
-          <RoleMark
-            role={isCoreTeam ? 'core' : 'member'}
-            label={isCoreTeam ? (shownPosition ? `Core team · ${shownPosition}` : 'Core team') : 'Member'}
-            size={18}
-            className="clubs-member__role"
-          />
-
-          <div className="clubs-member__actions">
+          <div className="cdx-member-actions">
             {student.email ? (
-              <a
-                className="ui-icon-btn clubs-member__mail"
-                href={`mailto:${student.email}`}
-                aria-label={`Email ${student.name || 'member'}`}
-              >
-                <MailIcon />
-              </a>
+              <a className="cdx-icon-btn" href={`mailto:${student.email}`} aria-label={`Email ${student.name || 'member'}`}><MailIcon /></a>
             ) : null}
             {canManage ? (
               <>
-                <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={() => setIsEditing(true)}>
-                  Edit
-                </button>
-                <button
-                  type="button"
-                  className="ui-btn ui-btn--ghost ui-btn--sm clubs-member__remove"
-                  onClick={() => setConfirming(true)}
-                >
-                  Remove
-                </button>
+                <button type="button" className="cdx-btn cdx-btn--quiet" onClick={() => setIsEditing(true)}>Edit</button>
+                <button type="button" className="cdx-btn cdx-btn--danger-quiet" onClick={() => setConfirming(true)}>Remove</button>
               </>
             ) : null}
           </div>
@@ -188,11 +149,8 @@ export function MemberItem({ m, clubId, canManage, onRefresh }: { m: any, clubId
       )}
 
       {confirming && (
-        <div
-          className="ui-overlay"
-          onMouseDown={(e) => { if (e.target === e.currentTarget && !loading) setConfirming(false); }}
-        >
-          <div className="ui-modal ui-modal--narrow" role="dialog" aria-modal="true" aria-labelledby="clubs-remove-title">
+        <div className="cdx-overlay ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget && !loading) setConfirming(false); }}>
+          <div className="ui-modal ui-modal--narrow cdx-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-remove-title">
             <div className="ui-modal__head">
               <h2 id="clubs-remove-title" className="ui-panel__title">Remove member</h2>
               <button type="button" className="ui-icon-btn" onClick={() => setConfirming(false)} disabled={loading} aria-label="Close">
@@ -208,9 +166,7 @@ export function MemberItem({ m, clubId, canManage, onRefresh }: { m: any, clubId
               </p>
             </div>
             <div className="ui-modal__foot">
-              <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setConfirming(false)} disabled={loading}>
-                Keep member
-              </button>
+              <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setConfirming(false)} disabled={loading}>Keep member</button>
               <button type="button" className="ui-btn ui-btn--danger" onClick={handleRemove} disabled={loading}>
                 {loading ? 'Removing…' : 'Remove member'}
               </button>
@@ -218,6 +174,6 @@ export function MemberItem({ m, clubId, canManage, onRefresh }: { m: any, clubId
           </div>
         </div>
       )}
-    </div>
+    </li>
   );
 }

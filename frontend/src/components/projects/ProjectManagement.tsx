@@ -1,6 +1,7 @@
 import { useState, useEffect, useId } from 'react';
 import { UserSelect } from '../UserSelect';
 import { api } from '../../services/api';
+import { Select } from '../common/Select';
 
 function initialOf(name?: string): string {
   return (name || '?').replace(/^Dr\.\s*/i, '').trim().charAt(0).toUpperCase() || '?';
@@ -138,9 +139,8 @@ export function ProjectManagement({ project, onUpdate }: { project: any; onUpdat
               <label className="ui-label" htmlFor={`${fieldId}-status`}>
                 Status
               </label>
-              <select
+              <Select
                 id={`${fieldId}-status`}
-                className="ui-field ui-field--select"
                 value={status}
                 onChange={(e) => setStatus(e.target.value)}
                 disabled={loading}
@@ -148,7 +148,7 @@ export function ProjectManagement({ project, onUpdate }: { project: any; onUpdat
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
                 <option value="completed">Completed</option>
-              </select>
+              </Select>
             </div>
 
             <div>

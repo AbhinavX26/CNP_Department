@@ -27,6 +27,8 @@ function isCredentialEndpoint(endpoint: string): boolean {
  * the token is already gone, so nothing in flight can resurrect the session.
  */
 export const UNAUTHORIZED_EVENT = 'cnp:unauthorized';
+export const HTTP_ERROR_EVENT = 'cnp:http-error';
+const ERROR_PAGE_STATUSES = new Set([400, 401, 403, 404, 429, 500, 502, 503, 504]);
 
 export async function api<T>(method: string, endpoint: string, body?: any): Promise<T> {
   const headers: Record<string, string> = {};
@@ -70,6 +72,16 @@ export async function api<T>(method: string, endpoint: string, body?: any): Prom
       } catch {
         /* non-browser environment */
       }
+    }
+
+    if (
+      ERROR_PAGE_STATUSES.has(response.status) &&
+      !(response.status === 401 && isCredentialEndpoint(endpoint)) &&
+      typeof window !== 'undefined'
+    ) {
+      window.dispatchEvent(
+        new CustomEvent(HTTP_ERROR_EVENT, { detail: { status: response.status } }),
+      );
     }
 
     const defaultMsg =

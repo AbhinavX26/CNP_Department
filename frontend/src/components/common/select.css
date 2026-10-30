@@ -1,0 +1,298 @@
+/* Dropdowns. One look for every select, combo input and user picker on the site.
+   Values come from the --pk-* palette in ui.css, so light and dark both follow it.
+   The menu is portalled to <body> (so a dialog or a scroller can never clip it), which is
+   why none of these rules depend on where the control sits. */
+
+/* ── Select: the trigger ─────────────────────────────────────────────────── */
+
+.sel {
+  position: relative;
+  display: block;
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 0;
+}
+.sel,
+.sel *,
+.sel__menu,
+.sel__menu * { box-sizing: border-box; }
+
+.sel__trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 42px;
+  padding: 8px 40px 8px 14px;
+  border: 1px solid var(--pk-edge);
+  border-radius: 12px;
+  background: var(--pk-field);
+  color: var(--pk-ink);
+  font: 500 14px/1.35 var(--font-body, inherit);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+.sel__trigger:hover:not(:disabled) { border-color: var(--pk-edge-hover); }
+.sel__trigger:focus-visible,
+.sel__trigger[aria-expanded="true"] {
+  border-color: var(--pk-blue);
+  box-shadow: 0 0 0 3px var(--pk-ring);
+  outline: 0;
+}
+.sel__trigger:disabled {
+  background: var(--pk-field-off);
+  color: var(--pk-faint);
+  cursor: not-allowed;
+}
+.sel__trigger[aria-invalid="true"] { border-color: var(--color-negative, #c0392b); }
+
+.sel__value {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sel__value.is-placeholder { color: var(--pk-faint); font-weight: 400; }
+
+.sel__chevron {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  width: 16px;
+  height: 16px;
+  color: var(--pk-muted);
+  transform: translateY(-50%);
+  pointer-events: none;
+  transition: transform 140ms ease, color 120ms ease;
+}
+.sel__trigger[aria-expanded="true"] ~ .sel__chevron { transform: translateY(-50%) rotate(180deg); color: var(--pk-blue); }
+.sel__trigger:disabled ~ .sel__chevron { color: var(--pk-faint); }
+
+/* The real <select> stays in the form so `name`, `required` and validation keep working. */
+.sel__native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ── The floating list (shared by Select and the combo input) ────────────── */
+
+.ui-menu.sel__menu {
+  position: fixed;
+  z-index: calc(var(--z-modal, 9999) + 1);
+  min-width: 0;
+  padding: 8px;
+  font-family: var(--font-body, inherit);
+  font-size: 14px;
+  color: var(--pk-ink);
+  background: var(--pk-bg);
+  border: 1px solid var(--pk-line);
+  border-radius: 16px;
+  box-shadow: var(--pk-shadow);
+}
+
+.sel__search { position: relative; padding: 2px 2px 10px; border-bottom: 1px solid var(--pk-line); }
+.sel__search svg {
+  position: absolute;
+  top: calc(50% - 4px);
+  left: 14px;
+  width: 16px;
+  height: 16px;
+  color: var(--pk-faint);
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+.sel__search input {
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px 0 38px;
+  border: 1px solid var(--pk-line);
+  border-radius: 10px;
+  background: var(--pk-search);
+  color: var(--pk-ink);
+  font: 400 13.5px/1.4 var(--font-body, inherit);
+}
+.sel__search input::placeholder { color: var(--pk-faint); }
+.sel__search input:focus {
+  border-color: var(--pk-blue);
+  background: var(--pk-bg);
+  box-shadow: 0 0 0 3px var(--pk-ring);
+  outline: 0;
+}
+
+.sel__list {
+  margin: 0;
+  padding: 8px 0 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: var(--pk-scroll) transparent;
+}
+.sel__menu:not(:has(.sel__search)) .sel__list { padding-top: 0; }
+
+.sel__option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: var(--pk-ink);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  cursor: pointer;
+}
+.sel__option + .sel__option { margin-top: 2px; }
+.sel__option:hover,
+.sel__option[data-highlighted="true"] { background: var(--pk-hover); }
+.sel__option[data-selected="true"] { background: var(--pk-selected); box-shadow: inset 3px 0 0 var(--pk-blue); font-weight: 700; }
+.sel__option[data-disabled="true"] { color: var(--pk-faint); cursor: not-allowed; }
+.sel__option[data-disabled="true"]:hover { background: transparent; }
+
+.sel__label { flex: 1 1 auto; min-width: 0; overflow-wrap: anywhere; }
+.sel__check { flex: none; width: 18px; height: 18px; color: var(--pk-blue); }
+.sel__empty { padding: 20px 12px; color: var(--pk-muted); font-size: 13.5px; text-align: center; }
+
+/* ── Combo input: free text with suggestions ─────────────────────────────── */
+
+.sel--combo .sel__input { cursor: text; font-weight: 400; }
+.sel--combo .sel__input::placeholder { color: var(--pk-faint); }
+.sel--combo .sel__toggle {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--pk-muted);
+  cursor: pointer;
+  transform: translateY(-50%);
+}
+.sel--combo .sel__toggle:hover { background: var(--pk-soft); color: var(--pk-blue); }
+.sel--combo .sel__toggle svg { width: 16px; height: 16px; transition: transform 140ms ease; }
+.sel--combo .sel__input[aria-expanded="true"] ~ .sel__toggle svg { transform: rotate(180deg); }
+
+/* Where a select sits in a row of inline controls (member editing forms). */
+.cdx-member-form .sel,
+.pdx-member-form .sel { flex: 0 1 150px; }
+
+/* The old arrow some wrappers drew over the native select. */
+.clubs-select:has(> .sel)::after { display: none; }
+
+/* ── UserSelect: the searchable person picker, in the same palette ───────────
+   This is the coordinator picker's dialog look, applied wherever the picker is used.
+   `:root` lifts these above profile.css, which styles the same classes. */
+
+:root .ui-field.prf-usel__trigger {
+  min-height: 54px;
+  padding: 8px 64px 8px 12px;
+  border: 1px solid var(--pk-edge);
+  border-radius: 12px;
+  background: var(--pk-field);
+  transition: border-color 120ms ease, box-shadow 120ms ease;
+}
+:root .ui-field.prf-usel__trigger:hover:not(:disabled) { border-color: var(--pk-edge-hover); }
+:root .ui-field.prf-usel__trigger[aria-expanded="true"],
+:root .ui-field.prf-usel__trigger:focus-visible {
+  border-color: var(--pk-blue);
+  box-shadow: 0 0 0 3px var(--pk-ring);
+  outline: 0;
+}
+:root .prf-usel__placeholder { font-size: 14px; color: var(--pk-faint); }
+:root .prf-usel__chevron { right: 14px; color: var(--pk-muted); }
+:root .ui-icon-btn.prf-usel__clear { right: 38px; width: 26px; height: 26px; border-radius: 50%; color: var(--pk-muted); }
+:root .ui-icon-btn.prf-usel__clear:hover { background: var(--pk-soft); color: var(--pk-blue); }
+
+:root .prf-usel .ui-avatar,
+:root .prf-usel__menu .ui-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--pk-avatar);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+:root .prf-usel__name { font-size: 14px; font-weight: 700; color: var(--pk-ink); }
+:root .prf-usel__sub { font-size: 12.5px; color: var(--pk-muted); }
+:root .ui-tag.prf-usel__role {
+  min-height: 20px;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--pk-soft);
+  color: var(--pk-soft-ink);
+  font-size: 11.5px;
+  font-weight: 700;
+  box-shadow: none;
+}
+:root .ui-tag.prf-usel__role svg { color: var(--pk-blue); }
+
+:root .ui-menu.prf-usel__menu {
+  padding: 8px;
+  border: 1px solid var(--pk-line);
+  border-radius: 16px;
+  background: var(--pk-bg);
+  box-shadow: var(--pk-shadow);
+}
+:root .ui-search.prf-usel__search { padding: 2px 2px 10px; border-bottom: 1px solid var(--pk-line); }
+:root .ui-search.prf-usel__search svg { left: 14px; width: 16px; height: 16px; color: var(--pk-faint); }
+:root .prf-usel__menu .prf-usel__search .ui-field {
+  min-height: 40px;
+  padding: 0 12px 0 38px;
+  border: 1px solid var(--pk-line);
+  border-radius: 10px;
+  background: var(--pk-search);
+  font-size: 13.5px;
+  color: var(--pk-ink);
+}
+:root .prf-usel__menu .prf-usel__search .ui-field::placeholder { color: var(--pk-faint); }
+:root .prf-usel__menu .prf-usel__search .ui-field:focus {
+  border-color: var(--pk-blue);
+  background: var(--pk-bg);
+  box-shadow: 0 0 0 3px var(--pk-ring);
+  outline: 0;
+}
+
+:root .prf-usel__list { max-height: 248px; padding: 8px 0 0; scrollbar-width: thin; scrollbar-color: var(--pk-scroll) transparent; }
+:root .prf-usel__option { align-items: center; gap: 12px; padding: 10px 12px; border-radius: 12px; }
+:root .prf-usel__option > .ui-avatar { margin-top: 0; }
+:root .prf-usel__option + .prf-usel__option { margin-top: 2px; }
+:root .prf-usel__option:hover,
+:root .prf-usel__option[data-highlighted="true"] { background: var(--pk-hover); }
+:root .prf-usel__option[data-selected="true"] { background: var(--pk-selected); box-shadow: inset 3px 0 0 var(--pk-blue); }
+:root .prf-usel__option[data-disabled="true"] { opacity: 1; cursor: not-allowed; }
+:root .prf-usel__option[data-disabled="true"]:hover { background: transparent; }
+:root .prf-usel__option[data-disabled="true"] .ui-avatar,
+:root .prf-usel__option[data-disabled="true"] .prf-usel__name { opacity: 0.55; }
+:root .prf-usel__option .ui-tag--plain:not(.prf-usel__role) {
+  flex: none;
+  min-height: 22px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 8px;
+  background: var(--pk-soft);
+  color: var(--pk-soft-ink);
+  font-size: 12px;
+  font-weight: 700;
+  box-shadow: none;
+}
+:root .prf-usel__check { width: 18px; height: 18px; color: var(--pk-blue); }
+:root .prf-usel__state { padding: 22px 12px; font-size: 13.5px; color: var(--pk-muted); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sel__trigger,
+  .sel__chevron,
+  .sel--combo .sel__toggle svg { transition: none; }
+}

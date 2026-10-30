@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import type { CSSProperties } from 'react';
 import { Link, useParams, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -10,9 +9,9 @@ import { ProjectUpdates } from '../../components/projects/ProjectUpdates';
 import { ProjectManagement } from '../../components/projects/ProjectManagement';
 import { ProjectJoinRequests } from '../../components/projects/ProjectJoinRequests';
 import { usePageLoading } from '../../context/LoadingContext';
-import { AvatarStack, Counter, KindGlyph, Ring } from '../../components/ui/vis';
-import { Tooltip } from '../../components/ui/Tooltip';
 import './projects.css';
+import './project-details.css';
+import '../../components/projects/project-panels.css';
 
 interface ProjectPerson {
   _id?: string;
@@ -89,18 +88,6 @@ function statusKey(status?: string): 'active' | 'completed' | 'inactive' {
   return status === 'completed' || status === 'inactive' ? status : 'active';
 }
 
-const STATUS_TONE: Record<'active' | 'completed' | 'inactive', string> = {
-  active: 'is-positive',
-  completed: 'ui-tag--plain',
-  inactive: 'is-warning',
-};
-
-const STATUS_NOTE: Record<'active' | 'completed' | 'inactive', string> = {
-  active: 'Work in progress',
-  completed: 'Delivered and closed',
-  inactive: 'Paused for now',
-};
-
 const ArrowLeft = () => (
   <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
     <path d="M20 12H5M11 6l-6 6 6 6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
@@ -121,43 +108,23 @@ const LockMark = () => (
   </svg>
 );
 
-const LayersMark = () => (
-  <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
-    <path d="m12 4 8 4-8 4-8-4 8-4Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-    <path d="m4 12 8 4 8-4M4 16l8 4 8-4" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
-  </svg>
-);
 
-const LeadMark = () => (
-  <svg viewBox="0 0 12 12" fill="none" aria-hidden="true" focusable="false">
-    <path
-      d="M2.6 8.3 2 3.3l2.4 1.8L6 2.6l1.6 2.5L10 3.3l-.6 5Z"
-      stroke="currentColor"
-      strokeWidth="1.3"
-      strokeLinejoin="round"
-    />
-    <path d="M2.6 10.2h6.8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
+const Icon = ({ children }: { children: React.ReactNode }) => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">{children}</svg>
 );
+const PeopleIcon = () => <Icon><path d="M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19M10 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6ZM20 19v-1.5a3.5 3.5 0 0 0-2.5-3.35M15.5 5.2a3 3 0 0 1 0 5.6" /></Icon>;
+const CapIcon = () => <Icon><path d="m2 9 10-5 10 5-10 5L2 9Zm5 3v4c0 1.5 2.5 3 5 3s5-1.5 5-3v-4" /></Icon>;
+const BoxIcon = () => <Icon><path d="m4 8 8-4 8 4-8 4-8-4Zm0 0v8l8 4m8-12v8l-8 4m0-8v8" /></Icon>;
+const CheckIcon = () => <Icon><path d="m5 12.5 4.5 4.5L19 7" /></Icon>;
+const CalIcon = () => <Icon><rect x="4" y="5.5" width="16" height="14.5" rx="2.5" /><path d="M4 10.5h16M8 3.5v4M16 3.5v4" /></Icon>;
+const ClockIcon = () => <Icon><path d="M12 8v4l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></Icon>;
 
-function PersonAvatar({ person, size = 'sm' }: { person?: ProjectPerson | null; size?: 'sm' | 'md' | 'lg' }) {
-  const className =
-    size === 'lg'
-      ? 'ui-avatar ui-avatar--lg prj-avatar'
-      : size === 'md'
-        ? 'ui-avatar prj-avatar'
-        : 'ui-avatar ui-avatar--sm prj-avatar';
-  if (person?.profileImage) {
-    return (
-      <span className={className}>
-        <img src={person.profileImage} alt="" />
-      </span>
-    );
-  }
-  return (
-    <span className={className} aria-hidden="true">
-      {initialOf(person?.name)}
-    </span>
+function Face({ person, size = 40 }: { person?: ProjectPerson | null; size?: number }) {
+  const style = { width: size, height: size, fontSize: Math.round(size * 0.4) };
+  return person?.profileImage ? (
+    <img className="pdx-face" src={person.profileImage} alt="" style={style} />
+  ) : (
+    <span className="pdx-face" style={style} aria-hidden="true">{initialOf(person?.name)}</span>
   );
 }
 
@@ -282,70 +249,26 @@ export default function ProjectDetails() {
 
   if (loading) {
     return (
-      <div className="prj-page prj-detail">
-        <div className="prj-detail-loading" aria-hidden="true">
-          <span className="ui-skel" style={{ width: '8rem', height: 12 }} />
-          <div className="prj-identity prj-identity--skeleton">
-            <span className="ui-skel prj-identity__mark-skel" />
-            <div className="prj-identity__main">
-              <span className="ui-skel" style={{ width: '45%', height: 26 }} />
-              <span className="ui-skel" style={{ width: '75%', height: 12, marginTop: 12 }} />
-              <span className="ui-skel" style={{ width: '55%', height: 34, marginTop: 18 }} />
-            </div>
-          </div>
-          <div className="prj-detail-grid">
-            <div className="prj-main">
-              {[0, 1].map((panel) => (
-                <div className="ui-panel" key={panel}>
-                  <div className="ui-panel__head">
-                    <span className="ui-skel" style={{ width: '30%', height: 13 }} />
-                  </div>
-                  <div className="ui-panel__body ui-stack">
-                    <span className="ui-skel" style={{ width: '100%', height: 44 }} />
-                    <span className="ui-skel" style={{ width: '92%', height: 44 }} />
-                  </div>
-                </div>
-              ))}
-            </div>
-            <aside className="prj-aside">
-              <div className="ui-panel">
-                <div className="ui-panel__head">
-                  <span className="ui-skel" style={{ width: '50%', height: 13 }} />
-                </div>
-                <div className="ui-panel__body ui-stack">
-                  {[0, 1, 2, 3].map((row) => (
-                    <span className="ui-skel" key={row} style={{ width: '100%', height: 32 }} />
-                  ))}
-                </div>
-              </div>
-            </aside>
-          </div>
-        </div>
+      <div className="prj-page prj-detail pdx" aria-busy="true" aria-label="Loading project">
+        <span className="pdx-skel pdx-skel--hero" />
+        <div className="pdx-tiles">{[0, 1, 2, 3].map((i) => <span key={i} className="pdx-skel pdx-skel--tile" />)}</div>
+        <span className="pdx-skel pdx-skel--card" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="prj-page prj-detail">
-        <nav className="prj-crumb" aria-label="Breadcrumb">
-          <Link className="prj-back" to="/projects">
-            <ArrowLeft />
-            Projects
-          </Link>
-        </nav>
-        <div className="ui-notice ui-notice--error prj-detail-error" role="alert">
-          <div className="ui-stack ui-stack--sm">
-            <strong>This project could not be loaded</strong>
-            <span>{error}</span>
+      <div className="prj-page prj-detail pdx">
+        <Link className="pdx-back" to="/projects"><ArrowLeft />Projects</Link>
+        <div className="pdx-state" role="alert">
+          <p className="pdx-state-title">This project could not be loaded</p>
+          <p className="pdx-state-text">{error}</p>
+          <div className="pdx-state-actions">
+            <button type="button" className="pdx-btn pdx-btn--solid" onClick={load}>Try again</button>
+            <button type="button" className="pdx-btn pdx-btn--quiet" onClick={() => navigate('/projects')}>Back to projects</button>
           </div>
-          <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={load}>
-            Retry
-          </button>
         </div>
-        <button type="button" className="ui-btn ui-btn--ghost" onClick={() => navigate('/projects')}>
-          Back to projects
-        </button>
       </div>
     );
   }
@@ -392,25 +315,13 @@ export default function ProjectDetails() {
               : 'Not a member'
             : null;
 
-  const relationKey = isProjectAdmin
-    ? 'admin'
-    : currentUserIsTL
-      ? 'lead'
-      : isMember
-        ? 'member'
-        : isAssignedMentor
-          ? 'mentor'
-          : 'none';
+  const pillKind = isProjectAdmin || isAssignedMentor ? 'staff' : currentUserIsTL ? 'core' : isMember ? 'member' : joinStatus === 'pending' ? 'pending' : 'member';
 
   const sortedMembers = [...(members || [])].sort((a, b) => {
     if (isTL(a)) return -1;
     if (isTL(b)) return 1;
     return (a.studentId?.name || '').localeCompare(b.studentId?.name || '');
   });
-
-  const memberPeople = sortedMembers
-    .map((member) => member.studentId)
-    .filter((person): person is ProjectPerson => Boolean(person));
 
   const mentorPeople = (mentors || [])
     .map((assignment) => assignment.mentorId)
@@ -422,311 +333,178 @@ export default function ProjectDetails() {
   // summary on GET /projects/:id.
   const requestsTotal = requests?.total ?? 0;
   const requestsApproved = requests?.approved ?? 0;
-  const coverRatio = requestsTotal > 0 ? requestsApproved / requestsTotal : 0;
+  const coverPct = requestsTotal > 0 ? Math.round((requestsApproved / requestsTotal) * 100) : 0;
 
-  const showFacts = memberPeople.length > 0 || mentorPeople.length > 0 || Boolean(relation);
-  const showCoveragePanel = canAccessProjectContent && (materials !== null || requests !== null);
+  const tiles = canAccessProjectContent
+    ? [
+        { label: members.length === 1 ? 'Member' : 'Members', value: members.length, note: teamLeader ? `Led by ${teamLeader.name}` : 'No team leader yet', tone: 'deep', Icon: PeopleIcon },
+        { label: mentorPeople.length === 1 ? 'Mentor' : 'Mentors', value: mentorPeople.length, note: mentorPeople.length ? 'Faculty guidance' : 'None assigned', tone: 'blue', Icon: CapIcon },
+        { label: 'Materials', value: materials?.total ?? 0, note: materials ? `${materials.purchased} purchased · ${materials.owned} owned` : 'Items tracked', tone: 'sky', Icon: BoxIcon },
+        { label: 'Requests approved', value: requestsApproved, note: requestsTotal ? `of ${requestsTotal} material requests` : 'No requests yet', tone: 'mist', Icon: CheckIcon },
+      ]
+    : [
+        { label: members.length === 1 ? 'Member' : 'Members', value: members.length, note: teamLeader ? `Led by ${teamLeader.name}` : 'No team leader yet', tone: 'deep', Icon: PeopleIcon },
+        { label: mentorPeople.length === 1 ? 'Mentor' : 'Mentors', value: mentorPeople.length, note: mentorPeople.length ? 'Faculty guidance' : 'None assigned', tone: 'blue', Icon: CapIcon },
+        { label: 'Created', value: project.createdAt ? new Date(project.createdAt).getDate() : 0, note: fullDate(project.createdAt), tone: 'sky', Icon: CalIcon },
+        { label: 'Status', value: 0, note: statusText(project.status), tone: 'mist', Icon: ClockIcon },
+      ];
+  const visibleTiles = canAccessProjectContent ? tiles : tiles.slice(0, 2);
 
   return (
-    <div className="prj-page prj-detail">
-      <nav className="prj-crumb">
-        <Link className="prj-back" to="/projects">
-          <ArrowLeft />
-          Projects
-        </Link>
-        <span className="prj-crumb__divider" aria-hidden="true">
-          /
-        </span>
-        <span className="prj-crumb__here">{project.name}</span>
-      </nav>
+    <div className="prj-page prj-detail pdx">
+      <Link className="pdx-back" to="/projects">
+        <ArrowLeft />
+        All projects
+      </Link>
 
-      {/* ── Identity plate ───────────────────────────────────────────────── */}
-      <header className="prj-identity prj-rise" style={{ '--i': 0 } as CSSProperties}>
-        <div className="prj-identity__mark-wrap">
-          <span className={`prj-identity__mark is-${status}`}>
-            {project.image ? (
-              <img src={project.image} alt="" />
-            ) : (
-              <span aria-hidden="true">{monogram(project.name)}</span>
+      {/* Hero */}
+      <section className="pdx-hero" aria-labelledby="project-name">
+        <div className="pdx-hero-body">
+          <div className="pdx-logo-wrap">
+            <span className={`pdx-logo is-${status}`} aria-hidden="true">
+              {project.image ? <img src={project.image} alt="" /> : monogram(project.name)}
+            </span>
+            {isProjectAdmin && (
+              <label className="pdx-logo-edit" title="Change project image">
+                <CameraMark />
+                <span className="ui-visually-hidden">Change project image</span>
+                <input type="file" accept="image/*" onChange={handleImageUpload} />
+              </label>
             )}
-          </span>
-          {isProjectAdmin && (
-            <label className="prj-identity__image-btn" title="Change project image">
-              <CameraMark />
-              <span className="ui-visually-hidden">Change project image</span>
-              <input type="file" accept="image/*" onChange={handleImageUpload} />
-            </label>
-          )}
-        </div>
-
-        <div className="prj-identity__main">
-          <div className="prj-identity__title-row">
-            <h1 className="prj-detail-title">{project.name}</h1>
-            <span
-              className={`ui-tag ${STATUS_TONE[status]}`}
-              title={`${statusText(project.status)} · ${STATUS_NOTE[status]}`}
-            >
-              {statusText(project.status)}
-            </span>
           </div>
 
-          {project.description && (
-            <p className="prj-identity__desc" title={project.description}>
-              {project.description}
-            </p>
-          )}
-
-          <div className="prj-identity__facts">
-            <span className={`prj-idfact${teamLeader ? '' : ' is-empty'}`}>
-              {teamLeader ? (
-                <>
-                  <span className="prj-lead">
-                    <span className="prj-lead__plate" aria-hidden="true">
-                      {teamLeader.profileImage ? (
-                        <img src={teamLeader.profileImage} alt="" />
-                      ) : (
-                        initialOf(teamLeader.name)
-                      )}
-                    </span>
-                    <span className="prj-lead__glyph" aria-hidden="true">
-                      <LeadMark />
-                    </span>
-                  </span>
-                  <span className="prj-idfact__text">
-                    <span className="prj-idfact__name">{teamLeader.name}</span>
-                    <span className="prj-idfact__label">Team leader</span>
-                  </span>
-                </>
-              ) : (
-                <Tooltip label="No team leader assigned">
-                  <span className="prj-idfact__text">
-                    <span className="prj-idfact__name is-muted">Lead open</span>
-                    <span className="prj-idfact__label">Team leader</span>
-                  </span>
-                </Tooltip>
-              )}
-            </span>
-
-            <span className="prj-idfact">
-              {memberPeople.length ? (
-                <AvatarStack
-                  people={memberPeople.map((person) => ({
-                    name: person.name || 'Unnamed student',
-                    image: person.profileImage || undefined,
-                  }))}
-                  max={3}
-                  size="sm"
-                />
-              ) : (
-                <span className="prj-av-empty" aria-hidden="true" />
-              )}
-              <span className="prj-idfact__text">
-                <span className="prj-idfact__name">
-                  <Counter value={members.length} />
-                </span>
-                <span className="prj-idfact__label">
-                  {members.length === 1 ? 'Member' : 'Members'}
-                </span>
-              </span>
-            </span>
-
-            <span className={`prj-idfact${mentorPeople.length ? '' : ' is-empty'}`}>
-              {mentorPeople.length ? (
-                <>
-                  <AvatarStack
-                    people={mentorPeople.map((person) => ({
-                      name: person.name || 'Mentor',
-                      image: person.profileImage || undefined,
-                    }))}
-                    max={3}
-                    size="sm"
-                  />
-                  <span className="prj-idfact__text">
-                    <span className="prj-idfact__name">
-                      <Counter value={mentorPeople.length} />
-                    </span>
-                    <span className="prj-idfact__label">
-                      {mentorPeople.length === 1 ? 'Mentor' : 'Mentors'}
-                    </span>
-                  </span>
-                </>
-              ) : (
-                <Tooltip label="No faculty mentor assigned">
-                  <span className="prj-idfact__text">
-                    <span className="prj-idfact__name is-muted">Mentor open</span>
-                    <span className="prj-idfact__label">Faculty</span>
-                  </span>
-                </Tooltip>
-              )}
-            </span>
-          </div>
-        </div>
-
-        <div className="prj-identity__actions">
-          {relation && !(user?.role === 'student' && joinStatus === 'pending') && (
-            <span className={`prj-rel-chip is-${relationKey}`}>
-              {relationKey === 'lead' ? (
-                <LeadMark />
-              ) : relationKey === 'member' ? (
-                <KindGlyph kind="member" size={14} />
-              ) : relationKey === 'mentor' ? (
-                <KindGlyph kind="mentor" size={14} />
-              ) : relationKey === 'admin' ? (
-                <KindGlyph kind="project" size={14} />
+          <div className="pdx-hero-text">
+            <p className="pdx-eyebrow">GUIITAR project</p>
+            <div className="pdx-hero-title">
+              <h1 id="project-name">{project.name}</h1>
+              <span className={`pdx-status pdx-status--${status}`}>{statusText(project.status)}</span>
+              {relation && !(user?.role === 'student' && joinStatus === 'none') ? (
+                <span className={`pdx-pill pdx-pill--${pillKind}`}>{relation}</span>
               ) : null}
-              {relation}
-            </span>
-          )}
-          {user?.role === 'student' &&
-            (joinStatus === 'pending' ? (
-              <span className="ui-tag is-warning">Request pending</span>
-            ) : joinStatus === 'none' ? (
-              <button type="button" className="ui-btn ui-btn--primary" onClick={handleJoin}>
-                Join project
-              </button>
-            ) : null)}
-          {user?.role === 'student' && joinStatus === 'member' && !currentUserIsTL ? (
-            confirmLeave ? (
-              <span className="prj-leave" role="group" aria-label="Confirm leaving this project">
-                <button
-                  type="button"
-                  className="ui-btn ui-btn--danger ui-btn--sm"
-                  onClick={handleLeave}
-                  disabled={leaving}
-                >
-                  {leaving ? 'Leaving…' : 'Confirm leave'}
-                </button>
-                <button
-                  type="button"
-                  className="ui-btn ui-btn--quiet ui-btn--sm"
-                  onClick={() => setConfirmLeave(false)}
-                  disabled={leaving}
-                >
-                  Stay
-                </button>
-              </span>
-            ) : (
-              <button
-                type="button"
-                className="ui-btn ui-btn--quiet ui-btn--sm"
-                onClick={() => setConfirmLeave(true)}
-                title="Leave this project; you can request to join again"
-              >
-                Leave project
-              </button>
-            )
-          ) : null}
-          {isProjectAdmin && (
-            <a className="ui-btn ui-btn--quiet prj-identity__manage" href="#manage" title="Project settings">
-              Manage
-            </a>
-          )}
-        </div>
-      </header>
+            </div>
+            <p className="pdx-hero-desc">{project.description?.trim() || 'This project has not added a description yet.'}</p>
 
-      {/* ── The record ───────────────────────────────────────────────────── */}
-      <div className="prj-detail-grid">
-        <div className="prj-main">
+            <div className="pdx-hero-facts">
+              <span className="pdx-fact">
+                {teamLeader ? <Face person={teamLeader} size={32} /> : null}
+                <span>
+                  <small>Team leader</small>
+                  <strong>{teamLeader?.name || 'Not assigned yet'}</strong>
+                </span>
+              </span>
+              <span className="pdx-fact">
+                <span>
+                  <small>{members.length === 1 ? 'Member' : 'Members'}</small>
+                  <strong>{members.length}</strong>
+                </span>
+              </span>
+              <span className="pdx-fact">
+                <span>
+                  <small>{mentorPeople.length === 1 ? 'Mentor' : 'Mentors'}</small>
+                  <strong>{mentorPeople.length ? mentorPeople.map((p) => p.name).filter(Boolean).slice(0, 2).join(', ') + (mentorPeople.length > 2 ? ` +${mentorPeople.length - 2}` : '') : 'Not assigned yet'}</strong>
+                </span>
+              </span>
+            </div>
+          </div>
+
+          <div className="pdx-hero-actions">
+            {user?.role === 'student' && joinStatus === 'none' ? (
+              <button type="button" className="pdx-btn pdx-btn--light" onClick={handleJoin}>Join project</button>
+            ) : null}
+            {user?.role === 'student' && joinStatus === 'pending' ? (
+              <span className="pdx-hint">Waiting for the team to review your request.</span>
+            ) : null}
+            {user?.role === 'student' && joinStatus === 'member' && !currentUserIsTL ? (
+              confirmLeave ? (
+                <span className="pdx-leave" role="group" aria-label="Confirm leaving this project">
+                  <button type="button" className="pdx-btn pdx-btn--danger" onClick={handleLeave} disabled={leaving}>
+                    {leaving ? 'Leaving…' : 'Confirm leave'}
+                  </button>
+                  <button type="button" className="pdx-btn pdx-btn--ghost" onClick={() => setConfirmLeave(false)} disabled={leaving}>Stay</button>
+                </span>
+              ) : (
+                <button type="button" className="pdx-btn pdx-btn--ghost" onClick={() => setConfirmLeave(true)} title="Leave this project; you can request to join again">
+                  Leave project
+                </button>
+              )
+            ) : null}
+            {isProjectAdmin && (
+              <a className="pdx-btn pdx-btn--ghost" href="#manage" title="Project settings">Manage project</a>
+            )}
+          </div>
+        </div>
+      </section>
+
+      <section className={`pdx-tiles${visibleTiles.length === 2 ? ' pdx-tiles--2' : ''}`} aria-label="Project at a glance">
+        {visibleTiles.map(({ label, value, note, tone, Icon: TileIcon }) => (
+          <div key={label} className={`pdx-tile pdx-tile--${tone}`}>
+            <span className="pdx-tile-icon"><TileIcon /></span>
+            <span className="pdx-tile-value">{label === 'Status' ? statusText(project.status) : value}</span>
+            <span className="pdx-tile-label">{label}</span>
+            <span className="pdx-tile-note">{note}</span>
+          </div>
+        ))}
+      </section>
+
+      <div className="pdx-layout">
+        <div className="pdx-main">
           {isProjectAdmin || user?.role === 'faculty_mentor' ? (
-            <ProjectJoinRequests
-              projectId={project._id}
-              onUpdate={load}
-              onCountChange={setPendingRequests}
-            />
+            <ProjectJoinRequests projectId={project._id} onUpdate={load} onCountChange={setPendingRequests} />
           ) : null}
 
           {canAccessProjectContent ? (
-            <ProjectUpdates
-              projectId={project._id}
-              projectName={project.name}
-              isTL={currentUserIsTL}
-              mentors={mentors}
-            />
+            <ProjectUpdates projectId={project._id} projectName={project.name} isTL={currentUserIsTL} mentors={mentors} />
           ) : (
-            <section className="ui-panel prj-restricted" aria-labelledby="prj-restricted-title">
-              <div className="ui-panel__body">
-                <span className="ui-empty__mark">
-                  <LockMark />
-                </span>
-                <h2 className="ui-h3" id="prj-restricted-title">
-                  Project work is restricted
-                </h2>
-                <p className="prj-restricted__text">
-                  {user?.role === 'student'
-                    ? joinStatus === 'pending'
-                      ? 'Updates and materials open when the team accepts your request.'
-                      : 'Send a join request to open updates, materials and requests.'
-                    : 'Open to the team, its mentors and project admins.'}
-                </p>
-              </div>
+            <section className="pdx-card pdx-restricted" aria-labelledby="prj-restricted-title">
+              <span className="pdx-empty-mark"><LockMark /></span>
+              <h2 className="pdx-card-title" id="prj-restricted-title">Project work is restricted</h2>
+              <p className="pdx-card-sub">
+                {user?.role === 'student'
+                  ? joinStatus === 'pending'
+                    ? 'Updates and materials open when the team accepts your request.'
+                    : 'Send a join request to open updates, materials and requests.'
+                  : 'Open to the team, its mentors and project admins.'}
+              </p>
             </section>
           )}
 
-          <section className="ui-panel prj-team-panel" aria-labelledby="prj-team-title">
-            <header className="ui-panel__head">
-              <div className="ui-panel__titles">
-                <h2 className="ui-panel__title" id="prj-team-title">
-                  Team
-                </h2>
-                <span className="ui-panel__meta">
-                  <Counter value={members.length} />
-                </span>
+          <section className="pdx-card" aria-labelledby="prj-team-title">
+            <header className="pdx-card-head">
+              <div>
+                <h2 className="pdx-card-title" id="prj-team-title">Team</h2>
+                <p className="pdx-card-sub">{members.length} {members.length === 1 ? 'member' : 'members'}, team leader first</p>
               </div>
-              {memberPeople.length > 0 && (
-                <AvatarStack
-                  people={memberPeople.map((person) => ({
-                    name: person.name || 'Unnamed student',
-                    image: person.profileImage || undefined,
-                  }))}
-                  max={5}
-                  size="sm"
-                  className="prj-team-panel__stack"
-                />
-              )}
             </header>
-            <div className="ui-panel__body ui-panel__body--flush">
-              {members.length ? (
-                <ul className="prj-roster">
-                  {sortedMembers.map((member) => (
-                    <li key={member._id} className="ui-row prj-roster__row">
-                      <PersonAvatar person={member.studentId} size="md" />
-                      <div className="prj-roster__main">
-                        <p className="prj-roster__name">{member.studentId?.name || 'Unknown student'}</p>
-                        <p className="prj-roster__sub">
-                          {[member.studentId?.department, member.studentId?.semester ? `Semester ${member.studentId.semester}` : null]
-                            .filter(Boolean)
-                            .join(' · ') || 'Student'}
-                        </p>
-                      </div>
-                      {isTL(member) ? (
-                        <span className="prj-lead-badge" title="Team leader">
-                          <LeadMark />
-                          <span>Lead</span>
-                        </span>
-                      ) : null}
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <div className="ui-empty prj-empty prj-empty--inset">
-                  <span className="ui-empty__mark">
-                    <LayersMark />
-                  </span>
-                  <p className="ui-empty__title">No members yet</p>
-                  <p className="ui-empty__text">Members appear here once they join.</p>
-                </div>
-              )}
-            </div>
+            {members.length ? (
+              <ul className="pdx-people">
+                {sortedMembers.map((member) => (
+                  <li key={member._id}>
+                    <Face person={member.studentId} size={40} />
+                    <span className="pdx-person-text">
+                      <strong>{member.studentId?.name || 'Unknown student'}</strong>
+                      <span>
+                        {[member.studentId?.department, member.studentId?.semester ? `Semester ${member.studentId.semester}` : null]
+                          .filter(Boolean)
+                          .join(' · ') || 'Student'}
+                      </span>
+                    </span>
+                    {isTL(member) ? <span className="pdx-pill pdx-pill--core">Team leader</span> : <span className="pdx-pill pdx-pill--member">Member</span>}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="pdx-empty">
+                <span className="pdx-empty-mark"><PeopleIcon /></span>
+                <p className="pdx-empty-title">No members yet</p>
+                <p className="pdx-empty-text">Members appear here once they join.</p>
+              </div>
+            )}
           </section>
 
           {canAccessProjectContent && (
             <>
               <ProjectMaterials projectId={project._id} isTL={currentUserIsTL} onSummaryChange={setMaterials} />
-              <ProjectMaterialRequests
-                projectId={project._id}
-                isTL={currentUserIsTL}
-                onStatsChange={setRequests}
-              />
+              <ProjectMaterialRequests projectId={project._id} isTL={currentUserIsTL} onStatsChange={setRequests} />
             </>
           )}
 
@@ -739,181 +517,60 @@ export default function ProjectDetails() {
           {isProjectAdmin && <ProjectManagement project={project} onUpdate={load} />}
         </div>
 
-        <aside className="prj-aside prj-detail__aside" aria-label="Project facts">
-          {showFacts && (
-            <section className="ui-panel prj-facts-panel prj-rise" style={{ '--i': 1 } as CSSProperties}>
-              <header className="ui-panel__head">
-                <div className="ui-panel__titles">
-                  <h2 className="ui-panel__title">Facts</h2>
-                </div>
-              </header>
-              <div className="ui-panel__body">
-                <dl className="prj-facts">
-                  {memberPeople.length > 0 && (
-                    <div>
-                      <dt>
-                        <KindGlyph kind="member" size={15} />
-                        Team
-                      </dt>
-                      <dd>
-                        <span className="prj-facts__inline">
-                          <AvatarStack
-                            people={memberPeople.map((person) => ({
-                              name: person.name || 'Unnamed student',
-                              image: person.profileImage || undefined,
-                            }))}
-                            max={4}
-                            size="sm"
-                          />
-                          <Counter value={memberPeople.length} />
-                        </span>
-                      </dd>
-                    </div>
-                  )}
-                  {mentorPeople.length > 0 && (
-                    <div>
-                      <dt>
-                        <KindGlyph kind="mentor" size={15} />
-                        Mentors
-                      </dt>
-                      <dd>
-                        <span className="prj-facts__inline">
-                          <AvatarStack
-                            people={mentorPeople.map((person) => ({
-                              name: person.name || 'Mentor',
-                              image: person.profileImage || undefined,
-                            }))}
-                            max={3}
-                            size="sm"
-                          />
-                          <Counter value={mentorPeople.length} />
-                        </span>
-                      </dd>
-                    </div>
-                  )}
-                  {(isProjectAdmin || isAssignedMentor) && (
-                    <div>
-                      <dt>
-                        <KindGlyph kind="request" size={15} />
-                        Join requests
-                      </dt>
-                      <dd>
-                        {pendingRequests === null ? '—' : <Counter value={pendingRequests} />}
-                      </dd>
-                    </div>
-                  )}
-                  {relation && (
-                    <div>
-                      <dt>
-                        <KindGlyph kind="project" size={15} />
-                        Your access
-                      </dt>
-                      <dd className="prj-facts__relation">{relation}</dd>
-                    </div>
-                  )}
-                </dl>
-              </div>
-              {isProjectAdmin && (
-                <footer className="ui-panel__foot prj-facts__foot">
-                  <a className="ui-link" href="#manage">
-                    Edit project settings
-                  </a>
-                </footer>
-              )}
-            </section>
-          )}
-
-          {showCoveragePanel && (
-            <section
-              className="ui-panel prj-cover prj-rise"
-              aria-labelledby="prj-cover-title"
-              style={{ '--i': 2 } as CSSProperties}
-            >
-              <header className="ui-panel__head">
-                <div className="ui-panel__titles">
-                  <h2 className="ui-panel__title" id="prj-cover-title">
-                    Materials
-                  </h2>
-                  <span className="ui-panel__meta">
-                    <Counter value={materials?.total ?? 0} />
-                  </span>
-                </div>
-              </header>
-              <div className="ui-panel__body">
-                <div className="prj-cover__row">
-                  <Tooltip
-                    label={
-                      requestsTotal > 0
-                        ? `${requestsApproved} of ${requestsTotal} material requests approved`
-                        : 'No material requests yet'
-                    }
-                  >
-                    <span className="prj-cover__ring">
-                      <Ring
-                        value={coverRatio}
-                        size={58}
-                        tone="ink"
-                        label={`${requestsApproved}/${requestsTotal}`}
-                      />
-                    </span>
-                  </Tooltip>
-                  <div className="prj-cover__nums">
-                    <span className="prj-cover__num">
-                      <Counter value={materials?.total ?? 0} />
-                      <span className="prj-cover__num-label">items</span>
-                    </span>
-                    <span className="prj-cover__num">
-                      <Counter value={requestsApproved} />
-                      <span className="prj-cover__num-label">approved</span>
-                    </span>
-                    <span className="prj-cover__num">
-                      <Counter value={requestsTotal} />
-                      <span className="prj-cover__num-label">requests</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </section>
-          )}
-
-          <section
-            className="ui-panel prj-record prj-rise"
-            aria-labelledby="prj-record-title"
-            style={{ '--i': 3 } as CSSProperties}
-          >
-            <header className="ui-panel__head">
-              <div className="ui-panel__titles">
-                <h2 className="ui-panel__title" id="prj-record-title">
-                  Record
-                </h2>
+        <aside className="pdx-side" aria-label="Project facts">
+          <section className="pdx-card pdx-card--dark">
+            <header className="pdx-card-head">
+              <div>
+                <h2 className="pdx-card-title">Your access</h2>
+                <p className="pdx-card-sub">What you can do here</p>
               </div>
             </header>
-            <div className="ui-panel__body">
-              <ol className="prj-spine">
-                <li className="prj-spine__row">
-                  <span className="prj-spine__rail" aria-hidden="true">
-                    <span className="prj-spine__node" />
-                  </span>
-                  <span className="prj-spine__text">
-                    <span className="prj-spine__label">Created</span>
-                    <time className="prj-spine__date" dateTime={project.createdAt}>
-                      {fullDate(project.createdAt)}
-                    </time>
-                  </span>
-                </li>
-                <li className="prj-spine__row">
-                  <span className="prj-spine__rail" aria-hidden="true">
-                    <span className="prj-spine__node is-latest" />
-                  </span>
-                  <span className="prj-spine__text">
-                    <span className="prj-spine__label">Updated</span>
-                    <time className="prj-spine__date" dateTime={project.updatedAt}>
-                      {fullDate(project.updatedAt)}
-                    </time>
-                  </span>
-                </li>
-              </ol>
-            </div>
+            <p className="pdx-access">{relation || 'Viewing'}</p>
+            <p className="pdx-access-note">
+              {canAccessProjectContent
+                ? 'You can open updates, materials and requests.'
+                : 'Updates and materials open to the team, its mentors and project admins.'}
+            </p>
+            {(isProjectAdmin || isAssignedMentor) && (
+              <p className="pdx-access-note">
+                {pendingRequests === null ? 'Loading join requests…' : `${pendingRequests} join ${pendingRequests === 1 ? 'request' : 'requests'} waiting.`}
+              </p>
+            )}
+          </section>
+
+          {canAccessProjectContent && (materials !== null || requests !== null) && (
+            <section className="pdx-card" aria-labelledby="prj-cover-title">
+              <header className="pdx-card-head">
+                <div>
+                  <h2 className="pdx-card-title" id="prj-cover-title">Materials</h2>
+                  <p className="pdx-card-sub">{requestsTotal > 0 ? `${requestsApproved} of ${requestsTotal} requests approved` : 'No material requests yet'}</p>
+                </div>
+                <span className="pdx-count">{materials?.total ?? 0}</span>
+              </header>
+              <span className="pdx-meter" role="img" aria-label={`${requestsApproved} of ${requestsTotal} material requests approved`}>
+                <i style={{ width: `${coverPct}%` }} />
+              </span>
+              <dl className="pdx-facts">
+                <div><dt>Items</dt><dd>{materials?.total ?? 0}</dd></div>
+                <div><dt>Approved</dt><dd>{requestsApproved}</dd></div>
+                <div><dt>Requests</dt><dd>{requestsTotal}</dd></div>
+              </dl>
+            </section>
+          )}
+
+          <section className="pdx-card" aria-labelledby="prj-record-title">
+            <header className="pdx-card-head">
+              <div>
+                <h2 className="pdx-card-title" id="prj-record-title">Record</h2>
+                <p className="pdx-card-sub">When this project changed</p>
+              </div>
+            </header>
+            <dl className="pdx-facts">
+              <div><dt>Created</dt><dd><time dateTime={project.createdAt}>{fullDate(project.createdAt)}</time></dd></div>
+              <div><dt>Last updated</dt><dd><time dateTime={project.updatedAt}>{fullDate(project.updatedAt)}</time></dd></div>
+              <div><dt>Status</dt><dd>{statusText(project.status)}</dd></div>
+            </dl>
+            {isProjectAdmin && <a className="pdx-link" href="#manage">Edit project settings</a>}
           </section>
         </aside>
       </div>

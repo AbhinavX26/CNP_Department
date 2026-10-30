@@ -1,0 +1,302 @@
+/* Events, in the dashboard's language: navy-to-blue gradient tiles, white 18px cards,
+   one ink colour. Loaded after events.css so it only has to say what changes.
+   Day tiles: soft green = something still ahead, soft orange = already happened. */
+.evt-page {
+  --ev-ink: #122549;
+  --ev-muted: #5f6f8d;
+  --ev-faint: #8a97b2;
+  --ev-line: #e4ebf7;
+  --ev-blue: #0462d3;
+  --ev-go: 31, 157, 99;       /* upcoming, as r,g,b */
+  --ev-done: 238, 132, 28;    /* past, as r,g,b */
+  max-width: 1320px;
+  margin: 0 auto;
+  color: var(--ev-ink);
+}
+
+/* Header: title left, totals as gradient tiles, controls on the right */
+.evt-page .ui-page-head { align-items: flex-end; gap: 16px 24px; flex-wrap: wrap; }
+.evt-page .evt-page__title { font-size: 28px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; color: var(--ev-ink); }
+.evt-ledger { display: flex; flex-wrap: wrap; gap: 12px; margin: 16px 0 0; }
+.evt-ledger__cell {
+  display: flex; flex-direction: column; justify-content: flex-end; gap: 2px; min-width: 150px; padding: 14px 18px;
+  border-radius: 16px; border: 0; color: #fff;
+  background: linear-gradient(145deg, #0c1a47 0%, #0b4fb5 100%);
+}
+.evt-ledger__cell + .evt-ledger__cell { background: linear-gradient(145deg, #0b4fb5 0%, #4c98f5 100%); }
+.evt-ledger__cell + .evt-ledger__cell + .evt-ledger__cell { background: linear-gradient(145deg, #9cc4fa 0%, #d3e5ff 100%); color: var(--ev-ink); }
+.evt-ledger__cell::before, .evt-ledger__cell::after { display: none; }
+.evt-ledger__n { font-size: 28px; font-weight: 800; line-height: 1.05; letter-spacing: -0.02em; color: inherit; }
+.evt-ledger__lab { font-size: 13px; font-weight: 600; color: inherit; opacity: 0.9; }
+
+/* Cards */
+.evt-page .ui-panel, .evt-page .evt-past {
+  border: 1px solid var(--ev-line); border-radius: 18px; background: #fff;
+  box-shadow: 0 10px 28px -16px rgba(18, 37, 73, 0.22); overflow: hidden;
+}
+.evt-page .ui-panel__head { padding: 18px 22px; border-bottom: 1px solid var(--ev-line); background: transparent; }
+.evt-page .ui-panel__title { font-size: 16.5px; font-weight: 700; letter-spacing: -0.01em; color: var(--ev-ink); }
+.evt-page .ui-panel__meta { font-size: 12.5px; color: var(--ev-muted); }
+
+/* Calendar header: month, week bars and the colour key */
+.evt-cal__id { flex-wrap: wrap; gap: 10px 22px; }
+.evt-legend { display: flex; gap: 14px; margin: 0; padding: 0; list-style: none; font-size: 12.5px; font-weight: 600; color: var(--ev-muted); }
+.evt-legend li { display: inline-flex; align-items: center; gap: 7px; }
+.evt-legend__dot { width: 12px; height: 12px; border-radius: 4px; border: 1px solid; }
+.evt-legend__dot--upcoming { background: rgba(var(--ev-go), 0.2); border-color: rgba(var(--ev-go), 0.55); }
+.evt-legend__dot--past { background: rgba(var(--ev-done), 0.22); border-color: rgba(var(--ev-done), 0.6); }
+.evt-weekbars__bar { fill: #0462d3; }
+.evt-weekbars__bar[data-empty] { fill: #cfe0f7; }
+.evt-weekbars__slot { fill: #eef3fb; }
+
+/* Month grid: every date is its own rounded tile */
+.evt-cal__scroll { padding: 0 18px 18px; }
+.evt-week { gap: 8px; margin-bottom: 8px; padding-top: 4px; border: 0; background: transparent; }
+.evt-week > span { padding: 10px 4px 2px 10px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ev-faint); }
+.evt-grid { gap: 8px; }
+.evt-cell {
+  min-height: 98px; padding: 8px 8px 9px; gap: 5px;
+  border: 1px solid #e9eff9; border-radius: 12px; background: #fff;
+  transition: transform 0.16s ease, box-shadow 0.16s ease, border-color 0.16s ease;
+}
+.evt-cell:nth-last-child(-n + 7) { border-bottom: 1px solid #e9eff9; }
+.evt-cell::before, .evt-cell::after { display: none; }
+.evt-cell--blank { border-color: transparent; background: transparent; }
+.evt-cell:not(.evt-cell--blank):hover { transform: translateY(-2px); box-shadow: 0 10px 18px -12px rgba(18, 37, 73, 0.4); }
+
+/* The whole tile carries the colour */
+.evt-cell.has-upcoming { background: rgba(var(--ev-go), 0.14); border-color: rgba(var(--ev-go), 0.42); }
+.evt-cell.has-past { background: rgba(var(--ev-done), 0.16); border-color: rgba(var(--ev-done), 0.46); }
+.evt-cell.has-upcoming:hover { border-color: rgba(var(--ev-go), 0.8); }
+.evt-cell.has-past:hover { border-color: rgba(var(--ev-done), 0.85); }
+
+.evt-cell.is-today { box-shadow: 0 0 0 2px var(--ev-blue); }
+.evt-cell.is-selected { box-shadow: 0 0 0 2px var(--ev-ink); }
+.evt-cell.is-today.is-selected { box-shadow: 0 0 0 2px var(--ev-ink), 0 0 0 4px rgba(4, 98, 211, 0.35); }
+
+.evt-cell__head { min-height: 26px; }
+.evt-cell__num { min-width: 26px; height: 26px; border-radius: 8px; font-size: 14px; font-weight: 700; color: var(--ev-muted); }
+.evt-cell[data-level] .evt-cell__num { color: var(--ev-ink); }
+.evt-cell__num:hover { background: rgba(255, 255, 255, 0.7); color: var(--ev-ink); }
+.evt-cell.is-today .evt-cell__num { background: linear-gradient(135deg, #0c1a47, #0462d3); color: #fff; }
+.evt-cell.is-selected:not(.is-today) .evt-cell__num { color: var(--ev-ink); }
+
+.evt-cell__chips { margin-inline: 0; gap: 4px; }
+.evt-chip {
+  padding: 2px 7px; border: 0; border-left: 3px solid rgb(var(--ev-go)); border-radius: 6px;
+  background: rgba(255, 255, 255, 0.72); color: var(--ev-ink); font-size: 12px; font-weight: 600; line-height: 1.4;
+}
+.evt-chip:hover { background: #fff; color: var(--ev-ink); }
+.evt-chip.is-past { border-left-color: rgb(var(--ev-done)); color: #5a3b14; }
+.evt-chip.is-past:hover { border-left-color: rgb(var(--ev-done)); color: var(--ev-ink); }
+.evt-cell__more { padding: 0 4px; border: 0; border-radius: 6px; color: var(--ev-blue); font-size: 12px; font-weight: 700; }
+.evt-cell__more:hover { background: rgba(255, 255, 255, 0.75); }
+.evt-cell__n { background: rgba(255, 255, 255, 0.8); color: var(--ev-ink); border-radius: 6px; }
+
+/* Side rail: one card per day group, no spine */
+.evt-side__body { --evt-time-col: 4.5rem; padding: 4px 22px 18px; }
+.evt-daynode { display: block; }
+.evt-daynode__plate { grid-column: auto; gap: 10px; padding: 16px 0 8px; border-left: 0; }
+.evt-daynode__rel { font-size: 13px; font-weight: 700; color: var(--ev-ink); }
+.evt-daynode__count { padding-right: 0; font-size: 12px; font-weight: 700; color: var(--ev-muted); }
+.evt-ticket { align-items: stretch; margin-top: 8px; border-radius: 12px; background: rgba(var(--ev-go), 0.1); border: 1px solid rgba(var(--ev-go), 0.34); overflow: hidden; }
+.evt-ticket.is-past { background: rgba(var(--ev-done), 0.12); border-color: rgba(var(--ev-done), 0.4); }
+.evt-ticket__time { display: flex; align-items: center; justify-content: center; padding: 0 8px; text-align: center; font-size: 12px; font-weight: 700; color: var(--ev-ink); border-right: 1px solid rgba(var(--ev-go), 0.28); }
+.evt-ticket.is-past .evt-ticket__time { border-right-color: rgba(var(--ev-done), 0.34); }
+.evt-ticket__body { border-left: 0; }
+.evt-ticket__open { align-items: center; padding: 11px 14px; }
+.evt-ticket__open:hover, .evt-ticket.is-past .evt-ticket__open:hover { background: rgba(255, 255, 255, 0.55); }
+.evt-ticket__title { font-size: 14px; font-weight: 700; color: var(--ev-ink); }
+.evt-ticket.is-past .evt-ticket__title { color: var(--ev-ink); }
+.evt-ticket__meta { font-size: 12px; color: var(--ev-muted); }
+.evt-ticket__flag { padding: 2px 8px; border-radius: 6px; background: rgba(var(--ev-done), 0.2); color: #8a4a05; font-size: 11.5px; font-weight: 700; }
+.evt-agenda__body, .evt-past__body { padding: 4px 22px 18px; }
+
+/* Clubs in the month */
+.evt-clublist { gap: 0; background: transparent; padding: 6px 12px 12px; }
+.evt-clublist > li { background: transparent; }
+.evt-clubrow { padding: 12px 10px; border-radius: 12px; font-weight: 600; color: var(--ev-ink); }
+button.evt-clubrow:hover { background: #eef4fd; }
+button.evt-clubrow[aria-pressed="true"] { background: #deecfd; color: var(--ev-ink); }
+.evt-clubrow__bar { height: 6px; border-radius: 999px; background: #e9f0fb; }
+.evt-clubrow__bar::after { background: linear-gradient(90deg, #0c1a47, #0462d3 55%, #6db2ff); border-radius: inherit; }
+
+/* Controls */
+.evt-page .ui-field--select { border-radius: 12px; border-color: var(--ev-line); }
+.evt-page .ui-seg { padding: 3px; border: 0; border-radius: 12px; background: #eaf1fc; }
+.evt-page .ui-seg button { border-radius: 9px; font-weight: 600; }
+.evt-page .ui-seg button[aria-pressed='true'] { background: #fff; color: var(--ev-ink); box-shadow: 0 1px 3px rgba(12, 26, 71, 0.14); }
+.evt-page .ui-btn--primary { border: 0; border-radius: 12px; background: linear-gradient(135deg, #0c1a47, #0462d3); color: #fff; }
+.evt-page .ui-btn--primary:hover:not(:disabled) { filter: brightness(1.1); background: linear-gradient(135deg, #0c1a47, #0462d3); }
+
+@media (max-width: 900px) {
+  .evt-cal__scroll { padding: 0 10px 12px; }
+  .evt-grid, .evt-week { gap: 5px; }
+  .evt-cell { min-height: 58px; padding: 5px; border-radius: 10px; }
+  .evt-ledger__cell { min-width: 0; flex: 1 1 100px; padding: 12px 14px; }
+  .evt-side__body, .evt-agenda__body, .evt-past__body { padding-inline: 16px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .evt-cell, .evt-cell:not(.evt-cell--blank):hover { transition: none; transform: none; }
+}
+
+.evt-page .evt-page-actions { align-self: flex-start; margin-left: auto; }
+
+.evt-page .evt-agenda__body, .evt-page .evt-past__body { padding: 4px 22px 18px; }
+.evt-ledger { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 160px)); }
+@media (max-width: 900px) {
+  .evt-ledger { grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); }
+  .evt-cell__n { position: absolute; right: 5px; bottom: 4px; min-width: 0; height: auto; padding: 0 4px; font-size: 10px; }
+  .evt-page .evt-agenda__body, .evt-page .evt-past__body { padding-inline: 14px; }
+}
+@media (max-width: 900px) {
+  .evt-page .ui-page-head__text { width: 100%; }
+  .evt-page .evt-page-actions { width: 100%; margin-left: 0; }
+}
+
+/* ---------- Date chip: green while ahead, orange once it has happened ---------- */
+.evt-chip-date { display: inline-flex; flex-direction: column; align-items: center; justify-content: center; flex: none; border-radius: 12px; line-height: 1.05; background: rgba(var(--ev-go), 0.16); border: 1px solid rgba(var(--ev-go), 0.45); color: #0d6b41; }
+.evt-chip-date.is-past { background: rgba(var(--ev-done), 0.18); border-color: rgba(var(--ev-done), 0.5); color: #8a4a05; }
+.evt-chip-date small { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; opacity: 0.85; }
+.evt-chip-date b { font-weight: 800; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ev-ink); }
+.evt-chip-date--sm { width: 46px; height: 52px; }
+.evt-chip-date--sm b { font-size: 19px; }
+.evt-chip-date--lg { width: 112px; height: 124px; border-radius: 20px; gap: 2px; }
+.evt-chip-date--lg small { font-size: 12px; }
+.evt-chip-date--lg b { font-size: 46px; }
+
+/* ---------- Side rail: day header + event cards ---------- */
+.evt-side__body { padding: 8px 18px 20px; }
+.evt-daygroup + .evt-daygroup { margin-top: 10px; }
+.evt-daynode__plate { display: flex; align-items: center; gap: 12px; padding: 12px 0 4px; }
+.evt-daynode__text { display: flex; flex-direction: column; flex: 1; min-width: 0; line-height: 1.25; }
+.evt-daynode__rel { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; color: var(--ev-ink); }
+.evt-daynode__full { font-size: 12.5px; color: var(--ev-muted); }
+.evt-daynode__count { display: inline-grid; place-items: center; min-width: 26px; height: 24px; padding: 0 8px; border-radius: 999px; background: #eaf1fc; color: #0b4fa3; font-size: 12px; font-weight: 700; }
+.evt-timeline { display: flex; flex-direction: column; gap: 10px; margin: 6px 0 0; padding: 0; list-style: none; }
+.evt-ticket { display: block; margin: 0; border-radius: 14px; }
+.evt-ticket__body { display: flex; align-items: stretch; }
+.evt-ticket__open { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; padding: 12px 14px; text-align: left; }
+.evt-ticket__main { display: flex; flex-direction: column; flex: 1; min-width: 0; gap: 3px; }
+.evt-ticket__title { font-size: 14.5px; font-weight: 700; letter-spacing: -0.01em; color: var(--ev-ink); overflow-wrap: anywhere; white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.evt-ticket__meta { display: flex; flex-wrap: wrap; gap: 2px 12px; font-size: 12.5px; color: var(--ev-muted); }
+.evt-ticket__when, .evt-ticket__venue { display: inline-flex; align-items: center; gap: 5px; min-width: 0; }
+.evt-ticket__when { font-weight: 700; color: var(--ev-ink); }
+.evt-ticket__club { font-size: 12px; font-weight: 600; color: #0b4fa3; }
+.evt-ticket.is-past .evt-ticket__club { color: #8a4a05; }
+.evt-ticket__go { display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 50%; background: rgba(255,255,255,.75); color: var(--ev-muted); }
+.evt-ticket__open:hover .evt-ticket__go { background: #fff; color: var(--ev-blue); }
+.evt-ticket__flag { flex: none; }
+.evt-ticket__actions { display: flex; align-items: center; padding-right: 8px; }
+.evt-side .evt-crest, .evt-side [class*='evt-crest'] { border-radius: 12px; }
+
+/* ---------- Event dialog ---------- */
+.evt-portal .evt-modal { width: min(720px, calc(100vw - 32px)); border: 0; border-radius: 22px; overflow: hidden; background: #fff; box-shadow: 0 30px 70px -24px rgba(12, 26, 71, 0.6); }
+.evt-portal .evt-modal__head { align-items: center; padding: 22px 26px; border: 0; color: #fff; background: linear-gradient(135deg, #0c1a47 0%, #0b3a86 55%, #0462d3 100%); }
+.evt-portal .evt-modal__id { gap: 16px; }
+.evt-portal .evt-modal__head .ui-h2 { margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15; color: #fff; overflow-wrap: anywhere; }
+.evt-portal .evt-modal__sub { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin: 8px 0 0; font-size: 13.5px; font-weight: 600; color: #cfe3ff; }
+.evt-portal .evt-modal__sub .evt-dot { display: none; }
+.evt-portal .evt-modal__sub .ui-tag { padding: 3px 10px; border: 0; border-radius: 8px; font-size: 12px; font-weight: 700; background: rgba(var(--ev-done), 0.28); color: #ffe0bd; }
+.evt-portal .evt-modal__sub .ui-tag::before { display: none; }
+.evt-portal .evt-modal__sub .ui-tag.is-positive { background: rgba(var(--ev-go), 0.3); color: #c9f3dd; }
+.evt-portal .evt-modal__head .ui-icon-btn { width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,.14); color: #fff; }
+.evt-portal .evt-modal__head .ui-icon-btn:hover { background: rgba(255,255,255,.28); }
+.evt-portal .evt-modal .evt-detail { padding: 24px 26px; }
+
+.evt-dlg { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 26px; align-items: start; }
+.evt-dlg__date { display: flex; flex-direction: column; align-items: center; gap: 12px; padding: 18px 12px; border-radius: 18px; background: rgba(var(--ev-go), 0.08); border: 1px solid rgba(var(--ev-go), 0.28); }
+.evt-dlg__date.is-past { background: rgba(var(--ev-done), 0.1); border-color: rgba(var(--ev-done), 0.34); }
+.evt-dlg__time { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 700; color: var(--ev-ink); }
+.evt-dlg__rel { padding: 4px 12px; border-radius: 999px; background: rgba(var(--ev-go), 0.2); color: #0d6b41; font-size: 12px; font-weight: 700; }
+.evt-dlg__date.is-past .evt-dlg__rel { background: rgba(var(--ev-done), 0.22); color: #8a4a05; }
+.evt-dlg__main { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.evt-dlg .evt-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin: 0; padding: 0; border: 0; }
+.evt-dlg .evt-fact { display: flex; flex-direction: column; gap: 4px; margin: 0; padding: 12px 14px; border: 1px solid var(--ev-line); border-radius: 12px; background: #f6f9fe; }
+.evt-dlg .evt-fact dt { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ev-muted); }
+.evt-dlg .evt-fact dd { margin: 0; font-size: 14.5px; font-weight: 700; color: var(--ev-ink); overflow-wrap: anywhere; }
+.evt-fact__sub { display: block; margin-top: 2px; font-size: 12px; font-weight: 600; text-transform: capitalize; color: var(--ev-muted); }
+.evt-dlg__label { margin: 0 0 6px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ev-muted); }
+.evt-dlg .evt-detail__desc { margin: 0; font-size: 15px; line-height: 1.65; color: var(--ev-ink); white-space: pre-wrap; overflow-wrap: anywhere; }
+.evt-dlg .evt-detail__links { display: flex; flex-wrap: wrap; gap: 8px; }
+.evt-dlg .evt-detail__links .ui-btn { height: 36px; border: 0; border-radius: 10px; background: #eaf1fc; color: #0b4fa3; font-weight: 600; }
+.evt-dlg .evt-detail__links .ui-btn:hover { background: #deecfd; }
+.evt-portal .evt-modal .ui-modal__foot { padding: 14px 26px; border-top: 1px solid var(--ev-line); background: #f6f9fe; gap: 8px; }
+.evt-portal .evt-modal .ui-modal__foot .ui-btn { height: 40px; padding: 0 18px; border-radius: 11px; font-weight: 600; }
+.evt-portal .evt-modal .ui-btn--primary { border: 0; background: linear-gradient(135deg, #0c1a47, #0462d3); color: #fff; }
+.evt-portal .evt-modal .ui-btn--ghost { background: #fff; border: 1px solid var(--ev-line); color: var(--ev-ink); }
+
+@media (max-width: 640px) {
+  .evt-dlg { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .evt-dlg__date { flex-direction: row; justify-content: center; flex-wrap: wrap; padding: 14px; }
+  .evt-chip-date--lg { width: 88px; height: 98px; }
+  .evt-chip-date--lg b { font-size: 36px; }
+  .evt-portal .evt-modal__head, .evt-portal .evt-modal .evt-detail, .evt-portal .evt-modal .ui-modal__foot { padding-inline: 18px; }
+}
+.evt-portal .ui-modal.evt-modal { width: 100%; max-width: 780px; }
+.evt-dlg .evt-facts { grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); }
+.evt-dlg .evt-fact dd { overflow-wrap: break-word; }
+.evt-portal .evt-modal__head .evt-crest, .evt-portal .evt-modal__head [class*='crest'] { border-radius: 12px; }
+
+/* ======================================================================
+   Same look for the older markup (DateTile plate, countdown ruler, separate
+   time column), so the page reads right whichever Events.tsx is in place.
+   ====================================================================== */
+
+/* Date plates become rounded tiles: green ahead, orange once past */
+.evt-page .vis-date {
+  clip-path: none; border-radius: 12px; gap: 0; padding: 4px 0;
+  background: rgba(var(--ev-go), 0.16); box-shadow: inset 0 0 0 1px rgba(var(--ev-go), 0.45); color: #0d6b41;
+}
+.evt-page .vis-date .vis-date__wd, .evt-page .vis-date .vis-date__mo { font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: inherit; opacity: 0.85; }
+.evt-page .vis-date .vis-date__day { font-weight: 800; letter-spacing: -0.02em; color: var(--ev-ink); }
+.evt-page .vis-date--sm, .evt-page .vis-date--md { --vis-date-w: 46px; --vis-date-h: 52px; --vis-date-day: 19px; }
+.evt-page .vis-date--lg { --vis-date-w: 112px; --vis-date-h: 124px; --vis-date-day: 46px; border-radius: 20px; padding: 10px 0; }
+.evt-page .vis-date--lg .vis-date__wd, .evt-page .vis-date--lg .vis-date__mo { font-size: 12px; }
+.evt-page .evt-past .vis-date, .evt-page .evt-ticket.is-past ~ * .vis-date,
+.evt-page .evt-modal:has(.evt-modal__sub .ui-tag:not(.is-positive)) .vis-date {
+  background: rgba(var(--ev-done), 0.18); box-shadow: inset 0 0 0 1px rgba(var(--ev-done), 0.5); color: #8a4a05;
+}
+
+/* Dialog: the stub becomes a tinted date panel beside the details */
+.evt-modal .evt-stub { display: grid; grid-template-columns: 170px minmax(0, 1fr); gap: 26px; align-items: start; }
+.evt-modal .evt-stub__date { align-items: center; gap: 12px; padding: 18px 12px; border-radius: 18px; background: rgba(var(--ev-go), 0.08); border: 1px solid rgba(var(--ev-go), 0.28); }
+.evt-modal:has(.evt-modal__sub .ui-tag:not(.is-positive)) .evt-stub__date { background: rgba(var(--ev-done), 0.1); border-color: rgba(var(--ev-done), 0.34); }
+.evt-modal .evt-stub__time { font-size: 14px; font-weight: 700; color: var(--ev-ink); }
+.evt-modal .evt-stub__body { padding-left: 0; border-left: 0; display: flex; flex-direction: column; gap: 18px; }
+.evt-modal .evt-stub__notch { display: none; }
+.evt-modal .evt-count { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 999px; background: rgba(var(--ev-go), 0.2); color: #0d6b41; font-size: 12px; font-weight: 700; }
+.evt-modal .evt-count.is-past { background: rgba(var(--ev-done), 0.22); color: #8a4a05; }
+.evt-modal .evt-count__rule { display: none; }
+.evt-modal .evt-count__num::after { content: ' away'; }
+.evt-modal .evt-count.is-past .evt-count__num::after { content: ' ago'; }
+.evt-modal .evt-stub .evt-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; margin: 0; }
+.evt-modal .evt-stub .evt-fact { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; border: 1px solid var(--ev-line); border-radius: 12px; background: #f6f9fe; }
+.evt-modal .evt-stub .evt-fact dt { font-size: 11.5px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--ev-muted); }
+.evt-modal .evt-stub .evt-fact dd { margin: 0; font-size: 14.5px; font-weight: 700; color: var(--ev-ink); overflow-wrap: break-word; }
+.evt-modal .evt-stub .evt-detail__desc { margin: 0; font-size: 15px; line-height: 1.65; color: var(--ev-ink); }
+@media (max-width: 640px) { .evt-modal .evt-stub { grid-template-columns: minmax(0, 1fr); gap: 16px; } .evt-modal .evt-stub__date { flex-direction: row; flex-wrap: wrap; justify-content: center; } }
+
+/* Rail cards: time becomes a small pill instead of a banner, club shows once */
+.evt-ticket { position: relative; }
+.evt-ticket__time { position: absolute; top: 10px; right: 52px; z-index: 1; display: inline-flex; padding: 3px 10px; border: 0; border-radius: 999px; background: rgba(255, 255, 255, 0.85); font-size: 11.5px; font-weight: 700; color: var(--ev-ink); }
+.evt-ticket__open { padding-right: 14px; }
+.evt-ticket__who { display: none; }
+.evt-ticket__open .evt-crest { --evt-crest: 40px; border-radius: 12px; }
+.evt-page .evt-ticket .evt-ticket__title { color: var(--ev-ink); padding-right: 74px; }
+.evt-page .evt-ticket__meta { display: flex; flex-wrap: wrap; gap: 2px 12px; }
+.evt-page .evt-ticket__club { color: #0b4fa3; font-weight: 600; }
+.evt-page .evt-ticket.is-past .evt-ticket__club { color: #8a4a05; }
+.evt-daynode__plate { display: flex; align-items: center; gap: 12px; }
+.evt-daynode__rel { flex: 1; font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+.evt-ticket__open .evt-crest { width: 40px; height: 40px; flex: none; border-radius: 12px; font-size: 15px; }
+
+.evt-page .ui-page-head > .ui-page-head__text { flex: 1 1 620px; min-width: 0; }
+.evt-page .ui-page-head > .ui-page-head__text > .evt-ledger {
+  display: grid;
+  width: 100%;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+@media (max-width: 900px) {
+  .evt-page .ui-page-head > .ui-page-head__text { flex-basis: 100%; width: 100%; }
+}

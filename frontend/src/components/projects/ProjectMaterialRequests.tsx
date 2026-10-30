@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { api } from '../../services/api';
+import { Select } from '../common/Select';
 
 interface InventoryItem {
   _id: string;
@@ -443,9 +444,8 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
                     {loadingInventory ? (
                       <span className="ui-skel" style={{ display: 'block', height: 40 }} />
                     ) : (
-                      <select
+                      <Select
                         id={`${fieldId}-item`}
-                        className="ui-field ui-field--select"
                         value={selectedItemId}
                         onChange={(e) => {
                           setSelectedItemId(e.target.value);
@@ -466,7 +466,7 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
                               : ' · Out of stock'}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     )}
 
                     {selectedItem && (

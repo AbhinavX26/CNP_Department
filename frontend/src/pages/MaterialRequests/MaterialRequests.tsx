@@ -7,6 +7,7 @@ import { Counter } from '../../components/ui/vis';
 import { Tooltip } from '../../components/ui/Tooltip';
 import { OpsOverlay } from '../Inventory/OpsOverlay';
 import '../Inventory/ops.css';
+import { Select } from '../../components/common/Select';
 
 interface RequestUser {
   _id?: string;
@@ -118,14 +119,6 @@ function ChevronIcon() {
   );
 }
 
-function ChevronDownIcon() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-      <path d="m6 9 6 6 6-6" />
-    </svg>
-  );
-}
-
 function RefreshIcon() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
@@ -149,6 +142,23 @@ function DocumentIcon() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
       <path d="M14 3H7a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V7l-4-4Z" />
       <path d="M14 3v4h4M9 12h6M9 16h4" />
+    </svg>
+  );
+}
+
+function ClockIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="8.2" />
+      <path d="M12 7.4V12l3 1.8" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.7} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <path d="m5 12.6 4.4 4.4L19 7.2" />
     </svg>
   );
 }
@@ -195,153 +205,111 @@ function StockBar({ requested, available, size = 'sm' }: StockBarProps) {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   Pipeline — pending → approved → rejected, proportional widths, plus the age
-   of everything still waiting on one rail.
+   Queue marks: how long a request has waited, and requested against shelf stock.
    ───────────────────────────────────────────────────────────────────────────── */
 
-interface StageProps {
-  stage: Exclude<StatusFilter, 'all'>;
-  count: number;
-  total: number;
-  index: number;
-  pressed: boolean;
-  onToggle: () => void;
-}
+const DAY = 24 * 60 * 60 * 1000;
 
-function Stage({ stage, count, total, index, pressed, onToggle }: StageProps) {
-  const share = total > 0 ? count / total : 0;
+const waitTone = (value?: string): 'fresh' | 'slow' | 'late' => {
+  const days = waitMs(value) / DAY;
+  return days >= 7 ? 'late' : days >= 3 ? 'slow' : 'fresh';
+};
+
+const stockOf = (request: MaterialRequest): number | null => {
+  const value = request.inventoryItemId?.availableQuantity;
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+};
+
+/** The fill is the request; the vertical mark is what the shelf holds. Past the mark is short. */
+function Meter({ requested, available }: { requested: number; available: number | null }) {
+  const stock = available ?? 0;
+  const ceiling = Math.max(requested, stock, 1);
+  const fill = Math.max(0, Math.min(requested / ceiling, 1));
+  const mark = available === null ? null : Math.max(0, Math.min(stock / ceiling, 1));
+  const short = available !== null && requested > stock;
   return (
-    <button
-      type="button"
-      className="ops-stage"
-      data-status={stage}
-      aria-pressed={pressed}
-      onClick={onToggle}
-      style={{ '--w': share, '--i': index } as CSSProperties}
-    >
-      <span className={`ops-stage__mark ops-mark--${stage}`} aria-hidden="true" />
-      <span className="ops-stage__label">{STATUS_LABEL[stage]}</span>
-      <span className="ops-stage__track" aria-hidden="true">
-        <span className="ops-stage__fill" />
-      </span>
-      <span className="ops-stage__n">
-        <Counter value={count} />
-      </span>
-    </button>
-  );
-}
-
-function AgeRail({ requests }: { requests: MaterialRequest[] }) {
-  const oldest = requests.reduce((max, request) => Math.max(max, waitMs(request.createdAt)), 0);
-  const span = Math.max(oldest, 1);
-  const oldestRequest = requests.reduce<MaterialRequest | null>(
-    (found, request) => (!found || waitMs(request.createdAt) > waitMs(found.createdAt) ? request : found),
-    null,
-  );
-
-  return (
-    <div
-      className="ops-age"
+    <span
+      className={`mr-meter${short ? ' is-short' : ''}`}
       role="img"
-      aria-label={`${requests.length} waiting, oldest ${waitingLabel(oldestRequest?.createdAt)}`}
+      aria-label={
+        available === null
+          ? `${requested} requested, stock not listed`
+          : `${requested} requested, ${stock} in stock${short ? `, short by ${requested - stock}` : ''}`
+      }
     >
-      <span className="ops-age__label">Waiting</span>
-      <div className="ops-age__rail">
-        {requests.map((request) => {
-          const fraction = waitMs(request.createdAt) / span;
-          const isOldest = request === oldestRequest;
-          return (
-            <span
-              className={`ops-age__tick${isOldest ? ' is-oldest' : ''}`}
-              key={request._id}
-              style={{ left: `${fraction * 100}%` }}
-              title={`${request.requestedBy?.name || 'Unknown requester'} · ${waitingLabel(request.createdAt)}`}
-            />
-          );
-        })}
-      </div>
-      <div className="ops-age__axis" aria-hidden="true">
-        <span>now</span>
-        <span>{waitingLabel(oldestRequest?.createdAt)}</span>
-      </div>
-    </div>
+      <i style={{ width: `${fill * 100}%` }} />
+      {mark !== null && <b style={{ left: `${mark * 100}%` }} />}
+    </span>
   );
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   One ticket in the review queue.
+   One row in the review queue.
    ───────────────────────────────────────────────────────────────────────────── */
 
 interface TicketProps {
   request: MaterialRequest;
-  ageFraction: number;
   onOpen: (request: MaterialRequest) => void;
   onApprove: (request: MaterialRequest) => void;
   onReject: (request: MaterialRequest) => void;
   busy: boolean;
 }
 
-function Ticket({ request, ageFraction, onOpen, onApprove, onReject, busy }: TicketProps) {
+function Ticket({ request, onOpen, onApprove, onReject, busy }: TicketProps) {
   const item = itemNameOf(request);
   const project = request.projectId?.name || 'Unknown project';
   const requester = request.requestedBy;
-  const available = request.inventoryItemId?.availableQuantity;
+  const available = stockOf(request);
+  const short = available !== null && request.quantity > available;
   const note = request.reason?.trim() || request.specifications?.trim() || '';
 
   return (
-    <li className="ops-ticket" style={{ '--age': ageFraction } as CSSProperties}>
+    <li className="mr-row">
       <button
         type="button"
-        className="ops-ticket__open"
+        className="mr-open"
         aria-label={`Open request for ${request.quantity} of ${item} from ${requester?.name || 'unknown requester'}, waiting ${waitingLabel(request.createdAt)}`}
         onClick={() => onOpen(request)}
       />
-      <span className="ops-ticket__wait" title={`Waiting ${waitingLabel(request.createdAt)}`}>
-        {waitingLabel(request.createdAt)}
+      <span className="mr-cell mr-who">
+        <span
+          className="mr-face"
+          title={[requester?.name, requester?.email, requester?.department, requester?.semester ? `Sem ${requester.semester}` : null]
+            .filter(Boolean)
+            .join(' · ')}
+          aria-hidden="true"
+        >
+          {initialsOf(requester?.name)}
+        </span>
+        <span className="mr-who-text">
+          <span className="mr-item" title={note || item}>{item}</span>
+          <span className="mr-sub">
+            {project}
+            {requester?.name ? ` · ${requester.name}` : ''}
+          </span>
+        </span>
       </span>
-
-      <span
-        className="ui-avatar ui-avatar--sm ops-ticket__who"
-        title={[requester?.name, requester?.email, requester?.department, requester?.semester ? `Sem ${requester.semester}` : null]
-          .filter(Boolean)
-          .join(' · ')}
-        aria-hidden="true"
-      >
-        {initialsOf(requester?.name)}
-      </span>
-
-      <div className="ops-ticket__main">
-        <p className="ops-ticket__item" title={note || item}>{item}</p>
-        <p className="ops-ticket__project">{project}</p>
-      </div>
-
-      <div className="ops-ticket__stock">
-        <StockBar requested={request.quantity} available={available} />
-        <span className="ops-ticket__nums">
+      <span className="mr-cell mr-stock">
+        <Meter requested={request.quantity} available={available} />
+        <span className={`mr-nums${short ? ' is-short' : ''}`}>
           <strong>{request.quantity}</strong>
-          <span className="ops-ticket__slash">/</span>
+          <em>/</em>
           {available ?? '—'}
         </span>
-      </div>
-
-      <div className="ops-ticket__actions">
-        <button
-          type="button"
-          className="ui-btn ui-btn--quiet ui-btn--sm"
-          onClick={() => onReject(request)}
-          disabled={busy}
-        >
+      </span>
+      <span className="mr-cell">
+        <span className={`mr-wait mr-wait--${waitTone(request.createdAt)}`} title={`Waiting ${waitingLabel(request.createdAt)}`}>
+          {waitingLabel(request.createdAt)}
+        </span>
+      </span>
+      <span className="mr-cell mr-actions">
+        <button type="button" className="mr-btn mr-btn--quiet mr-btn--sm" onClick={() => onReject(request)} disabled={busy}>
           Reject
         </button>
-        <button
-          type="button"
-          className="ui-btn ui-btn--primary ui-btn--sm"
-          onClick={() => onApprove(request)}
-          disabled={busy}
-        >
+        <button type="button" className="mr-btn mr-btn--sm" onClick={() => onApprove(request)} disabled={busy}>
           {busy ? 'Approving…' : 'Approve'}
         </button>
-      </div>
+      </span>
     </li>
   );
 }
@@ -603,37 +571,80 @@ export default function MaterialRequests() {
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [detail, approveTarget, rejectTarget]);
 
+  const oldestPending = pendingAll[0] ?? null;
+
+  const byProject = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; count: number }>();
+    pendingAll.forEach((request) => {
+      const id = request.projectId?._id || 'unknown';
+      const entry = map.get(id) ?? { id, name: request.projectId?.name || 'Unknown project', count: 0 };
+      entry.count += 1;
+      map.set(id, entry);
+    });
+    return Array.from(map.values()).sort((a, b) => b.count - a.count).slice(0, 6);
+  }, [pendingAll]);
+  const maxByProject = byProject[0]?.count ?? 0;
+
+  const shortOnStock = useMemo(
+    () =>
+      pendingAll.filter((request) => {
+        const stock = stockOf(request);
+        return stock !== null && request.quantity > stock;
+      }),
+    [pendingAll],
+  );
+
+  const sharePct = (n: number) => (counts.all > 0 ? Math.round((n / counts.all) * 100) : 0);
+  const tiles = [
+    {
+      key: 'pending' as const,
+      label: 'Pending',
+      value: counts.pending,
+      note: oldestPending ? `Oldest waiting ${waitingLabel(oldestPending.createdAt)}` : 'Nothing waiting',
+      tone: 'deep',
+      Icon: ClockIcon,
+    },
+    { key: 'approved' as const, label: 'Approved', value: counts.approved, note: `${sharePct(counts.approved)}% of requests`, tone: 'blue', Icon: CheckIcon },
+    { key: 'rejected' as const, label: 'Rejected', value: counts.rejected, note: `${sharePct(counts.rejected)}% of requests`, tone: 'sky', Icon: CloseIcon },
+    {
+      key: 'all' as const,
+      label: 'All requests',
+      value: counts.all,
+      note: `${projects.length} ${projects.length === 1 ? 'project' : 'projects'}`,
+      tone: 'mist',
+      Icon: InboxIcon,
+    },
+  ];
+
   const approveStock = approveTarget?.inventoryItemId?.availableQuantity ?? 0;
   const approveShort = !!approveTarget && approveTarget.quantity > approveStock;
   const detailStock = detail?.inventoryItemId?.availableQuantity;
   const detailShort = detail != null && detailStock != null && detail.quantity > detailStock;
 
   return (
-    <div className="ops-page">
-      <header className="ui-page-head ops-rise" style={rise(0)}>
-        <div className="ui-page-head__text">
-          <h1 className="ui-title">Material requests</h1>
+    <div className="ops-page mr">
+      <header className="mr-head">
+        <div>
+          <h1 className="mr-title">Material requests</h1>
+          <p className="mr-sub-head">What teams are drawing from the store room, checked against what the shelf holds.</p>
         </div>
-        <div className="ui-page-actions ops-head-tools">
-          <div className="ui-search ops-search">
+        <div className="mr-tools">
+          <label className="mr-search">
             <SearchIcon />
-            <label className="ui-visually-hidden" htmlFor="ops-request-search">Search requests</label>
             <input
-              id="ops-request-search"
-              className="ui-field"
               type="search"
               placeholder="Search requests"
+              aria-label="Search requests by item, project or requester"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               disabled={loading}
             />
-          </div>
+          </label>
           {projects.length > 1 && (
-            <div className="ops-select ops-filter">
+            <div className="mr-select">
               <label className="ui-visually-hidden" htmlFor="ops-request-project">Filter by project</label>
-              <select
+              <Select
                 id="ops-request-project"
-                className="ui-field ui-field--select"
                 value={projectFilter}
                 onChange={(e) => setProjectFilter(e.target.value)}
                 disabled={loading}
@@ -642,285 +653,313 @@ export default function MaterialRequests() {
                 {projects.map((project) => (
                   <option key={project.id} value={project.id}>{project.name}</option>
                 ))}
-              </select>
-              <ChevronDownIcon />
+              </Select>
             </div>
           )}
+          <button type="button" className="mr-btn mr-btn--quiet" onClick={refresh} disabled={refreshing || loading}>
+            <RefreshIcon />
+            {refreshing ? 'Refreshing' : 'Refresh'}
+          </button>
         </div>
       </header>
 
-      <div className="ops-body">
-        {alertMsg && (
-          <div
-            className={`ui-notice ${alertMsg.type === 'success' ? 'ops-notice--success' : 'ui-notice--error'}`}
-            role="status"
-          >
-            <div className="ui-grow">{alertMsg.message}</div>
-            <button
-              type="button"
-              className="ui-icon-btn"
-              aria-label="Dismiss message"
-              onClick={() => setAlertMsg(null)}
-            >
-              <CloseIcon />
-            </button>
-          </div>
-        )}
+      {alertMsg && (
+        <div
+          className={`ui-notice ${alertMsg.type === 'success' ? 'ops-notice--success' : 'ui-notice--error'}`}
+          role="status"
+        >
+          <div className="ui-grow">{alertMsg.message}</div>
+          <button type="button" className="ui-icon-btn" aria-label="Dismiss message" onClick={() => setAlertMsg(null)}>
+            <CloseIcon />
+          </button>
+        </div>
+      )}
 
-        {loadError && (
-          <div className="ui-notice ui-notice--error" role="alert">
-            <div className="ui-grow">
-              <p>Material requests could not be loaded.</p>
-              <p className="ops-note">{loadError}</p>
-            </div>
-            <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={loadRequests}>
-              Retry
-            </button>
-          </div>
-        )}
+      {loadError && (
+        <div className="mr-state" role="alert">
+          <p className="mr-state-title">Material requests could not be loaded</p>
+          <p className="mr-state-text">{loadError}</p>
+          <button type="button" className="mr-btn mr-btn--quiet" onClick={loadRequests}>
+            Retry
+          </button>
+        </div>
+      )}
 
-        {loading ? (
-          <div className="ops-stack" aria-busy="true">
-            <div className="ops-console ops-console--skel" aria-hidden="true">
-              {[0, 1, 2].map((n) => (
-                <div className="ops-console__cell" key={n}>
-                  <div className="ui-skel ops-skel-line ops-skel-line--sm" />
-                  <div className="ui-skel ops-skel-line ops-skel-line--value" />
-                  <div className="ui-skel ops-skel-line ops-skel-line--rail" />
-                </div>
-              ))}
-            </div>
-            <div className="ui-panel" aria-hidden="true">
-              <header className="ui-panel__head">
-                <div className="ui-skel ops-skel-line ops-skel-line--head" />
-              </header>
-              <div className="ops-skel-rows">
-                {[0, 1, 2].map((n) => (
-                  <div className="ops-skel-row" key={n}>
+      {loading ? (
+        <div className="mr-loading" aria-busy="true">
+          <div className="mr-tiles">
+            {[0, 1, 2, 3].map((n) => (
+              <span key={n} className="mr-skel mr-skel--tile" />
+            ))}
+          </div>
+          <span className="mr-skel mr-skel--table" />
+          <span className="ui-visually-hidden" role="status">Loading material requests</span>
+        </div>
+      ) : requests.length === 0 && !loadError ? (
+        <div className="mr-state">
+          <span className="mr-state-mark"><InboxIcon /></span>
+          <p className="mr-state-title">No material requests</p>
+          <p className="mr-state-text">Requests arrive here when a team leader draws from the store room.</p>
+          <Link className="mr-btn mr-btn--quiet" to="/inventory">
+            Open inventory
+          </Link>
+        </div>
+      ) : requests.length > 0 ? (
+        <>
+          <section className="mr-tiles" aria-label="Requests by status">
+            {tiles.map(({ key, label, value, note, tone, Icon }) => (
+              <button
+                key={key}
+                type="button"
+                className={`mr-tile mr-tile--${tone}`}
+                aria-pressed={key === 'all' ? undefined : filter === key}
+                onClick={() => {
+                  if (key === 'all') {
+                    setFilter('all');
+                    setShowResolved(false);
+                  } else {
+                    toggleStage(key);
+                  }
+                }}
+              >
+                <span className="mr-tile-icon"><Icon /></span>
+                <span className="mr-tile-value"><Counter value={value} /></span>
+                <span className="mr-tile-label">{label}</span>
+                <span className="mr-tile-note">{note}</span>
+              </button>
+            ))}
+          </section>
+
+          <div className="mr-layout">
+            <div className="mr-main">
+              {showPending && (
+                <section className="mr-card ops-rise" style={rise(1)} aria-labelledby="ops-review-title">
+                  <header className="mr-card-head">
                     <div>
-                      <div className="ui-skel ops-skel-line" />
-                      <div className="ui-skel ops-skel-line ops-skel-line--sm" />
+                      <h2 className="mr-card-title" id="ops-review-title">Needs review</h2>
+                      <p className="mr-card-sub">
+                        {hasSearch ? `${pendingRequests.length} of ${counts.pending} match` : 'Oldest first'}
+                      </p>
                     </div>
-                    <div className="ui-skel ops-skel-line ops-skel-line--wide" />
-                    <div className="ui-skel ops-skel-line" />
-                  </div>
-                ))}
-              </div>
-            </div>
-            <span className="ui-visually-hidden" role="status">Loading material requests</span>
-          </div>
-        ) : requests.length === 0 && !loadError ? (
-          <div className="ui-empty">
-            <span className="ui-empty__mark"><InboxIcon /></span>
-            <p className="ui-empty__title">No material requests</p>
-            <p className="ui-empty__text">Requests arrive here when a team leader draws from the store room.</p>
-            <Link className="ui-btn ui-btn--quiet ui-btn--sm" to="/inventory">
-              Open inventory
-            </Link>
-          </div>
-        ) : requests.length > 0 ? (
-          <>
-            <section className="ui-panel ui-panel--accent ops-rise" style={rise(1)} aria-labelledby="ops-pipeline-title">
-              <header className="ui-panel__head">
-                <div className="ui-panel__titles">
-                  <h2 className="ui-panel__title" id="ops-pipeline-title">Pipeline</h2>
-                  <span className="ui-panel__meta">{counts.all}</span>
-                </div>
-                <div className="ops-panel-tools">
-                  {filter !== 'all' && (
-                    <button
-                      type="button"
-                      className="ui-btn ui-btn--quiet ui-btn--sm"
-                      onClick={() => {
-                        setFilter('all');
-                        setShowResolved(false);
-                      }}
-                    >
-                      All
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    className="ui-icon-btn"
-                    aria-label="Refresh requests"
-                    title="Refresh"
-                    onClick={refresh}
-                    disabled={refreshing}
-                  >
-                    <RefreshIcon />
-                  </button>
-                </div>
-              </header>
+                    <div className="mr-card-tools">
+                      {hasSearch && (
+                        <button type="button" className="mr-link" onClick={resetFilters}>Clear filters</button>
+                      )}
+                      <span className="mr-count">{pendingRequests.length}</span>
+                    </div>
+                  </header>
 
-              <div className="ops-panel-body">
-                <div className="ops-funnel">
-                  {(['pending', 'approved', 'rejected'] as const).map((stage, index) => (
-                    <Stage
-                      key={stage}
-                      stage={stage}
-                      count={counts[stage]}
-                      total={counts.all}
-                      index={index}
-                      pressed={filter === stage}
-                      onToggle={() => toggleStage(stage)}
-                    />
-                  ))}
-                </div>
-
-                {pendingAll.length > 0 && <AgeRail requests={pendingAll} />}
-              </div>
-            </section>
-
-            {showPending && (
-              <section className="ops-region ops-rise" style={rise(2)} aria-labelledby="ops-review-title">
-                <header className="ops-region__head">
-                  <div className="ops-region__titles">
-                    <h2 className="ops-region__title" id="ops-review-title">Needs review</h2>
-                    <span className="ops-region__n">{pendingRequests.length}</span>
-                  </div>
-                  <div className="ops-region__tools">
-                    {hasSearch && (
-                      <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={resetFilters}>
-                        Clear filters
-                      </button>
-                    )}
-                  </div>
-                </header>
-
-                {pendingRequests.length > 0 ? (
-                  <ul className="ops-tickets">
-                    {pendingRequests.map((request) => (
-                      <Ticket
-                        key={request._id}
-                        request={request}
-                        ageFraction={oldestWait > 0 ? waitMs(request.createdAt) / oldestWait : 0}
-                        onOpen={openDetail}
-                        onApprove={openApprove}
-                        onReject={openReject}
-                        busy={actionLoading === request._id}
-                      />
-                    ))}
-                  </ul>
-                ) : (
-                  <div className="ops-empty-wrap">
-                    <div className="ui-empty ui-empty--tight">
-                      <span className="ui-empty__mark"><InboxIcon /></span>
-                      <p className="ui-empty__title">Nothing waiting</p>
-                      <p className="ui-empty__text">
+                  {pendingRequests.length > 0 ? (
+                    <ul className="mr-rows">
+                      <li className="mr-row mr-row--head" aria-hidden="true">
+                        <span>Request</span><span>Requested / in stock</span><span>Waiting</span><span />
+                      </li>
+                      {pendingRequests.map((request) => (
+                        <Ticket
+                          key={request._id}
+                          request={request}
+                          onOpen={openDetail}
+                          onApprove={openApprove}
+                          onReject={openReject}
+                          busy={actionLoading === request._id}
+                        />
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="mr-empty">
+                      <span className="mr-state-mark"><CheckIcon /></span>
+                      <p className="mr-state-title">Nothing waiting</p>
+                      <p className="mr-state-text">
                         {counts.pending > 0 && hasSearch
                           ? 'No pending request matches the current filter.'
                           : 'Every request has been reviewed.'}
                       </p>
                       {counts.pending > 0 && hasSearch ? (
-                        <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={resetFilters}>
+                        <button type="button" className="mr-btn mr-btn--quiet mr-btn--sm" onClick={resetFilters}>
                           Clear filters
                         </button>
                       ) : resolvedRequests.length > 0 ? (
-                        <button
-                          type="button"
-                          className="ui-btn ui-btn--quiet ui-btn--sm"
-                          onClick={() => setShowResolved(true)}
-                        >
+                        <button type="button" className="mr-btn mr-btn--quiet mr-btn--sm" onClick={() => setShowResolved(true)}>
                           Review resolved
                         </button>
                       ) : null}
                     </div>
-                  </div>
-                )}
-              </section>
-            )}
+                  )}
+                </section>
+              )}
 
-            {showResolvedSection && renderResolvedSection && (
-              <section className="ui-panel ops-rise" style={rise(3)} aria-labelledby="ops-resolved-title">
-                {isCollapsible ? (
-                  <button
-                    type="button"
-                    className="ops-disclosure"
-                    aria-expanded={showResolved}
-                    aria-controls="ops-resolved-body"
-                    onClick={() => setShowResolved((open) => !open)}
-                  >
-                    <span className="ops-disclosure__title" id="ops-resolved-title">{filterLabel}</span>
-                    <span className="ops-disclosure__n">{resolvedRequests.length}</span>
-                    <span className="ops-disclosure__mark"><ChevronIcon /></span>
-                  </button>
-                ) : (
-                  <header className="ui-panel__head">
-                    <div className="ui-panel__titles">
-                      <h2 className="ui-panel__title" id="ops-resolved-title">{filterLabel}</h2>
-                      <span className="ui-panel__meta">{resolvedForFilter.length}</span>
-                    </div>
-                    <div className="ops-panel-tools">
-                      <button
-                        type="button"
-                        className="ui-icon-btn"
-                        aria-label="Refresh requests"
-                        title="Refresh"
-                        onClick={refresh}
-                        disabled={refreshing}
-                      >
-                        <RefreshIcon />
-                      </button>
-                    </div>
-                  </header>
-                )}
+              {showResolvedSection && renderResolvedSection && (
+                <section className="mr-card ops-rise" style={rise(2)} aria-labelledby="ops-resolved-title">
+                  {isCollapsible ? (
+                    <button
+                      type="button"
+                      className="mr-disclosure"
+                      aria-expanded={showResolved}
+                      aria-controls="ops-resolved-body"
+                      onClick={() => setShowResolved((open) => !open)}
+                    >
+                      <span className="mr-card-title" id="ops-resolved-title">{filterLabel}</span>
+                      <span className="mr-count">{resolvedRequests.length}</span>
+                      <span className="mr-disclosure-mark"><ChevronIcon /></span>
+                    </button>
+                  ) : (
+                    <header className="mr-card-head">
+                      <div>
+                        <h2 className="mr-card-title" id="ops-resolved-title">{filterLabel}</h2>
+                        <p className="mr-card-sub">Most recently reviewed first</p>
+                      </div>
+                      <div className="mr-card-tools">
+                        {hasSearch && (
+                          <button type="button" className="mr-link" onClick={resetFilters}>Clear filters</button>
+                        )}
+                        <span className="mr-count">{resolvedForFilter.length}</span>
+                      </div>
+                    </header>
+                  )}
 
-                {(!isCollapsible || showResolved) && (
-                  <div id="ops-resolved-body">
-                    {resolvedForFilter.length > 0 ? (
-                      <ul className="ui-rows ops-resolved">
-                        {resolvedForFilter.map((request) => {
-                          return (
-                            <li className="ui-row ops-resolved__row" key={request._id}>
+                  {(!isCollapsible || showResolved) && (
+                    <div id="ops-resolved-body">
+                      {resolvedForFilter.length > 0 ? (
+                        <ul className="mr-rows mr-rows--done">
+                          <li className="mr-row mr-row--done mr-row--head" aria-hidden="true">
+                            <span>Request</span><span>Requested by</span><span>Status</span><span>Reviewed</span>
+                          </li>
+                          {resolvedForFilter.map((request) => (
+                            <li className="mr-row mr-row--done" key={request._id}>
                               <button
                                 type="button"
-                                className="ops-row-open"
+                                className="mr-open"
                                 aria-label={`Open ${request.status} request for ${request.quantity} of ${itemNameOf(request)}`}
                                 onClick={() => openDetail(request)}
                               />
-                              <span className={`ops-mark ops-mark--${request.status}`} aria-hidden="true" />
-                              <div className="ui-row__main">
-                                <p className="ui-row__title">
-                                  {request.quantity} × {itemNameOf(request)}
-                                </p>
-                                <p className="ui-row__sub">
-                                  {request.projectId?.name || 'Unknown project'}
-                                  {request.requestedBy?.name ? ` · ${request.requestedBy.name}` : ''}
-                                </p>
-                              </div>
-                              <div className="ui-row__meta">
-                                <span className="ops-resolved__state">{STATUS_LABEL[request.status]}</span>
-                                <span className="ops-resolved__when">{formatDay(request.reviewedAt || request.createdAt)}</span>
-                              </div>
+                              <span className="mr-cell mr-who">
+                                <span className={`mr-face mr-face--${request.status}`} aria-hidden="true">
+                                  {request.status === 'approved' ? <CheckIcon /> : <CloseIcon />}
+                                </span>
+                                <span className="mr-who-text">
+                                  <span className="mr-item">{request.quantity} × {itemNameOf(request)}</span>
+                                  <span className="mr-sub">{request.projectId?.name || 'Unknown project'}</span>
+                                </span>
+                              </span>
+                              <span className="mr-cell mr-by">{request.requestedBy?.name || '—'}</span>
+                              <span className="mr-cell">
+                                <span className={`mr-pill mr-pill--${request.status}`}>{STATUS_LABEL[request.status]}</span>
+                              </span>
+                              <span className="mr-cell mr-date">{formatDay(request.reviewedAt || request.createdAt)}</span>
                             </li>
-                          );
-                        })}
-                      </ul>
-                    ) : (
-                      <div className="ops-empty-wrap">
-                        <div className="ui-empty ui-empty--tight">
-                          <span className="ui-empty__mark"><InboxIcon /></span>
-                          <p className="ui-empty__title">
-                            No {filter === 'approved' ? 'approved' : 'rejected'} requests
+                          ))}
+                        </ul>
+                      ) : (
+                        <div className="mr-empty">
+                          <span className="mr-state-mark"><InboxIcon /></span>
+                          <p className="mr-state-title">
+                            No {filter === 'approved' ? 'approved' : filter === 'rejected' ? 'rejected' : 'resolved'} requests
                           </p>
-                          {(filter === 'approved' ? counts.approved : counts.rejected) > 0 && hasSearch ? (
+                          {hasSearch ? (
                             <>
-                              <p className="ui-empty__text">None matches the current filter.</p>
-                              <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={resetFilters}>
+                              <p className="mr-state-text">None matches the current filter.</p>
+                              <button type="button" className="mr-btn mr-btn--quiet mr-btn--sm" onClick={resetFilters}>
                                 Clear filters
                               </button>
                             </>
                           ) : null}
                         </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </section>
+                      )}
+                    </div>
+                  )}
+                </section>
+              )}
+            </div>
+
+            {pendingAll.length > 0 && (
+              <aside className="mr-side" aria-label="Queue summary">
+                <section className="mr-card ops-rise" style={rise(2)} aria-labelledby="mr-wait-title">
+                  <header className="mr-card-head">
+                    <div>
+                      <h2 className="mr-card-title" id="mr-wait-title">Longest waiting</h2>
+                      <p className="mr-card-sub">Pending, oldest first</p>
+                    </div>
+                    <span className="mr-count">{pendingAll.length}</span>
+                  </header>
+                  <ul className="mr-list">
+                    {pendingAll.slice(0, 5).map((request) => (
+                      <li key={request._id}>
+                        <button type="button" className="mr-list-row" onClick={() => openDetail(request)}>
+                          <span className="mr-list-text">
+                            <span className="mr-list-name">{itemNameOf(request)}</span>
+                            <span className="mr-list-sub">{request.projectId?.name || 'Unknown project'}</span>
+                            <span className="mr-meter mr-meter--thin" aria-hidden="true">
+                              <i style={{ width: `${oldestWait > 0 ? Math.max(4, (waitMs(request.createdAt) / oldestWait) * 100) : 4}%` }} />
+                            </span>
+                          </span>
+                          <span className={`mr-wait mr-wait--${waitTone(request.createdAt)}`}>{waitingLabel(request.createdAt)}</span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+
+                <section className="mr-card ops-rise" style={rise(3)} aria-labelledby="mr-project-title">
+                  <header className="mr-card-head">
+                    <div>
+                      <h2 className="mr-card-title" id="mr-project-title">Pending by project</h2>
+                      <p className="mr-card-sub">Select a project to filter</p>
+                    </div>
+                  </header>
+                  <ul className="mr-ranks">
+                    {byProject.map((entry) => (
+                      <li key={entry.id}>
+                        <button
+                          type="button"
+                          className="mr-rank"
+                          aria-pressed={projectFilter === entry.id}
+                          disabled={entry.id === 'unknown'}
+                          onClick={() => setProjectFilter(projectFilter === entry.id ? 'all' : entry.id)}
+                        >
+                          <span className="mr-rank-name">{entry.name}</span>
+                          <span className="mr-meter mr-meter--thin" aria-hidden="true">
+                            <i style={{ width: `${maxByProject ? Math.round((entry.count / maxByProject) * 100) : 0}%` }} />
+                          </span>
+                          <b>{entry.count}</b>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </section>
+
+                <section className="mr-card ops-rise" style={rise(4)} aria-labelledby="mr-short-title">
+                  <header className="mr-card-head">
+                    <div>
+                      <h2 className="mr-card-title" id="mr-short-title">Short on stock</h2>
+                      <p className="mr-card-sub">Requested more than the shelf holds</p>
+                    </div>
+                    <span className="mr-count">{shortOnStock.length}</span>
+                  </header>
+                  {shortOnStock.length > 0 ? (
+                    <ul className="mr-list">
+                      {shortOnStock.slice(0, 5).map((request) => (
+                        <li key={request._id}>
+                          <button type="button" className="mr-list-row" onClick={() => openDetail(request)}>
+                            <span className="mr-list-text">
+                              <span className="mr-list-name">{itemNameOf(request)}</span>
+                              <span className="mr-list-sub">{request.projectId?.name || 'Unknown project'}</span>
+                            </span>
+                            <span className="mr-pill mr-pill--rejected">
+                              {request.quantity} / {stockOf(request)}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mr-note">Every pending request fits the stock on hand.</p>
+                  )}
+                </section>
+              </aside>
             )}
-          </>
-        ) : null}
-      </div>
+          </div>
+        </>
+      ) : null}
 
       {detail && (
         <OpsOverlay className="ops-overlay--drawer" onClose={closeDetail}>

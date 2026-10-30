@@ -13,27 +13,20 @@ export const CLUB_PHOTOS = [
   { src: '/photos/photo-3.jpg', alt: 'Stage dance performance' },
   { src: '/photos/photo-4.jpg', alt: 'Ramzat musical event live performance' },
   { src: '/photos/photo-5.jpg', alt: 'Students playing basketball on the campus court' },
-  { src: '/photos/photo-6.png', alt: 'Students with bubbles at outdoor club fair booth' },
-  { src: '/photos/photo-7.jpg', alt: 'Students collaborating and planning club projects' },
-  { src: '/photos/photo-8.jpg', alt: 'Students participating in tug-of-war activity' },
-  { src: '/photos/photo-9.png', alt: 'Students enjoying food festival and social gathering' },
-  { src: '/photos/photo-10.jpg', alt: 'Origami lanterns and paper boat celebration' },
-  { src: '/photos/photo-11.png', alt: 'Students practicing archery at sports club' },
-  { src: '/photos/photo-12.png', alt: 'Students holding up an earth globe together' },
-  { src: '/photos/photo-13.png', alt: 'Football match on the campus grass field' },
-  { src: '/photos/photo-14.png', alt: 'Student painting on canvas in fine arts club' },
+  { src: '/photos/X6.jpeg', alt: 'Ramzat musical stage and performance setup' },
+  { src: '/photos/X7.jpeg', alt: 'Campus rally and awareness event with police and cadets' },
+  { src: '/photos/X8.jpeg', alt: 'Students drama and theatrical performance at Infoplex' },
+  { src: '/photos/X9.jpeg', alt: 'Industrial safety equipment demonstration' },
+  { src: '/photos/X10.jpeg', alt: 'Student safety protocol demonstration' },
+  { src: '/photos/X11.jpeg', alt: 'Campus street play performance' },
+  { src: '/photos/X12.jpeg', alt: 'Theater mono-act dialogue performance' },
+  { src: '/photos/X13.jpeg', alt: 'Students presenting smart fertilizer capsule project' },
+  { src: '/photos/X14.jpeg', alt: 'Student research methodology and tinkering presentation' },
+  { src: '/photos/X15.jpeg', alt: 'Student team presenting project to faculty mentors' },
+  { src: '/photos/X16.jpeg', alt: 'Fine arts and floral design exhibition' },
 ];
 
-export const PROJECT_PHOTOS = [
-  { src: '/photos/project-1.png', alt: 'Students engineering and testing robotics rover prototype' },
-  { src: '/photos/project-2.png', alt: 'Student conducting research and project work in library' },
-  { src: '/photos/project-3.jpg', alt: 'Student building and assembling 3D printer hardware frame' },
-  { src: '/photos/project-4.jpg', alt: 'Group of college students collaborating on research project' },
-  { src: '/photos/project-5.png', alt: 'Student doing research in computer lab' },
-  { src: '/photos/project-6.png', alt: 'Engineering student on university campus' },
-  { src: '/photos/project-7.png', alt: 'Student taking project notes and coding with laptop' },
-  { src: '/photos/project-8.png', alt: 'Students conducting experiment in science laboratory' },
-];
+export const PROJECT_PHOTOS = CLUB_PHOTOS;
 
 export function PhotoTrack({ id, title, photos = CLUB_PHOTOS }: PhotoTrackProps) {
   const sectionRef = useRef<HTMLElement>(null);

@@ -91,6 +91,11 @@ body {
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
+.app-header.has-notif-open {
+  position: relative;
+  z-index: 10000;
+}
+
 .header-title {
   font-size: 1.25rem;
   font-weight: 600;
@@ -125,7 +130,8 @@ body {
   height: var(--header-height);
   display: flex;
   align-items: center;
-  padding: 0 24px;
+  justify-content: center;
+  padding: 0;
   font-weight: 700;
   font-size: 1.1rem;
   color: var(--text);
@@ -4486,21 +4492,115 @@ input[type="number"]:focus {
 
 /* ── Top bar and page canvas ────────────────────────────────────────────── */
 .app-header {
-  background: rgba(255, 255, 255, 0.82);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-bottom: 1px solid #e0e6f3;
+  background:
+    radial-gradient(ellipse 38% 220% at left center, rgba(104, 169, 255, 0.14), transparent 100%),
+    radial-gradient(ellipse 30% 200% at center, rgba(104, 169, 255, 0.08), transparent 100%),
+    radial-gradient(ellipse 38% 220% at right center, rgba(104, 169, 255, 0.14), transparent 100%),
+    var(--color-graphite);
+  border-bottom: 1px solid var(--color-graphite-2);
+}
+@media (min-width: 769px) {
+  .app-header { border-left: 0.1px solid #fff; }
 }
 .header-title {
-  color: var(--navy-800);
+  color: var(--color-graphite-ink);
   font-weight: 650;
   letter-spacing: -0.02em;
 }
 .app-header .badge-student {
-  background: #eaeffc;
-  color: var(--navy-700);
-  border-color: #d3dcf5;
+  display: inline-flex;
+  align-items: center;
+  min-height: 40px;
+  background: var(--color-graphite-2);
+  color: var(--color-graphite-ink);
+  border-color: rgba(255, 255, 255, 0.24);
   text-transform: capitalize;
+}
+.theme-toggle-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 112px;
+  height: 40px;
+  flex: none;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-graphite-ink);
+  font: 600 12px/1 var(--font);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.theme-toggle-button:hover {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: var(--color-graphite-2);
+}
+.theme-toggle-button:focus-visible {
+  outline: 2px solid #8ec5ff;
+  outline-offset: 3px;
+}
+.theme-toggle-button svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.theme-toggle-button span { white-space: nowrap; }
+.notif-inbox-button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--color-graphite-ink);
+  font: 600 13px/1 var(--font);
+  cursor: pointer;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+.notif-inbox-button:hover,
+.notif-inbox-button[aria-expanded="true"] {
+  border-color: rgba(255, 255, 255, 0.38);
+  background: var(--color-graphite-2);
+}
+.notif-inbox-button:focus-visible {
+  outline: 2px solid #8ec5ff;
+  outline-offset: 3px;
+}
+.notif-inbox-button svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+.notif-inbox-count {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  display: grid;
+  min-width: 20px;
+  height: 20px;
+  place-items: center;
+  padding-inline: 5px;
+  border: 2px solid var(--color-graphite);
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  line-height: 1;
 }
 .main-content {
   background:
@@ -4854,5 +4954,181 @@ input[type="number"]:focus {
 @media (max-width: 768px) {
   .sidebar-container:not(.open) .main-sidebar {
     box-shadow: none;
+  }
+}
+
+.shell-content :is(.dash, .sd-dash) .ui-page-head {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--color-rule-2);
+}
+
+.shell-content .dash-region__head,
+.shell-content .sd-region__head {
+  border-bottom-color: var(--color-rule-2);
+}
+
+/* Align the legacy dashboard surface with the public landing page's Cobalt palette. */
+.shell-content .student-dash {
+  --navy-950: var(--color-graphite);
+  --navy-900: var(--color-graphite);
+  --navy-800: var(--color-ink);
+  --navy-700: var(--color-accent);
+  --gold: var(--color-accent);
+  --gold-soft: var(--color-accent-wash);
+}
+.main-sidebar {
+  color: var(--color-graphite-ink);
+  background:
+    linear-gradient(90deg, rgba(104, 169, 255, 0.12), rgba(104, 169, 255, 0.04) 68%, transparent),
+    var(--color-graphite);
+  box-shadow: none;
+}
+.main-sidebar .brand { border-bottom-color: var(--color-graphite-2); }
+.main-sidebar .brand .dot {
+  background: var(--color-accent);
+  box-shadow: 0 0 0 4px var(--color-accent-glow);
+}
+.main-sidebar .brand-logo {
+  flex: none;
+  width: min(100%, 170px);
+  height: 50px;
+  object-fit: contain;
+  background: transparent;
+}
+.main-nav-btn.active::before { background: var(--color-accent); }
+.main-nav-btn:focus-visible { outline-color: var(--color-focus); }
+.main-content { background: var(--color-paper); }
+.student-dash-header {
+  background: linear-gradient(120deg, var(--color-graphite), var(--color-accent-deep));
+  box-shadow: var(--shadow-lift);
+}
+.student-dash-header .student-dash-title-accent {
+  background: none;
+  color: var(--color-accent-2);
+  -webkit-text-fill-color: currentColor;
+}
+.student-dash-header .student-dash-eyebrow::before,
+.student-dash-overview-attention li::before,
+.student-dash-notification-count,
+.student-dash-notification-dot { background: var(--color-accent); }
+.student-dash-header .student-dash-notification-count {
+  background: #fff;
+  color: var(--color-graphite);
+}
+.student-dash-header-actions .btn-primary {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+  box-shadow: var(--shadow-key-accent);
+}
+.student-dash-header-actions .btn-primary:hover { background: var(--color-accent-deep); }
+.student-dash-section,
+.student-dash-notifications {
+  border-color: var(--color-rule);
+  background: var(--color-sheet);
+  box-shadow: var(--shadow-card);
+}
+.student-dash-section::before { background: var(--color-accent); }
+.student-dash-section-head .student-dash-eyebrow { color: var(--color-muted); }
+.student-dash-count {
+  border-color: var(--color-rule);
+  background: var(--color-accent-wash);
+  color: var(--color-accent-deep);
+}
+.student-dash-section-action { color: var(--color-accent); }
+.student-dash .student-card,
+.student-dash-event-stack .event-card {
+  border-color: var(--color-rule);
+  background: var(--color-sheet);
+}
+.student-dash .student-card:hover {
+  border-color: var(--color-accent-2);
+  box-shadow: var(--shadow-lift);
+}
+.student-dash-notifications {
+  color: var(--color-graphite-ink);
+  background: var(--color-graphite);
+}
+.student-dash-notifications .student-dash-count {
+  background: var(--color-accent);
+  color: var(--color-accent-ink);
+}
+.student-dash-arrow,
+.student-dash-inbox-link { color: var(--color-accent-2); }
+.student-dash :is(button, a):focus-visible {
+  outline-color: var(--color-focus);
+}
+
+
+/* Group labels for the restored sidebar navigation. */
+.main-sidebar .nav-links { gap: 0; }
+.main-sidebar .nav-group { display: flex; flex-direction: column; gap: 4px; }
+.main-sidebar .nav-group + .nav-group {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+.main-sidebar .nav-group-label {
+  margin: 0 16px 6px;
+  color: rgba(214, 224, 255, 0.68);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  line-height: 1.4;
+  text-transform: uppercase;
+}
+
+/* Sidebar scrollbar · Cobalt
+   A slim, always-visible rail so it is obvious the list scrolls. The track is a
+   faint graphite groove, the thumb a muted rail-ink that lights to the cobalt
+   signal on hover and drag. Arrow buttons are removed. Only tokens, so it
+   follows the dark theme too. */
+.main-sidebar .nav-links {
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+}
+
+/* Chromium, Safari, Edge: draw it ourselves. */
+.main-sidebar .nav-links::-webkit-scrollbar {
+  width: 12px;
+}
+.main-sidebar .nav-links::-webkit-scrollbar-button {
+  display: none;
+  width: 0;
+  height: 0;
+}
+.main-sidebar .nav-links::-webkit-scrollbar-track {
+  margin-block: var(--space-xs);
+  border: 4px solid transparent;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--color-graphite-ink) 7%, transparent);
+  background-clip: padding-box;
+}
+.main-sidebar .nav-links::-webkit-scrollbar-thumb {
+  min-height: var(--space-xl);
+  border: 3px solid transparent;
+  border-radius: var(--radius-pill);
+  background: color-mix(in oklch, var(--color-graphite-muted) 55%, transparent);
+  background-clip: padding-box;
+  transition: background-color var(--dur-short) var(--ease-in-out);
+}
+.main-sidebar .nav-links::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent-2);
+  background-clip: padding-box;
+}
+.main-sidebar .nav-links::-webkit-scrollbar-thumb:active {
+  background: var(--color-accent);
+  background-clip: padding-box;
+}
+.main-sidebar .nav-links::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Firefox, and any engine without ::-webkit-scrollbar. Chrome 121+ would let
+   scrollbar-color override the rules above, so it is scoped away from it. */
+@supports not selector(::-webkit-scrollbar) {
+  .main-sidebar .nav-links {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--color-graphite-muted) 55%, transparent)
+      color-mix(in oklch, var(--color-graphite-ink) 7%, transparent);
   }
 }

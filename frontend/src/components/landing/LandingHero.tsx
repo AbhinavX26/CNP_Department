@@ -2,23 +2,12 @@ import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 const HERO_PHOTOS = [
-  // ── Inner Ring: Placed directly behind the main CNP card, peeking out ──
-  { src: '/photos/photo-4.jpg', alt: 'Live musical performance at Ramzat festival' },
-  { src: '/photos/project-1.png', alt: 'Autonomous robotics rover prototyping team' },
-  { src: '/photos/photo-10.jpg', alt: 'Origami lanterns and campus cultural celebration' },
-  { src: '/photos/project-3.jpg', alt: '3D printing rapid prototyping laboratory' },
-  { src: '/photos/photo-14.png', alt: 'Fine arts student canvas oil painting' },
-  { src: '/photos/photo-2.jpg', alt: 'Competitive chess tournament club match' },
-  { src: '/photos/project-8.png', alt: 'Applied science research laboratory experiment' },
-  { src: '/photos/photo-5.jpg', alt: 'Basketball team practice on the university court' },
-
-  // ── Outer Ring: Framing the full viewport breadth and corners ──
-  { src: '/photos/photo-8.jpg', alt: 'Students participating in campus club outdoor event' },
-  { src: '/photos/photo-11.png', alt: 'Target archery sports club student practice' },
-  { src: '/photos/project-2.png', alt: 'Collaborative student project research in library' },
-  { src: '/photos/project-5.png', alt: 'Software engineering student coding in computer lab' },
-  { src: '/photos/photo-13.png', alt: 'University football match on open campus grounds' },
-  { src: '/photos/project-6.png', alt: 'Engineering student working with hardware equipment' },
+  { src: '/photos/X1.jpeg', alt: 'NCC cadets ceremony and parade' },
+  { src: '/photos/X2.jpeg', alt: 'Students celebrating at campus cultural fest' },
+  { src: '/photos/photo-2.jpg', alt: 'Chess tournament club' },
+  { src: '/photos/X3.jpeg', alt: 'GSFC University event celebration on stage' },
+  { src: '/photos/X4.jpeg', alt: 'Volleyball sports match on campus court' },
+  { src: '/photos/X5.jpeg', alt: 'Student and faculty collaboration meeting' },
 ];
 
 const HT = [
@@ -143,7 +132,17 @@ export function LandingHero({ signedIn }: LandingHeroProps) {
           })}
         </div>
         <div className="core" id="core" ref={coreRef}>
-          <div className="logo">CNP</div>
+          <div className="hero-logo-badge">
+            <img
+              className="hero-logo"
+              src="/branding/cnp-community-emblem.png"
+              alt="CNP Department logo"
+              width={140}
+              height={62}
+              loading="eager"
+              decoding="async"
+            />
+          </div>
           <h1>Welcome to the CNP Department</h1>
           <p>Clubs and projects, organised, resourced and seen.</p>
           {signedIn ? (

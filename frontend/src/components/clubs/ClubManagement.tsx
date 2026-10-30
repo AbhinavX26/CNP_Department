@@ -4,6 +4,7 @@ import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { UserSelect } from '../UserSelect';
 import '../../pages/Clubs/clubs.css';
+import { Select } from '../common/Select';
 
 type Modal = null | 'requests' | 'edit' | 'member' | 'coordinator' | 'images';
 
@@ -91,6 +92,14 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
     ? club.facultyCoordinatorId?._id || ''
     : club.facultyCoordinatorId || '';
   const [selectedCoordinatorId, setSelectedCoordinatorId] = useState(currentCoordinatorId);
+  const coordinator = typeof club.facultyCoordinatorId === 'object' && club.facultyCoordinatorId?.name ? club.facultyCoordinatorId : null;
+  const coordinatorInitials = (coordinator?.name || '')
+    .replace(/^(dr|prof|mr|mrs|ms)\.?\s+/i, '')
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part: string) => part[0]?.toUpperCase())
+    .join('');
 
   useEffect(() => {
     const cid = typeof club.facultyCoordinatorId === 'object'
@@ -259,38 +268,38 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
 
   return (
     <>
-      <div className="clubs-toolbar" role="toolbar" aria-label="Manage this club">
+      <div className="cdx-toolbar" role="toolbar" aria-label="Manage this club">
         <button
           type="button"
-          className={`ui-btn ui-btn--quiet ui-btn--sm clubs-toolbar__requests${requests.length ? ' is-waiting' : ''}`}
+          className={`cdx-btn cdx-btn--quiet cdx-toolbar__requests${requests.length ? ' is-waiting' : ''}`}
           onClick={() => setModal('requests')}
         >
           <InboxIcon />
           Requests
-          <span className={`ui-count${requests.length ? ' ui-count--accent' : ''}`}>
+          <span className={`cdx-badge${requests.length ? ' is-hot' : ''}`}>
             {loading ? '·' : requests.length}
           </span>
         </button>
 
-        <span className="clubs-toolbar__sep" aria-hidden="true" />
+        
 
         {user?.role === 'club_admin' && (
-          <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={() => setModal('edit')}>
+          <button type="button" className="cdx-btn cdx-btn--quiet" onClick={() => setModal('edit')}>
             <EditIcon />
             Edit
           </button>
         )}
-        <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={() => setModal('member')}>
+        <button type="button" className="cdx-btn cdx-btn--quiet" onClick={() => setModal('member')}>
           <UserPlusIcon />
           Add member
         </button>
         {user?.role === 'club_admin' && (
-          <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={() => setModal('coordinator')}>
+          <button type="button" className="cdx-btn cdx-btn--quiet" onClick={() => setModal('coordinator')}>
             <BadgeIcon />
             Coordinator
           </button>
         )}
-        <button type="button" className="ui-btn ui-btn--quiet ui-btn--sm" onClick={() => setModal('images')}>
+        <button type="button" className="cdx-btn cdx-btn--quiet" onClick={() => setModal('images')}>
           <ImageIcon />
           Images
         </button>
@@ -299,7 +308,7 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
       {modal === 'requests' &&
         createPortal(
           <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
-            <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-requests-title">
+            <div className="ui-modal cdx-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-requests-title">
               <div className="ui-modal__head">
                 <div className="ui-panel__titles">
                   <h2 id="clubs-requests-title" className="ui-panel__title">Join requests</h2>
@@ -372,7 +381,7 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
       {modal === 'edit' &&
         createPortal(
           <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
-            <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-edit-title">
+            <div className="ui-modal cdx-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-edit-title">
               <div className="ui-modal__head">
                 <div>
                   <h2 id="clubs-edit-title" className="ui-panel__title">Edit club details</h2>
@@ -425,7 +434,7 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
       {modal === 'member' &&
         createPortal(
           <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
-            <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-member-title">
+            <div className="ui-modal cdx-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-member-title">
               <div className="ui-modal__head">
                 <div>
                   <h2 id="clubs-member-title" className="ui-panel__title">Add member</h2>
@@ -452,15 +461,14 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
                   <div>
                     <label className="ui-label" htmlFor="clubs-add-type">Membership</label>
                     <span className="clubs-select">
-                      <select
+                      <Select
                         id="clubs-add-type"
-                        className="ui-field ui-field--select"
                         value={addMembershipType}
                         onChange={e => setAddMembershipType(e.target.value)}
                       >
                         <option value="member">Member</option>
                         <option value="core_team">Core team</option>
-                      </select>
+                      </Select>
                     </span>
                   </div>
 
@@ -496,46 +504,70 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
       {modal === 'coordinator' &&
         createPortal(
           <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
-            <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-coordinator-title">
-              <div className="ui-modal__head">
-                <div>
-                  <h2 id="clubs-coordinator-title" className="ui-panel__title">Faculty coordinator</h2>
+            <div className="ui-modal cdx-modal cdx-modal--coord" role="dialog" aria-modal="true" aria-labelledby="clubs-coordinator-title">
+              <header className="cdm-head">
+                <span className="cdm-head__mark" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="m3 9.5 9-4.5 9 4.5-9 4.5-9-4.5Z" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" />
+                    <path d="M7 12v4.2c0 1 2.2 2.3 5 2.3s5-1.3 5-2.3V12" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                </span>
+                <div className="cdm-head__text">
+                  <h2 id="clubs-coordinator-title">Faculty coordinator</h2>
+                  <p className="cdm-head__sub">
+                    <span className="cdm-head__club">{club.name}</span>
+                    <span className={`cdm-state ${coordinator ? 'is-on' : 'is-off'}`}>
+                      {coordinator ? 'Assigned' : 'Unassigned'}
+                    </span>
+                  </p>
                 </div>
-                <button type="button" className="ui-icon-btn" onClick={() => setModal(null)} aria-label="Close">
+                <button type="button" className="cdm-close" onClick={() => setModal(null)} aria-label="Close">
                   <CloseIcon />
                 </button>
-              </div>
-              <div className="ui-modal__body clubs-modal__body">
-                <div className="clubs-upload">
-                  <div className="clubs-upload__text">
-                    <p className="clubs-upload__title">
-                      {club.facultyCoordinatorId
-                        ? (typeof club.facultyCoordinatorId === 'object' ? club.facultyCoordinatorId.name : club.facultyCoordinatorId)
-                        : 'No coordinator assigned'}
-                    </p>
-                    {typeof club.facultyCoordinatorId === 'object' && club.facultyCoordinatorId?.email ? (
-                      <p className="clubs-upload__hint">{club.facultyCoordinatorId.email}</p>
-                    ) : null}
+              </header>
+
+              <div className="cdm-body">
+                <div className="cdm-grid">
+                  <div className={`cdm-person ${coordinator ? '' : 'is-empty'}`}>
+                    <span className="cdm-person__avatar" aria-hidden="true">
+                      {coordinator?.profileImage ? <img src={coordinator.profileImage} alt="" /> : coordinator ? coordinatorInitials : '?'}
+                    </span>
+                    <span className="cdm-person__name">{coordinator?.name || 'No coordinator'}</span>
+                    <span className="cdm-person__role">{coordinator ? 'Current coordinator' : 'Nobody assigned yet'}</span>
                   </div>
-                  <span className={`ui-tag ${club.facultyCoordinatorId ? 'is-positive' : 'is-warning'}`}>
-                    {club.facultyCoordinatorId ? 'Assigned' : 'Unassigned'}
-                  </span>
+
+                  <dl className="cdm-facts">
+                    <div className="cdm-fact cdm-fact--wide">
+                      <dt>Email</dt>
+                      <dd>{coordinator?.email || '—'}</dd>
+                    </div>
+                    <div className="cdm-fact">
+                      <dt>Department</dt>
+                      <dd>{coordinator?.department || '—'}</dd>
+                    </div>
+                    <div className="cdm-fact">
+                      <dt>Club</dt>
+                      <dd>{club.name}</dd>
+                    </div>
+                  </dl>
                 </div>
 
-                <div>
-                  <label className="ui-label" htmlFor="clubs-coordinator-select">Assign or reassign</label>
-                  <UserSelect
-                    id="clubs-coordinator-select"
-                    role="faculty_coordinator"
-                    value={selectedCoordinatorId}
-                    onChange={setSelectedCoordinatorId}
-                    placeholder="Search and select faculty coordinator…"
-                    disabledUserIds={currentCoordinatorId ? [currentCoordinatorId] : []}
-                    disabledReason="Currently assigned"
-                  />
+                <div className="cdm-section">
+                  <label htmlFor="clubs-coordinator-select">Assign or reassign</label>
+                  {selectedCoordinatorId !== currentCoordinatorId ? <span className="cdm-section__flag">Unsaved change</span> : null}
                 </div>
+                <UserSelect
+                  id="clubs-coordinator-select"
+                  role="faculty_coordinator"
+                  value={selectedCoordinatorId}
+                  onChange={setSelectedCoordinatorId}
+                  placeholder="Search and select faculty coordinator…"
+                  disabledUserIds={currentCoordinatorId ? [currentCoordinatorId] : []}
+                  disabledReason="Currently assigned"
+                />
               </div>
-              <div className="ui-modal__foot">
+
+              <footer className="cdm-foot">
                 <button type="button" className="ui-btn ui-btn--ghost" onClick={() => setModal(null)} disabled={assigning}>
                   Cancel
                 </button>
@@ -547,7 +579,7 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
                 >
                   {assigning ? 'Updating…' : 'Update assignment'}
                 </button>
-              </div>
+              </footer>
             </div>
           </div>,
           document.body
@@ -556,7 +588,7 @@ export function ClubManagement({ club, onUpdate }: { club: any, onUpdate: () => 
       {modal === 'images' &&
         createPortal(
           <div className="ui-overlay" onMouseDown={(e) => { if (e.target === e.currentTarget) setModal(null); }}>
-            <div className="ui-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-images-title">
+            <div className="ui-modal cdx-modal" role="dialog" aria-modal="true" aria-labelledby="clubs-images-title">
               <div className="ui-modal__head">
                 <div>
                   <h2 id="clubs-images-title" className="ui-panel__title">Club images</h2>

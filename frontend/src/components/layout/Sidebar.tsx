@@ -1,6 +1,5 @@
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 
 /**
  * Destinations, one row each. `icon` is a key into NAV_ICON_PATHS (it used to hold
@@ -15,7 +14,8 @@ export const NAVIGATION = [
   { id: 'notifications', label: 'Notifications',     icon: 'notifications', path: '/notifications',     roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] },
   { id: 'inventory',     label: 'Inventory',         icon: 'inventory',     path: '/inventory',         roles: ['project_admin'] },
   { id: 'requests',      label: 'Material Requests', icon: 'requests',      path: '/material-requests', roles: ['project_admin'] },
-  { id: 'profile',       label: 'Profile',           icon: 'profile',       path: '/profile',           roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] }
+  { id: 'profile',       label: 'Profile',           icon: 'profile',       path: '/profile',           roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] },
+  { id: 'about',         label: 'About Us',          icon: 'about',         path: '/about',             roles: ['student', 'faculty_coordinator', 'faculty_mentor', 'club_admin', 'project_admin'] }
 ];
 
 /**
@@ -27,6 +27,7 @@ export const NAV_GROUPS: { id: string; label: string; items: string[] }[] = [
   { id: 'inbox',       label: 'Inbox',       items: ['notifications'] },
   { id: 'operations',  label: 'Operations',  items: ['inventory', 'requests'] },
   { id: 'account',     label: 'Account',     items: ['profile'] },
+  { id: 'developers',  label: 'Developers',  items: ['about'] },
 ];
 
 /* Line icons on the 24px grid, drawn inside a common 4–20 optical square so
@@ -41,6 +42,7 @@ export const NAV_ICON_PATHS: Record<string, string> = {
   inventory: 'm4 8 8-4 8 4-8 4-8-4Zm0 0v8l8 4m8-12v8l-8 4m0-8v8',
   requests: 'M4 13h4l1.5 3h5L16 13h4M4 13V6.5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1V13M4 13v4.5a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V13',
   profile: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM4.5 20a7.5 7.5 0 0 1 15 0',
+  about: 'M12 12a3.2 3.2 0 1 0 0-6.4 3.2 3.2 0 0 0 0 6.4ZM5.5 19a6.5 6.5 0 0 1 13 0M18.5 8.2a2.4 2.4 0 0 1 0 4.4M20.5 17.5c0-1.7-.9-3-2.2-3.6',
 };
 
 export function NavIcon({ id, className = 'rail-icon' }: { id: string; className?: string }) {
@@ -77,9 +79,7 @@ interface SidebarProps {
 
 export function Sidebar({ onClose }: SidebarProps = {}) {
   const { user, logout } = useAuth();
-  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
-  const isDark = theme === 'dark';
 
   if (!user) return null;
 
@@ -150,46 +150,6 @@ export function Sidebar({ onClose }: SidebarProps = {}) {
             <span className="rail-role">{roleLabel(user.role)}</span>
           </span>
         </div>
-
-        {/* Appearance is a preference, not a destination: it lives with the
-            account row, remembers the choice, and never follows the device. */}
-        <button
-          type="button"
-          className="rail-theme"
-          role="switch"
-          aria-checked={isDark}
-          aria-label="Dark mode"
-          title={isDark ? 'Switch to light' : 'Switch to dark'}
-          onClick={toggleTheme}
-        >
-          <span className="rail-theme__glyph" aria-hidden="true">
-            {isDark ? (
-              <svg viewBox="0 0 24 24" fill="none" focusable="false">
-                <path
-                  d="M20 14.2A8 8 0 0 1 9.8 4a8.2 8.2 0 1 0 10.2 10.2Z"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            ) : (
-              <svg viewBox="0 0 24 24" fill="none" focusable="false">
-                <circle cx="12" cy="12" r="4.2" stroke="currentColor" strokeWidth="1.7" />
-                <path
-                  d="M12 3v2m0 14v2M3 12h2m14 0h2M5.6 5.6 7 7m10 10 1.4 1.4M18.4 5.6 17 7M7 17l-1.4 1.4"
-                  stroke="currentColor"
-                  strokeWidth="1.7"
-                  strokeLinecap="round"
-                />
-              </svg>
-            )}
-          </span>
-          <span className="rail-theme__label">{isDark ? 'Dark' : 'Light'}</span>
-          <span className="rail-theme__track" aria-hidden="true">
-            <span className="rail-theme__knob" />
-          </span>
-        </button>
 
         <button type="button" className="rail-signout" onClick={handleSignOut}>
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">

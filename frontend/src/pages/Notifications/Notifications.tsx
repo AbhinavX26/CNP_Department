@@ -3,10 +3,10 @@ import type { CSSProperties, ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { api } from '../../services/api';
 import { usePageLoading } from '../../context/LoadingContext';
-import { Counter, KindGlyph } from '../../components/ui/vis';
+import { KindGlyph } from '../../components/ui/vis';
 import type { Kind } from '../../components/ui/vis';
-import { Tooltip } from '../../components/ui/Tooltip';
 import './notifications.css';
+import './notifications-theme.css';
 
 interface NotificationMetadata {
   actorId?: string;
@@ -588,33 +588,53 @@ export default function Notifications() {
       : `${volume.window} ${volume.window === 1 ? 'notification' : 'notifications'} in the last 14 days, ${volume.today} today`;
 
   return (
-    <div className="ntf">
-      <header className="ui-page-head ntf-pagehead">
-        <div className="ui-page-head__text">
-          <div className="ntf-headline">
-            <h1 className="ui-title">Notifications</h1>
-            {unreadCount > 0 && (
-              <Tooltip label={`${unreadCount} unread of ${total}`}>
-                <span className="ui-count ui-count--accent">
-                  <Counter value={unreadCount} />
-                  <span className="ui-visually-hidden"> unread</span>
-                </span>
-              </Tooltip>
-            )}
-          </div>
+    <div className="ntf ntfx">
+      <header className="ntfx-head">
+        <div>
+          <h1 className="ntfx-title">Notifications</h1>
+          <p className="ntfx-sub">
+            {unreadCount > 0
+              ? `${unreadCount} unread of ${total}. Open one to read it in full.`
+              : total > 0
+                ? 'You are all caught up.'
+                : 'Requests, approvals, events and feedback show up here.'}
+          </p>
         </div>
-        <div className="ui-page-actions">
-          <button
-            type="button"
-            className="ui-btn ui-btn--quiet ui-btn--sm"
-            onClick={markAllAsRead}
-            disabled={unreadCount === 0 || markingAll}
-          >
-            <Mark name="checkAll" size={14} />
-            {markingAll ? 'Marking all read' : 'Mark all read'}
-          </button>
-        </div>
+        <button
+          type="button"
+          className="ntfx-btn ntfx-btn--solid"
+          onClick={markAllAsRead}
+          disabled={unreadCount === 0 || markingAll}
+        >
+          <Mark name="checkAll" size={15} />
+          {markingAll ? 'Marking all read' : 'Mark all read'}
+        </button>
       </header>
+
+      {!error && (
+        <section className="ntfx-tiles" aria-label={volumeAria}>
+          <div className="ntfx-tile ntfx-tile--deep">
+            <span className="ntfx-tile-value">{unreadCount}</span>
+            <span className="ntfx-tile-label">Unread</span>
+            <span className="ntfx-tile-note">{unreadCount === 0 ? 'Nothing waiting' : 'Waiting for you'}</span>
+          </div>
+          <div className="ntfx-tile ntfx-tile--blue">
+            <span className="ntfx-tile-value">{volume.today}</span>
+            <span className="ntfx-tile-label">Today</span>
+            <span className="ntfx-tile-note">Arrived since midnight</span>
+          </div>
+          <div className="ntfx-tile ntfx-tile--sky">
+            <span className="ntfx-tile-value">{volume.window}</span>
+            <span className="ntfx-tile-label">Last 14 days</span>
+            <span className="ntfx-tile-note">{volume.peak > 0 ? `Busiest day: ${volume.peak}` : 'Quiet fortnight'}</span>
+          </div>
+          <div className="ntfx-tile ntfx-tile--mist">
+            <span className="ntfx-tile-value">{total}</span>
+            <span className="ntfx-tile-label">All notifications</span>
+            <span className="ntfx-tile-note">{familiesPresent.length} {familiesPresent.length === 1 ? 'type' : 'types'}</span>
+          </div>
+        </section>
+      )}
 
       {error ? (
         <div className="ntf-error">
@@ -628,7 +648,7 @@ export default function Notifications() {
           </div>
         </div>
       ) : (
-        <section className={`ui-panel ntf-inbox${isReading ? ' is-reading' : ''}`} aria-label="Notification inbox">
+        <section className={`ui-panel ntf-inbox ntfx-inbox${isReading ? ' is-reading' : ''}`} aria-label="Notification inbox">
           <div className="ntf-bar">
             <div className="ntf-filters">
               <div className="ui-seg ntf-seg" role="group" aria-label="Filter by read state">
@@ -704,33 +724,6 @@ export default function Notifications() {
               </div>
             </div>
 
-            {total > 0 && (
-              <Tooltip
-                label={`${volumeAria} · busiest day ${volume.peak}`}
-                side="bottom"
-              >
-                <div className="ntf-vol" role="img" aria-label={volumeAria}>
-                  <span className="ntf-vol__days" aria-hidden="true">
-                    {volume.counts.map((count, i) => (
-                      <span
-                        key={i}
-                        className="ntf-vol__day"
-                        data-today={i === volume.counts.length - 1 || undefined}
-                        data-empty={count === 0 || undefined}
-                        title={volume.labels[i]}
-                        style={
-                          { '--ntf-f': volume.peak > 0 ? count / volume.peak : 0 } as CSSProperties
-                        }
-                      />
-                    ))}
-                  </span>
-                  <span className="ntf-vol__total">
-                    <Counter value={volume.today} />
-                    <span className="ntf-vol__cap">today</span>
-                  </span>
-                </div>
-              </Tooltip>
-            )}
           </div>
 
           <div className={`ntf-body${bodyClass}`}>
