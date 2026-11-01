@@ -8,6 +8,7 @@ import react from '@vitejs/plugin-react';
  * Vitest 5 declares `vite: ^6.4.0 || ^7.0.0 || ^8.0.0`, so the app's Vite 8 stays.
  */
 export default defineConfig({
+  root: import.meta.dirname,
   plugins: [react()],
   test: {
     environment: 'jsdom',

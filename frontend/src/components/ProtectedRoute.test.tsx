@@ -43,7 +43,7 @@ describe('ProtectedRoute', () => {
 
     renderGuarded('/dashboard', 'auth');
 
-    expect(screen.getByRole('status', { name: 'Loading workspace' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Protected dashboard' })).not.toBeInTheDocument();
     expect(screen.queryByText(/Login screen/)).not.toBeInTheDocument();
   });
@@ -73,7 +73,7 @@ describe('RoleProtectedRoute', () => {
 
     renderGuarded('/inventory', 'role');
 
-    expect(screen.getByRole('status', { name: 'Loading workspace' })).toBeInTheDocument();
+    expect(screen.getByRole('status', { name: 'Loading' })).toBeInTheDocument();
   });
 
   it('redirects an unauthenticated visitor to /login', () => {

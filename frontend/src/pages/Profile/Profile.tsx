@@ -7,6 +7,7 @@ import {
   type FormEvent,
   type RefObject,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { useAuth } from '../../context/AuthContext';
 import { api } from '../../services/api';
 import type { User } from '../../types';
@@ -16,10 +17,12 @@ import {
   AlertIcon,
   CameraIcon,
   CheckIcon,
+  CloseIcon,
   CopyIcon,
   FieldGlyph,
   LockIcon,
   PencilIcon,
+  ZoomInIcon,
   type FieldKind,
 } from './icons';
 import './profile.css';
@@ -69,6 +72,10 @@ export default function Profile() {
   const [success, setSuccess] = useState('');
   const [copied, setCopied] = useState<'email' | 'phone' | null>(null);
 
+  const [photoExpanded, setPhotoExpanded] = useState(false);
+  const portraitFaceRef = useRef<HTMLButtonElement>(null);
+  const closePhotoRef = useRef<HTMLButtonElement>(null);
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const phoneInputRef = useRef<HTMLInputElement>(null);
@@ -106,6 +113,30 @@ export default function Profile() {
       editButtonRef.current?.focus();
     }
   }, [isEditing]);
+
+  useEffect(() => {
+    if (!photoExpanded) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    closePhotoRef.current?.focus();
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setPhotoExpanded(false);
+        portraitFaceRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.body.style.overflow = prev;
+      document.removeEventListener('keydown', onKey);
+    };
+  }, [photoExpanded]);
+
+  const handleClosePhoto = () => {
+    setPhotoExpanded(false);
+    portraitFaceRef.current?.focus();
+  };
 
   if (!user) return null;
 
@@ -301,9 +332,25 @@ export default function Profile() {
       <section className={`pfx-hero prf-enter${isEditing ? ' is-editing' : ''}`} style={stagger(0)} aria-labelledby="prf-name">
         <div className="pfx-hero-body">
           <div className="pfx-portrait">
-            <span className="pfx-portrait-face">
-              {user.profileImage ? <img src={user.profileImage} alt="" /> : <span aria-hidden="true">{initialsOf(identityName)}</span>}
-            </span>
+            <Tooltip label="Click to view full photo">
+              <button
+                ref={portraitFaceRef}
+                type="button"
+                className="pfx-portrait-face"
+                onClick={() => setPhotoExpanded(true)}
+                aria-label="View enlarged profile photo"
+                aria-haspopup="dialog"
+              >
+                {user.profileImage ? (
+                  <img src={user.profileImage} alt="" />
+                ) : (
+                  <span aria-hidden="true">{initialsOf(identityName)}</span>
+                )}
+                <span className="pfx-portrait-hint" aria-hidden="true">
+                  <ZoomInIcon size={22} />
+                </span>
+              </button>
+            </Tooltip>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="ui-visually-hidden" tabIndex={-1} />
             <Tooltip label={user.profileImage ? 'Replace photo' : 'Add a photo'}>
               <button
@@ -556,6 +603,74 @@ export default function Profile() {
       <span className="ui-visually-hidden" aria-live="polite">
         {copied === 'email' ? 'Email address copied' : copied === 'phone' ? 'Phone number copied' : ''}
       </span>
+
+      {photoExpanded &&
+        createPortal(
+          <div
+            className="pfx-photo-modal-scrim"
+            onClick={(e) => {
+              if (e.target === e.currentTarget) handleClosePhoto();
+            }}
+          >
+            <div
+              className="pfx-photo-modal-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="pfx-photo-modal-title"
+            >
+              <header className="pfx-photo-modal-head">
+                <div className="pfx-photo-modal-meta">
+                  <span className="pfx-photo-modal-role">{roleLabel(user.role)}</span>
+                  <h3 id="pfx-photo-modal-title" className="pfx-photo-modal-name">
+                    {identityName}
+                  </h3>
+                </div>
+                <button
+                  ref={closePhotoRef}
+                  type="button"
+                  className="pfx-photo-modal-close"
+                  onClick={handleClosePhoto}
+                  aria-label="Close enlarged photo"
+                >
+                  <CloseIcon size={18} />
+                </button>
+              </header>
+
+              <div className="pfx-photo-modal-view">
+                {user.profileImage ? (
+                  <img
+                    src={user.profileImage}
+                    alt={identityName}
+                    className="pfx-photo-modal-img"
+                  />
+                ) : (
+                  <div className="pfx-photo-modal-initials">
+                    <span aria-hidden="true">{initialsOf(identityName)}</span>
+                  </div>
+                )}
+              </div>
+
+              <footer className="pfx-photo-modal-foot">
+                <div className="pfx-photo-modal-details">
+                  {identityDepartment ? <span>{identityDepartment}</span> : null}
+                  {isStudent && identitySemester ? <span>Sem {identitySemester}</span> : null}
+                </div>
+                <button
+                  type="button"
+                  className="pfx-photo-modal-change"
+                  onClick={() => {
+                    handleClosePhoto();
+                    fileInputRef.current?.click();
+                  }}
+                >
+                  <CameraIcon />
+                  <span>{user.profileImage ? 'Change photo' : 'Upload photo'}</span>
+                </button>
+              </footer>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 }

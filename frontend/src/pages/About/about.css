@@ -52,7 +52,7 @@
   opacity: 0; visibility: hidden; transform: translateY(101%);
   transition: opacity 0.3s ease, transform 0.3s ease, visibility 0.3s;
 }
-.ab-card-wrap:hover .ab-card-footer, .ab-card-wrap:focus-within .ab-card-footer {
+.ab-card-wrap:hover .ab-card-footer, .ab-card-footer:focus-within {
   opacity: 1; visibility: visible; transform: translateY(0);
 }
 .ab-card-footer :is(a, span) {
