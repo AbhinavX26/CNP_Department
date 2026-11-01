@@ -12,6 +12,7 @@ import ClubDetails from './pages/Clubs/ClubDetails';
 import Projects from './pages/Projects/Projects';
 import ProjectDetails from './pages/Projects/ProjectDetails';
 import About from './pages/About/About';
+import AboutUs from './pages/About/AboutUs';
 import Events from './pages/Events/Events';
 import Notifications from './pages/Notifications/Notifications';
 import Profile from './pages/Profile/Profile';
@@ -25,7 +26,7 @@ import LoadingScreen from './components/LoadingScreen';
 import { HTTP_ERROR_EVENT } from './services/api';
 
 /** Signed-out pages never get the loader; it belongs to the account. */
-const PUBLIC_PATH = /^\/($|login|register|about|error)/;
+const PUBLIC_PATH = /^\/($|login|register|about-us|error)/;
 
 function HttpErrorRedirect() {
   const navigate = useNavigate();
@@ -218,8 +219,8 @@ export default function App() {
             <Routes>
             <Route path="/login" element={<AuthGuard />} />
             <Route path="/register" element={<AuthRegisterGuard />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/about-us" element={<About />} />
+
+            <Route path="/about-us" element={<AboutUs />} />
             <Route path="/" element={<Landing />} />
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>

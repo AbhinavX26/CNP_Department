@@ -7,6 +7,7 @@ import './app.css';
 import './ui.css';
 import './components/ui/vis.css';
 import './components/ui/chrome.css';
+import './dark-theme.css';
 
 ReactDOM.createRoot(document.getElementById('app')!).render(
   <StrictMode>
