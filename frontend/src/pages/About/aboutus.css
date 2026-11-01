@@ -26,7 +26,7 @@
   padding-block: var(--section-gap-s) var(--space-3xl);
   background: radial-gradient(ellipse 60% 70% at 18% 0%, var(--color-accent-glow), transparent 70%);
 }
-.au-hero h1 { max-width: 16ch; font-size: var(--text-display); }
+.au-hero h1 { max-width: 24ch; font-size: var(--text-display); line-height: 1.08; text-wrap: balance; }
 .au-actions { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin-top: var(--space-xl); }
 .au-actions .btn { margin: 0; }
 
@@ -35,8 +35,8 @@
 .au-section--tint { background: var(--color-paper-2); border-block: var(--rule-hair) solid var(--color-rule); }
 .au-split { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: var(--space-xl) var(--space-2xl); align-items: start; }
 .au-copy { display: flex; flex-direction: column; gap: var(--space-md); font-size: var(--text-md); line-height: 1.7; color: var(--color-ink-2); }
-.au-head { max-width: 30ch; margin-bottom: var(--space-xl); }
-.au-head h2 { font-size: var(--text-section); }
+.au-head { max-width: min(100%, 880px); margin-bottom: var(--space-xl); }
+.au-head h2 { font-size: var(--text-section); line-height: 1.15; letter-spacing: -0.02em; text-wrap: balance; }
 
 .au-chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); }
 .au-chips li {

@@ -119,10 +119,11 @@
 
 /* ── Nav · slab ──────────────────────────────────────────────────────────── */
 
-.landing-nav {
-  position: sticky;
-  top: 0;
-  z-index: 1000;
+.landing-nav,
+.landing header.landing-nav {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 1000 !important;
   background: var(--color-paper);
   color: var(--color-ink);
   border-bottom: var(--rule-hair) solid var(--color-rule);
@@ -134,8 +135,12 @@
 .landing-nav-inner {
   display: flex;
   align-items: center;
-  gap: var(--space-lg);
+  justify-content: space-between;
+  gap: var(--space-md);
   min-height: 64px;
+  width: 100% !important;
+  max-width: 100% !important;
+  padding-inline: clamp(20px, 3.5vw, 40px) !important;
 }
 
 .landing-brand {
@@ -196,7 +201,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-xs);
-  margin-left: auto;
+  margin-inline: auto;
 }
 
 .landing-nav-links a {
