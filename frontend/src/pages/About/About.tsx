@@ -20,7 +20,7 @@ function Portrait({ dev, className }: { dev: Developer; className?: string }) {
   );
 }
 
-function Profile({ dev, from, onClose }: { dev: Developer; from: DOMRect; onClose: () => void }) {
+function Profile({ dev, from, onClose }: { dev: Developer; from: DOMRect; onClose: (viaKeyboard?: boolean) => void }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
   const originRef = useRef<() => DOMRect>(() => from);
@@ -44,17 +44,17 @@ function Profile({ dev, from, onClose }: { dev: Developer; from: DOMRect; onClos
 
   useLayoutEffect(() => { glide(false); }, [glide]);
 
-  const close = useCallback(() => {
+  const close = useCallback((viaKeyboard = false) => {
     if (closing.current) return;
     closing.current = true;
     panelRef.current?.parentElement?.classList.add('is-leaving');
-    glide(true, onClose);
+    glide(true, () => onClose(viaKeyboard));
   }, [glide, onClose]);
 
   useEffect(() => {
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') close();
+      if (e.key === 'Escape') close(true);
       if (e.key === 'Tab') {
         const nodes = panelRef.current?.querySelectorAll<HTMLElement>('a[href], button');
         if (!nodes?.length) return;
@@ -71,7 +71,7 @@ function Profile({ dev, from, onClose }: { dev: Developer; from: DOMRect; onClos
 
   const links = dev.links ?? {};
   return createPortal(
-    <div className="ab ab-scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) close(); }}>
+    <div className="ab ab-scrim" onMouseDown={(e) => { if (e.target === e.currentTarget) close(false); }}>
       <div
         className="ab-panel"
         ref={panelRef}
@@ -83,7 +83,7 @@ function Profile({ dev, from, onClose }: { dev: Developer; from: DOMRect; onClos
           <Portrait dev={dev} />
         </figure>
         <div className="ab-panel-body">
-          <button type="button" className="ab-close" ref={closeRef} onClick={close} aria-label="Close profile">
+          <button type="button" className="ab-close" ref={closeRef} onClick={() => close(false)} aria-label="Close profile">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
           </button>
           <p className="ab-eyebrow">Developer</p>
@@ -108,18 +108,24 @@ export default function About() {
   const { setPageReady } = usePageLoading();
   const [open, setOpen] = useState<{ dev: Developer; from: DOMRect } | null>(null);
   const openedFrom = useRef<HTMLElement | null>(null);
+  const openedViaKeyboard = useRef(false);
 
   useEffect(() => {
     setPageReady(true);
   }, [setPageReady]);
 
-  const show = (dev: Developer, el: HTMLElement) => {
+  const show = (dev: Developer, el: HTMLElement, viaKeyboard = false) => {
+    openedViaKeyboard.current = viaKeyboard;
     openedFrom.current = el;
     setOpen({ dev, from: el.getBoundingClientRect() });
   };
-  const hide = () => {
+  const hide = (viaKeyboard?: boolean) => {
     setOpen(null);
-    openedFrom.current?.focus();
+    if (viaKeyboard || openedViaKeyboard.current) {
+      openedFrom.current?.focus();
+    } else {
+      openedFrom.current?.blur();
+    }
   };
 
   return (
@@ -142,7 +148,7 @@ export default function About() {
               <button
                 type="button"
                 className="ab-card"
-                onClick={(e) => show(dev, e.currentTarget)}
+                onClick={(e) => show(dev, e.currentTarget, e.detail === 0)}
                 aria-haspopup="dialog"
                 aria-label={`${dev.name}, ${dev.designation}. Open profile`}
               >

@@ -12,7 +12,7 @@ const ERROR_DETAILS: Record<ErrorStatus, { title: string; description: string }>
   403: { title: 'Access Denied', description: 'You\'re not authorized to open this file. How did you even come here?' },
   404: { title: 'Page Not Found', description: 'We appreciate manual searching, but the thing is that you wrote the wrong address.' },
   429: { title: 'Too Many Requests', description: 'Slow down. Trying to brute force will only waste your time. You have asked for too many requests. Come back later.' },
-  500: { title: 'Server Error', description: 'Our servers bugged again. Sorry about that. We\'re a small group of devs. Things happen. By the way, can you donate some money to us (If you have some to spare?)?' },
+  500: { title: 'Server Error', description: 'Our servers bugged again. Sorry about that. We\'re a small group of devs. Things happen.' },
   502: { title: 'Bad Gateway', description: 'Our servers received some invalid response. What exactly are you trying to do?' },
   503: { title: 'Service Unavailable', description: 'This service is not available for some time. Use the other facilities for now. We\'ll try to bring this one back up.' },
   504: { title: 'Gateway Timeout', description: 'Server is too slow. It took too much time. Why don\'t you try again?' },
