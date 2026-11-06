@@ -36,6 +36,16 @@ import {
   sendError,
 } from '../lib/http.js';
 
+/** unitCost: blank/null clears it; otherwise a non-negative number (max 2 decimals). */
+function parseUnitCost(raw) {
+  if (raw === undefined || raw === null || raw === '') return { value: null };
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n < 0 || n > 100000000) {
+    return { error: 'unitCost must be a number of zero or more' };
+  }
+  return { value: Math.round(n * 100) / 100 };
+}
+
 const router = express.Router();
 
 // ── GET /api/inventory ────────────────────────────────────────────────────────
@@ -134,7 +144,7 @@ router.get('/summary', requireAuth, async (req, res) => {
 // SECURITY: project_admin only. createdBy from req.user.userId.
 router.post('/', requireAuth, requireRole('project_admin'), async (req, res) => {
   try {
-    const { name, description, category, totalQuantity, availableQuantity, location, minimumStock } = req.body;
+    const { name, description, category, totalQuantity, availableQuantity, location, minimumStock, unitCost } = req.body;
     const createdBy = req.user.userId; // SECURITY: from JWT, never from body
 
     const cleanName = boundedString(name, 120);
@@ -162,8 +172,14 @@ router.post('/', requireAuth, requireRole('project_admin'), async (req, res) => 
       });
     }
 
+    const parsedCost = parseUnitCost(unitCost);
+    if (parsedCost.error) {
+      return res.status(400).json({ success: false, message: parsedCost.error });
+    }
+
     const item = await GuitarInventory.create({
       name: cleanName,
+      unitCost: parsedCost.value,
       description: description ? String(description).slice(0, 2000) : '',
       category: category ? String(category).trim().slice(0, 80) : '',
       totalQuantity: total,
@@ -222,7 +238,7 @@ router.get('/:itemId', requireAuth, async (req, res) => {
 router.put('/:itemId', requireAuth, requireRole('project_admin'), async (req, res) => {
   try {
     const { itemId } = req.params;
-    const { name, description, category, location, minimumStock } = req.body;
+    const { name, description, category, location, minimumStock, unitCost } = req.body;
 
     if (!isValidObjectId(itemId)) {
       return res.status(400).json({ success: false, message: 'Invalid ID format' });
@@ -248,6 +264,13 @@ router.put('/:itemId', requireAuth, requireRole('project_admin'), async (req, re
     }
     if (location !== undefined) {
       item.location = String(location).trim().slice(0, 200);
+    }
+    if (unitCost !== undefined) {
+      const parsedCost = parseUnitCost(unitCost);
+      if (parsedCost.error) {
+        return res.status(400).json({ success: false, message: parsedCost.error });
+      }
+      item.unitCost = parsedCost.value;
     }
     if (minimumStock !== undefined) {
       const minStock = Number(minimumStock);

@@ -14,11 +14,14 @@
  *   POST   /                           — Team Leader creates request
  *   GET    /                           — project_admin: all requests
  *   GET    /project/:projectId         — project member / mentor / admin
- *   PATCH  /:requestId/approve         — project_admin approves (runs full workflow)
- *   PATCH  /:requestId/reject          — project_admin rejects (reason required)
+ *   GET    /config                     — budget limit
+ *   GET    /assigned                   — faculty_mentor: requests routed to them
+ *   PATCH  /:requestId/approve         — project_admin, or the assigned mentor for a within-budget request
+ *   PATCH  /:requestId/reject          — same reviewers (reason required)
  */
 
 import express from 'express';
+import mongoose from 'mongoose';
 import Project from '../models/Project.js';
 import ProjectMembership from '../models/ProjectMembership.js';
 import ProjectMentor from '../models/ProjectMentor.js';
@@ -28,6 +31,14 @@ import ProjectMaterial from '../models/ProjectMaterial.js';
 import InventoryAllocation from '../models/InventoryAllocation.js';
 import User from '../models/User.js';
 import { createNotification, createNotifications } from '../services/notificationService.js';
+import { sendMaterialRequestEmails } from '../services/emailService.js';
+import {
+  MIN_JUSTIFICATION_LENGTH,
+  decideRoute,
+  getBudgetLimit,
+  needsJustification,
+  priceLines,
+} from '../services/budgetPolicy.js';
 import { requireAuth } from '../middleware/requireAuth.js';
 import { requireRole, requireAnyRole } from '../middleware/requireRole.js';
 import { uploadMixed, getBase64DataURI, handleUploadError } from '../middleware/upload.js';
@@ -47,9 +58,91 @@ const STATUSES = ['pending', 'approved', 'rejected'];
 const REQUEST_POPULATE = [
   { path: 'requestedBy', select: 'name email role department semester' },
   { path: 'projectId', select: 'name status' },
-  { path: 'inventoryItemId', select: 'name category availableQuantity totalQuantity location' },
+  { path: 'inventoryItemId', select: 'name category availableQuantity totalQuantity location unitCost' },
   { path: 'reviewedBy', select: 'name email role department semester' },
 ];
+
+
+const MAX_SUBMISSION_ITEMS = 20;
+
+/**
+ * Items of a submission, from `items` (array, or a JSON string when sent as
+ * multipart) or from the legacy single-item fields.
+ */
+function parseSubmissionItems(body) {
+  let raw = body.items;
+  if (typeof raw === 'string' && raw.trim()) {
+    try {
+      raw = JSON.parse(raw);
+    } catch {
+      return { error: 'items must be valid JSON' };
+    }
+  }
+  if (raw === undefined || raw === null || raw === '') {
+    if (!body.inventoryItemId || body.quantity == null) {
+      return { error: 'projectId, inventoryItemId, and quantity are required' };
+    }
+    raw = [{ inventoryItemId: body.inventoryItemId, quantity: body.quantity, specifications: body.specifications }];
+  }
+  if (!Array.isArray(raw) || raw.length === 0) {
+    return { error: 'items must be a non-empty list' };
+  }
+  if (raw.length > MAX_SUBMISSION_ITEMS) {
+    return { error: `A request may contain at most ${MAX_SUBMISSION_ITEMS} items` };
+  }
+
+  const seen = new Set();
+  const items = [];
+  for (const row of raw) {
+    const inventoryItemId = String(row?.inventoryItemId ?? '');
+    if (!isValidObjectId(inventoryItemId)) {
+      return { error: 'Each item needs a valid inventoryItemId' };
+    }
+    if (seen.has(inventoryItemId)) {
+      return { error: 'The same item appears twice — combine it into one line' };
+    }
+    seen.add(inventoryItemId);
+
+    const quantity = Number(row?.quantity);
+    if (!isWholeNumber(quantity, { min: 1 })) {
+      return { error: 'quantity must be a positive whole number' };
+    }
+    const specifications = row?.specifications === undefined || row?.specifications === null
+      ? ''
+      : String(row.specifications).trim();
+    if (specifications.length > 2000) {
+      return { error: 'specifications must be 2000 characters or fewer' };
+    }
+    items.push({ inventoryItemId, quantity, specifications });
+  }
+  return { items };
+}
+
+/**
+ * Who may decide a request. The project admin can decide any; a faculty mentor
+ * only a request routed to the mentor, on a project they are assigned to.
+ * Returns a map requestId -> reason for the requests this user may NOT decide.
+ */
+async function reviewBlockers(user, requests) {
+  const blocked = new Map();
+  if (user.role === 'project_admin') return blocked;
+
+  const projectIds = [...new Set(requests.map((r) => String(r.projectId?._id || r.projectId)))];
+  const links = await ProjectMentor.find({ mentorId: user.userId, projectId: { $in: projectIds } })
+    .select('projectId')
+    .lean();
+  const assigned = new Set(links.map((link) => String(link.projectId)));
+
+  for (const request of requests) {
+    const id = request._id.toString();
+    if (request.route !== 'mentor') {
+      blocked.set(id, 'This request is above the mentor budget limit and needs the project admin');
+    } else if (!assigned.has(String(request.projectId?._id || request.projectId))) {
+      blocked.set(id, 'You are not the faculty mentor of this project');
+    }
+  }
+  return blocked;
+}
 
 // ── POST /api/material-requests ───────────────────────────────────────────────
 // Team Leader creates a material request from Guitar inventory.
@@ -67,35 +160,34 @@ router.post(
   handleUploadError,
   async (req, res) => {
     try {
-      const { projectId, inventoryItemId, quantity, reason, specifications } = req.body;
+      const { projectId } = req.body;
+      const reason = typeof req.body.reason === 'string' ? req.body.reason.trim() : '';
       const requestedBy = req.user.userId; // SECURITY: from JWT
 
-      if (!projectId || !inventoryItemId || quantity == null) {
-        return res.status(400).json({
-          success: false,
-          message: 'projectId, inventoryItemId, and quantity are required',
-        });
+      // One submission may carry several items. The single-item body still works.
+      const parsed = parseSubmissionItems(req.body);
+      if (parsed.error) {
+        return res.status(400).json({ success: false, message: parsed.error });
       }
+      const wanted = parsed.items;
 
-      const qty = Number(quantity);
-      if (!isWholeNumber(qty, { min: 1 })) {
-        return res.status(400).json({ success: false, message: 'quantity must be a positive whole number' });
+      if (!projectId) {
+        return res.status(400).json({ success: false, message: 'projectId is required' });
       }
-
-      if (!reason || !reason.trim()) {
+      if (!reason) {
         return res.status(400).json({
           success: false,
           message: 'Reason or explanation of the requirement is required',
         });
       }
-      if (reason.trim().length > 2000) {
+      if (reason.length > 2000) {
         return res.status(400).json({ success: false, message: 'reason must be 2000 characters or fewer' });
-      }
-      if (specifications !== undefined && String(specifications).trim().length > 2000) {
-        return res.status(400).json({ success: false, message: 'specifications must be 2000 characters or fewer' });
       }
 
       // 1. Verify project exists
+      if (!isValidObjectId(projectId)) {
+        return res.status(400).json({ success: false, message: 'Invalid projectId format' });
+      }
       const project = await Project.findById(projectId);
       if (!project) {
         return res.status(404).json({ success: false, message: 'Project not found' });
@@ -109,21 +201,52 @@ router.post(
         });
       }
 
-      // 3. Verify inventory item exists
-      const invItem = await GuitarInventory.findById(inventoryItemId);
-      if (!invItem) {
-        return res.status(404).json({ success: false, message: 'Inventory item not found' });
+      // 3. Verify every inventory item exists and has the stock
+      const invItems = await GuitarInventory.find({ _id: { $in: wanted.map((w) => w.inventoryItemId) } });
+      const invById = new Map(invItems.map((doc) => [doc._id.toString(), doc]));
+      for (const line of wanted) {
+        const invItem = invById.get(line.inventoryItemId);
+        if (!invItem) {
+          return res.status(404).json({ success: false, message: 'Inventory item not found' });
+        }
+        if (line.quantity > invItem.availableQuantity) {
+          return res.status(400).json({
+            success: false,
+            message: `Requested quantity (${line.quantity}) for "${invItem.name}" exceeds available stock (${invItem.availableQuantity})`,
+          });
+        }
       }
 
-      // 4. Validate inventory availability limits
-      if (qty > invItem.availableQuantity) {
+      // 4. Price the submission (server-side: the client's numbers are never trusted)
+      //    and decide who reviews it.
+      const priced = priceLines(
+        wanted.map((line) => ({ quantity: line.quantity, unitCost: invById.get(line.inventoryItemId).unitCost })),
+      );
+      const mentorLinks = await ProjectMentor.find({ projectId })
+        .sort({ isPrimary: -1, assignedAt: 1 })
+        .populate('mentorId', 'name email role');
+      const mentors = mentorLinks.map((link) => link.mentorId).filter((user) => user && user.role === 'faculty_mentor');
+      const limit = getBudgetLimit();
+      const decision = decideRoute({
+        total: priced.total,
+        hasUnpriced: priced.hasUnpriced,
+        hasMentor: mentors.length > 0,
+        limit,
+      });
+
+      // 5. Above the limit the team must explain, in writing, why it needs this.
+      if (needsJustification(decision) && reason.length < MIN_JUSTIFICATION_LENGTH) {
         return res.status(400).json({
           success: false,
-          message: `Requested quantity (${qty}) exceeds available stock (${invItem.availableQuantity})`,
+          code: 'JUSTIFICATION_REQUIRED',
+          message: `This request is above the budget limit (${limit}), so it goes to the project admin. Please explain in at least ${MIN_JUSTIFICATION_LENGTH} characters why these materials are needed.`,
+          route: decision.route,
+          routeReason: decision.reason,
+          limit,
         });
       }
 
-      // 5. Handle optional file uploads
+      // 6. Handle optional file uploads (stored once, shared by the submission)
       let documentUrl = null;
       let documentPublicId = null;
       let documentOriginalName = null;
@@ -157,37 +280,59 @@ router.post(
         imagePublicId = uploadResult.public_id;
       }
 
-      const request = await MaterialRequest.create({
-        projectId,
-        requestedBy, // SECURITY: JWT-derived
-        inventoryItemId,
-        materialName: invItem.name,
-        specifications: specifications ? specifications.trim() : '',
-        quantity: qty,
-        reason: reason.trim(),
-        status: 'pending',
-        documentUrl,
-        documentPublicId,
-        documentOriginalName,
-        imageUrl,
-        imagePublicId,
-      });
+      const submissionId = new mongoose.Types.ObjectId();
+      const created = await MaterialRequest.insertMany(
+        wanted.map((line, index) => {
+          const invItem = invById.get(line.inventoryItemId);
+          return {
+            projectId,
+            requestedBy, // SECURITY: JWT-derived
+            inventoryItemId: invItem._id,
+            materialName: invItem.name,
+            specifications: line.specifications,
+            quantity: line.quantity,
+            reason,
+            status: 'pending',
+            submissionId,
+            unitCost: invItem.unitCost ?? null,
+            submissionTotal: priced.total,
+            route: decision.route,
+            routeReason: decision.reason,
+            documentUrl,
+            documentPublicId,
+            documentOriginalName,
+            imageUrl,
+            imagePublicId,
+          };
+        }),
+      );
 
+      const request = created[0];
       await request.populate('requestedBy', 'name email role department semester');
       await request.populate('projectId', 'name status');
-      await request.populate('inventoryItemId', 'name category availableQuantity totalQuantity location');
+      await request.populate('inventoryItemId', 'name category availableQuantity totalQuantity location unitCost');
 
-      // Notify Project Admin(s) about the new material request from Guitar inventory
+      // Who gets told: the project's mentor (primary first) or every project admin.
+      const requesterName = request.requestedBy?.name || req.user.name || 'Team Leader';
+      let recipients = [];
       try {
-        const projectAdmins = await User.find({ role: 'project_admin' });
-        if (projectAdmins.length > 0) {
-          const requesterName = request.requestedBy?.name || req.user.name || 'Team Leader';
+        if (decision.route === 'mentor') {
+          recipients = mentors.slice(0, 1).map((user) => ({ _id: user._id, name: user.name, email: user.email }));
+        } else {
+          const admins = await User.find({ role: 'project_admin' }).select('name email');
+          recipients = admins.map((user) => ({ _id: user._id, name: user.name, email: user.email }));
+        }
+
+        const summaryText = wanted.length === 1
+          ? `${wanted[0].quantity}x "${invById.get(wanted[0].inventoryItemId).name}"`
+          : `${wanted.length} items`;
+        if (recipients.length > 0) {
           await createNotifications(
-            projectAdmins.map((admin) => ({
-              userId: admin._id,
+            recipients.map((recipient) => ({
+              userId: recipient._id,
               type: 'material_request_submitted',
               title: 'New Material Request',
-              message: `Team Leader ${requesterName} requested ${qty}x "${invItem.name}" for project "${project.name}".`,
+              message: `Team Leader ${requesterName} requested ${summaryText} for project "${project.name}".`,
               relatedId: request._id,
               link: '/material-requests',
               actionText: 'Review Request',
@@ -199,23 +344,64 @@ router.post(
                 semester: request.requestedBy?.semester || req.user.semester || null,
                 projectId: project._id,
                 projectName: project.name,
-                entityName: invItem.name,
-                quantity: qty,
-                reason: reason.trim(),
+                entityName: wanted.length === 1 ? invById.get(wanted[0].inventoryItemId).name : `${wanted.length} items`,
+                quantity: wanted.reduce((sum, line) => sum + line.quantity, 0),
+                reason,
                 status: 'pending',
                 action: 'submitted',
               },
-            }))
+            })),
           );
         }
       } catch (notifErr) {
         console.error('[Notification] material_request_submitted error:', notifErr.message);
       }
 
+      // Email the reviewer(s). Fire-and-forget: a mail problem never fails the request.
+      const reviewBase = (process.env.CLIENT_URL || '').split(',')[0].trim().replace(/\/$/, '');
+      sendMaterialRequestEmails(
+        {
+          projectName: project.name,
+          requester: {
+            name: requesterName,
+            email: request.requestedBy?.email || req.user.email,
+            department: request.requestedBy?.department,
+            semester: request.requestedBy?.semester,
+          },
+          submittedAt: request.createdAt,
+          items: wanted.map((line, index) => ({
+            name: invById.get(line.inventoryItemId).name,
+            quantity: line.quantity,
+            unitCost: invById.get(line.inventoryItemId).unitCost ?? null,
+            lineTotal: priced.lineTotals[index],
+            specifications: line.specifications,
+          })),
+          total: priced.total,
+          route: decision.route,
+          routeReason: decision.reason,
+          limit,
+          reason,
+          reviewUrl: `${reviewBase}/material-requests`,
+        },
+        recipients,
+      ).catch((mailErr) => console.error('[Email] material request error:', mailErr.message));
+
       res.status(201).json({
         success: true,
-        message: 'Material request submitted successfully',
+        message:
+          decision.route === 'mentor'
+            ? 'Material request submitted to your faculty mentor'
+            : 'Material request submitted to the project admin',
         data: request,
+        requests: created.map((doc) => doc._id),
+        submission: {
+          id: submissionId,
+          total: priced.total,
+          route: decision.route,
+          routeReason: decision.reason,
+          limit,
+          itemCount: created.length,
+        },
       });
     } catch (error) {
       if (error.name === 'CastError') {
@@ -321,6 +507,45 @@ router.get('/summary', requireAuth, requireRole('project_admin'), async (_req, r
         resolved: counts.approved + counts.rejected,
       },
     });
+  } catch (error) {
+    return sendError(res, error);
+  }
+});
+
+// ── GET /api/material-requests/config ─────────────────────────────────────────
+// The budget limit, so the form can show where a request will go before it is sent.
+router.get('/config', requireAuth, (_req, res) => {
+  res.status(200).json({
+    success: true,
+    data: { budgetLimit: getBudgetLimit(), minJustificationLength: MIN_JUSTIFICATION_LENGTH },
+  });
+});
+
+// ── GET /api/material-requests/assigned ───────────────────────────────────────
+// A faculty mentor's queue: requests routed to the mentor, on projects they are
+// assigned to. (Anything above the limit goes to the project admin instead.)
+router.get('/assigned', requireAuth, requireRole('faculty_mentor'), async (req, res) => {
+  try {
+    const { limit, skip } = parsePagination(req.query, { defaultLimit: 200, maxLimit: 500 });
+    const links = await ProjectMentor.find({ mentorId: req.user.userId }).select('projectId').lean();
+    const filter = { route: 'mentor', projectId: { $in: links.map((link) => link.projectId) } };
+
+    const status = req.query.status;
+    if (status !== undefined && status !== '') {
+      if (!STATUSES.includes(String(status))) {
+        return res.status(400).json({ success: false, message: `status must be one of: ${STATUSES.join(', ')}` });
+      }
+      filter.status = String(status);
+    }
+
+    const requests = await MaterialRequest.find(filter)
+      .populate(REQUEST_POPULATE)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    res.status(200).json({ success: true, count: requests.length, data: requests });
   } catch (error) {
     return sendError(res, error);
   }
@@ -483,7 +708,7 @@ async function validateApprovalBatch(requests) {
 }
 
 // ── POST /api/material-requests/bulk-approve ──────────────────────────────────
-router.post('/bulk-approve', requireAuth, requireRole('project_admin'), async (req, res) => {
+router.post('/bulk-approve', requireAuth, requireAnyRole('project_admin', 'faculty_mentor'), async (req, res) => {
   try {
     const adminId = req.user.userId;
     const normalized = normalizeBatchIds(req.body?.requestIds);
@@ -494,6 +719,11 @@ router.post('/bulk-approve', requireAuth, requireRole('project_admin'), async (r
 
     const { requests, problems: pendingProblems } = await loadPendingBatch(normalized.ids);
     problems = problems.concat(pendingProblems);
+
+    if (problems.length === 0) {
+      const blocked = await reviewBlockers(req.user, requests);
+      problems = [...blocked].map(([requestId, reason]) => ({ requestId, reason }));
+    }
 
     if (problems.length === 0) {
       const validation = await validateApprovalBatch(requests);
@@ -642,7 +872,7 @@ async function executeBulkApproval(res, req, requests, validation, adminId) {
 // ── POST /api/material-requests/bulk-reject ───────────────────────────────────
 // Body: { requestIds: string[], rejectionReason: string }
 // All-or-nothing, same contract as bulk-approve.
-router.post('/bulk-reject', requireAuth, requireRole('project_admin'), async (req, res) => {
+router.post('/bulk-reject', requireAuth, requireAnyRole('project_admin', 'faculty_mentor'), async (req, res) => {
   try {
     const adminId = req.user.userId;
     const reason = typeof req.body?.rejectionReason === 'string' ? req.body.rejectionReason.trim() : '';
@@ -664,6 +894,10 @@ router.post('/bulk-reject', requireAuth, requireRole('project_admin'), async (re
 
     const { requests, problems } = await loadPendingBatch(normalized.ids);
     const allProblems = (normalized.problems || []).concat(problems);
+    if (allProblems.length === 0) {
+      const blocked = await reviewBlockers(req.user, requests);
+      for (const [requestId, reason] of blocked) allProblems.push({ requestId, reason });
+    }
     if (allProblems.length > 0 || requests.length === 0) {
       return res.status(422).json({
         success: false,
@@ -750,7 +984,7 @@ router.post('/bulk-reject', requireAuth, requireRole('project_admin'), async (re
 //   4. Create ProjectMaterial entry (source = guitar)
 //   5. Create InventoryAllocation record
 // SECURITY: project_admin only. adminId derived from JWT.
-router.patch('/:requestId/approve', requireAuth, requireRole('project_admin'), async (req, res) => {
+router.patch('/:requestId/approve', requireAuth, requireAnyRole('project_admin', 'faculty_mentor'), async (req, res) => {
   try {
     const { requestId } = req.params;
     const adminId = req.user.userId; // SECURITY: from JWT
@@ -765,6 +999,11 @@ router.patch('/:requestId/approve', requireAuth, requireRole('project_admin'), a
         success: false,
         message: `Request is already ${request.status}. Only pending requests can be approved.`,
       });
+    }
+
+    const blocked = await reviewBlockers(req.user, [request]);
+    if (blocked.size > 0) {
+      return res.status(403).json({ success: false, message: [...blocked.values()][0] });
     }
 
     // 2. Validate inventory
@@ -949,7 +1188,7 @@ router.patch('/:requestId/approve', requireAuth, requireRole('project_admin'), a
 // Project Admin rejects request — rejectionReason is REQUIRED.
 // Inventory and project material list are NOT changed.
 // SECURITY: project_admin only. adminId derived from JWT.
-router.patch('/:requestId/reject', requireAuth, requireRole('project_admin'), async (req, res) => {
+router.patch('/:requestId/reject', requireAuth, requireAnyRole('project_admin', 'faculty_mentor'), async (req, res) => {
   try {
     const { requestId } = req.params;
     const { rejectionReason } = req.body;
@@ -966,6 +1205,16 @@ router.patch('/:requestId/reject', requireAuth, requireRole('project_admin'), as
         success: false,
         message: 'rejectionReason must be 2000 characters or fewer',
       });
+    }
+
+    if (req.user.role !== 'project_admin') {
+      const target = await MaterialRequest.findById(requestId);
+      if (target) {
+        const blocked = await reviewBlockers(req.user, [target]);
+        if (blocked.size > 0) {
+          return res.status(403).json({ success: false, message: [...blocked.values()][0] });
+        }
+      }
     }
 
     const updatedRequest = await MaterialRequest.findOneAndUpdate(

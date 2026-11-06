@@ -11,7 +11,18 @@ interface InventoryItem {
   availableQuantity: number;
   totalQuantity: number;
   location?: string;
+  unitCost?: number | null;
 }
+
+interface RequestLine {
+  key: number;
+  itemId: string;
+  quantity: number | '';
+  specifications: string;
+}
+
+const formatMoney = (value: number) =>
+  `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
 interface MaterialRequestItem {
   _id: string;
@@ -22,6 +33,7 @@ interface MaterialRequestItem {
   specifications?: string;
   reason: string;
   status: 'pending' | 'approved' | 'rejected';
+  route?: 'mentor' | 'admin';
   rejectionReason?: string;
   createdAt: string;
   reviewedAt?: string;
@@ -86,9 +98,10 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [loadingInventory, setLoadingInventory] = useState(false);
-  const [selectedItemId, setSelectedItemId] = useState('');
-  const [specifications, setSpecifications] = useState('');
-  const [quantity, setQuantity] = useState<number | ''>(1);
+  const [lines, setLines] = useState<RequestLine[]>([]);
+  const lineKey = useRef(1);
+  const [budgetLimit, setBudgetLimit] = useState(5000);
+  const [minJustification, setMinJustification] = useState(50);
   const [reason, setReason] = useState('');
   const [documentFile, setDocumentFile] = useState<File | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -144,11 +157,18 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
     setSubmitSuccess('');
     setLoadingInventory(true);
     try {
-      const res = await api<any>('GET', '/inventory');
+      const [res, config] = await Promise.all([
+        api<any>('GET', '/inventory'),
+        api<any>('GET', '/material-requests/config').catch(() => null),
+      ]);
       setInventoryItems(res.data || []);
-      if (res.data && res.data.length > 0 && !selectedItemId) {
+      if (config?.data) {
+        setBudgetLimit(Number(config.data.budgetLimit));
+        setMinJustification(Number(config.data.minJustificationLength) || 50);
+      }
+      if (res.data && res.data.length > 0 && lines.length === 0) {
         const firstAvailable = res.data.find((i: InventoryItem) => i.availableQuantity > 0) || res.data[0];
-        setSelectedItemId(firstAvailable._id);
+        setLines([{ key: lineKey.current++, itemId: firstAvailable._id, quantity: 1, specifications: '' }]);
       }
     } catch (err: any) {
       setSubmitError(err.message || 'Failed to load inventory items');
@@ -160,9 +180,7 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
   const closeModal = () => {
     if (submitting) return;
     setIsModalOpen(false);
-    setSelectedItemId('');
-    setSpecifications('');
-    setQuantity(1);
+    setLines([]);
     setReason('');
     setDocumentFile(null);
     setImageFile(null);
@@ -190,32 +208,77 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
     setDocumentFile(file || null);
   };
 
-  const selectedItem = inventoryItems.find((i) => i._id === selectedItemId);
-  const maxAvailable = selectedItem ? selectedItem.availableQuantity : 0;
+  const itemById = (id: string) => inventoryItems.find((i) => i._id === id);
+  const updateLine = (key: number, patch: Partial<RequestLine>) =>
+    setLines((current) => current.map((line) => (line.key === key ? { ...line, ...patch } : line)));
+  const removeLine = (key: number) => setLines((current) => current.filter((line) => line.key !== key));
+  const addLine = () => {
+    const used = new Set(lines.map((line) => line.itemId));
+    const next = inventoryItems.find((i) => i.availableQuantity > 0 && !used.has(i._id));
+    if (!next) return;
+    setLines((current) => [...current, { key: lineKey.current++, itemId: next._id, quantity: 1, specifications: '' }]);
+  };
+
+  // The server decides the route; this mirrors its rule so the team sees it before sending.
+  const pricing = (() => {
+    let total = 0;
+    let unpriced = false;
+    for (const line of lines) {
+      const cost = itemById(line.itemId)?.unitCost;
+      if (cost === null || cost === undefined) unpriced = true;
+      else total += cost * (Number(line.quantity) || 0);
+    }
+    return { total: Math.round(total * 100) / 100, unpriced };
+  })();
+  const overBudget = !pricing.unpriced && pricing.total > budgetLimit;
+  const goesToAdmin = overBudget || pricing.unpriced;
+  const needsLongReason = overBudget;
+  const reasonTooShort = needsLongReason && reason.trim().length < minJustification;
+  const linesInvalid = lines.length === 0 || lines.some((line) => {
+    const item = itemById(line.itemId);
+    const qty = Number(line.quantity);
+    return !item || !qty || qty < 1 || qty > item.availableQuantity;
+  });
+  const duplicateItems = new Set(lines.map((line) => line.itemId)).size !== lines.length;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitError('');
     setSubmitSuccess('');
 
-    if (!selectedItemId) {
+    if (lines.length === 0) {
       setSubmitError('Please select a material from inventory');
       return;
     }
-
-    const qty = Number(quantity);
-    if (!qty || qty < 1) {
-      setSubmitError('Requested quantity must be at least 1');
+    if (duplicateItems) {
+      setSubmitError('The same item appears twice — combine it into one line');
       return;
     }
-
-    if (qty > maxAvailable) {
-      setSubmitError(`Requested quantity (${qty}) exceeds available stock (${maxAvailable})`);
-      return;
+    for (const line of lines) {
+      const item = itemById(line.itemId);
+      const qty = Number(line.quantity);
+      if (!item) {
+        setSubmitError('Please select a material from inventory');
+        return;
+      }
+      if (!qty || qty < 1) {
+        setSubmitError('Requested quantity must be at least 1');
+        return;
+      }
+      if (qty > item.availableQuantity) {
+        setSubmitError(`Requested quantity (${qty}) for "${item.name}" exceeds available stock (${item.availableQuantity})`);
+        return;
+      }
     }
 
     if (!reason.trim()) {
       setSubmitError('Please provide a reason or explanation for this request');
+      return;
+    }
+    if (reasonTooShort) {
+      setSubmitError(
+        `This request is above the ${formatMoney(budgetLimit)} limit, so it goes to the project admin. Please explain in at least ${minJustification} characters why these materials are needed.`,
+      );
       return;
     }
 
@@ -223,12 +286,17 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
       setSubmitting(true);
       const formData = new FormData();
       formData.append('projectId', projectId);
-      formData.append('inventoryItemId', selectedItemId);
-      formData.append('quantity', String(qty));
+      formData.append(
+        'items',
+        JSON.stringify(
+          lines.map((line) => ({
+            inventoryItemId: line.itemId,
+            quantity: Number(line.quantity),
+            specifications: line.specifications.trim(),
+          })),
+        ),
+      );
       formData.append('reason', reason.trim());
-      if (specifications.trim()) {
-        formData.append('specifications', specifications.trim());
-      }
       if (documentFile) {
         formData.append('document', documentFile);
       }
@@ -236,8 +304,12 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
         formData.append('image', imageFile);
       }
 
-      await api('POST', '/material-requests', formData);
-      setSubmitSuccess('Material request submitted successfully! Awaiting Project Admin review.');
+      const res = await api<any>('POST', '/material-requests', formData);
+      setSubmitSuccess(
+        res?.submission?.route === 'mentor'
+          ? 'Request sent to your faculty mentor, who has been emailed.'
+          : 'Request sent to the project admin, who has been emailed.',
+      );
       fetchRequests();
 
       setTimeout(() => {
@@ -297,6 +369,11 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
                       <span className={`ui-tag ${STATUS_TONE[req.status] || STATUS_TONE.pending}`}>
                         {STATUS_LABEL[req.status] || 'Pending review'}
                       </span>
+                      {req.status === 'pending' && (
+                        <span className="ui-tag ui-tag--plain">
+                          With {req.route === 'mentor' ? 'faculty mentor' : 'project admin'}
+                        </span>
+                      )}
                     </div>
 
                     {req.reason && <p className="prj-request__reason">{req.reason}</p>}
@@ -437,107 +514,162 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
                     </div>
                   )}
 
-                  <div>
-                    <label className="ui-label" htmlFor={`${fieldId}-item`}>
-                      Material from central inventory
-                    </label>
+                  <div className="prj-lines">
                     {loadingInventory ? (
                       <span className="ui-skel" style={{ display: 'block', height: 40 }} />
                     ) : (
-                      <Select
-                        id={`${fieldId}-item`}
-                        value={selectedItemId}
-                        onChange={(e) => {
-                          setSelectedItemId(e.target.value);
-                          setQuantity(1);
-                        }}
-                        required
-                        disabled={submitting}
-                      >
-                        <option value="" disabled>
-                          Choose an item
-                        </option>
-                        {inventoryItems.map((item) => (
-                          <option key={item._id} value={item._id} disabled={item.availableQuantity <= 0}>
-                            {item.name}
-                            {item.category ? ` (${item.category})` : ''}
-                            {item.availableQuantity > 0
-                              ? ` · ${item.availableQuantity} available`
-                              : ' · Out of stock'}
-                          </option>
-                        ))}
-                      </Select>
+                      lines.map((line, index) => {
+                        const item = itemById(line.itemId);
+                        const max = item?.availableQuantity ?? 0;
+                        const cost = item?.unitCost;
+                        return (
+                          <div className="prj-line" key={line.key}>
+                            <div className="prj-line__head">
+                              <span className="prj-line__no">Item {index + 1}</span>
+                              {lines.length > 1 && (
+                                <button
+                                  type="button"
+                                  className="ui-btn ui-btn--ghost ui-btn--sm"
+                                  onClick={() => removeLine(line.key)}
+                                  disabled={submitting}
+                                >
+                                  Remove
+                                </button>
+                              )}
+                            </div>
+                            <label className="ui-label" htmlFor={`${fieldId}-item-${line.key}`}>
+                              Material from central inventory
+                            </label>
+                            <Select
+                              id={`${fieldId}-item-${line.key}`}
+                              value={line.itemId}
+                              onChange={(e) => updateLine(line.key, { itemId: e.target.value, quantity: 1 })}
+                              required
+                              disabled={submitting}
+                            >
+                              <option value="" disabled>
+                                Choose an item
+                              </option>
+                              {inventoryItems.map((option) => (
+                                <option key={option._id} value={option._id} disabled={option.availableQuantity <= 0}>
+                                  {option.name}
+                                  {option.category ? ` (${option.category})` : ''}
+                                  {option.availableQuantity > 0
+                                    ? ` · ${option.availableQuantity} available`
+                                    : ' · Out of stock'}
+                                </option>
+                              ))}
+                            </Select>
+
+                            {item && (
+                              <div className="prj-stock">
+                                <div className="prj-stock__top">
+                                  <span className={`ui-tag ${item.availableQuantity > 0 ? 'is-positive' : 'is-negative'}`}>
+                                    {item.availableQuantity > 0
+                                      ? `${item.availableQuantity} units available`
+                                      : 'Out of stock'}
+                                  </span>
+                                  <span className="ui-meta">
+                                    {cost === null || cost === undefined ? 'No price on file' : `${formatMoney(cost)} each`}
+                                  </span>
+                                  {item.location && <span className="ui-meta">{item.location}</span>}
+                                </div>
+                                {item.description && <p className="prj-stock__text">{item.description}</p>}
+                              </div>
+                            )}
+
+                            <div className="ui-form-row ui-form-row--2">
+                              <div>
+                                <label className="ui-label" htmlFor={`${fieldId}-specs-${line.key}`}>
+                                  Specifications <span className="prj-label__hint">optional</span>
+                                </label>
+                                <input
+                                  id={`${fieldId}-specs-${line.key}`}
+                                  type="text"
+                                  className="ui-field"
+                                  placeholder="e.g. 5V 2-channel relay module"
+                                  value={line.specifications}
+                                  onChange={(e) => updateLine(line.key, { specifications: e.target.value })}
+                                  disabled={submitting}
+                                />
+                              </div>
+                              <div>
+                                <label className="ui-label" htmlFor={`${fieldId}-qty-${line.key}`}>
+                                  Quantity
+                                </label>
+                                <input
+                                  id={`${fieldId}-qty-${line.key}`}
+                                  type="number"
+                                  className="ui-field"
+                                  min="1"
+                                  max={max || 1}
+                                  value={line.quantity}
+                                  onChange={(e) =>
+                                    updateLine(line.key, {
+                                      quantity: e.target.value === '' ? '' : Math.max(1, Number(e.target.value)),
+                                    })
+                                  }
+                                  required
+                                  disabled={submitting}
+                                />
+                                {Number(line.quantity) > max && max > 0 && (
+                                  <p className="ui-error">Requested quantity exceeds the {max} units in stock.</p>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })
                     )}
 
-                    {selectedItem && (
-                      <div className="prj-stock">
-                        <div className="prj-stock__top">
-                          <span className={`ui-tag ${selectedItem.availableQuantity > 0 ? 'is-positive' : 'is-negative'}`}>
-                            {selectedItem.availableQuantity > 0
-                              ? `${selectedItem.availableQuantity} units available`
-                              : 'Out of stock'}
-                          </span>
-                          {selectedItem.location && <span className="ui-meta">{selectedItem.location}</span>}
-                        </div>
-                        {selectedItem.description && (
-                          <p className="prj-stock__text">{selectedItem.description}</p>
-                        )}
-                      </div>
+                    {!loadingInventory && inventoryItems.some((i) => i.availableQuantity > 0 && !lines.some((l) => l.itemId === i._id)) && (
+                      <button type="button" className="ui-btn ui-btn--ghost ui-btn--sm" onClick={addLine} disabled={submitting}>
+                        + Add another item
+                      </button>
                     )}
                   </div>
 
-                  <div className="ui-form-row ui-form-row--2">
-                    <div>
-                      <label className="ui-label" htmlFor={`${fieldId}-specs`}>
-                        Specifications <span className="prj-label__hint">optional</span>
-                      </label>
-                      <input
-                        id={`${fieldId}-specs`}
-                        type="text"
-                        className="ui-field"
-                        placeholder="e.g. 5V 2-channel relay module"
-                        value={specifications}
-                        onChange={(e) => setSpecifications(e.target.value)}
-                        disabled={submitting}
-                      />
+                  {lines.length > 0 && (
+                    <div className={`prj-route${goesToAdmin ? ' is-admin' : ''}`} role="status">
+                      <p className="prj-route__total">
+                        {pricing.unpriced ? 'Total not available' : `Estimated total ${formatMoney(pricing.total)}`}
+                      </p>
+                      <p className="prj-route__text">
+                        {pricing.unpriced
+                          ? 'At least one item has no price on file, so this goes to the project admin.'
+                          : overBudget
+                            ? `Above the ${formatMoney(budgetLimit)} limit, so this goes to the project admin and needs a full written justification.`
+                            : `Within the ${formatMoney(budgetLimit)} limit, so this goes to your faculty mentor (if the project has one).`}
+                      </p>
                     </div>
-                    <div>
-                      <label className="ui-label" htmlFor={`${fieldId}-qty`}>
-                        Quantity
-                      </label>
-                      <input
-                        id={`${fieldId}-qty`}
-                        type="number"
-                        className="ui-field"
-                        min="1"
-                        max={maxAvailable || 1}
-                        value={quantity}
-                        onChange={(e) => setQuantity(e.target.value === '' ? '' : Math.max(1, Number(e.target.value)))}
-                        required
-                        disabled={submitting}
-                      />
-                      {Number(quantity) > maxAvailable && maxAvailable > 0 && (
-                        <p className="ui-error">
-                          Requested quantity exceeds the {maxAvailable} units in stock.
-                        </p>
-                      )}
-                    </div>
-                  </div>
+                  )}
 
                   <div>
                     <label className="ui-label" htmlFor={`${fieldId}-reason`}>
-                      Reason
+                      {needsLongReason ? 'Justification for the admin' : 'Reason'}{' '}
+                      {needsLongReason && (
+                        <span className="prj-label__hint">required · at least {minJustification} characters</span>
+                      )}
                     </label>
                     <textarea
                       id={`${fieldId}-reason`}
                       className="ui-field ui-field--area"
                       rows={3}
-                      placeholder="What milestone or experiment needs this material?"
+                      placeholder={
+                        needsLongReason
+                          ? 'Explain what these materials are for, why they are needed now, and why the cost is justified.'
+                          : 'What milestone or experiment needs this material?'
+                      }
                       value={reason}
                       onChange={(e) => setReason(e.target.value)}
                       required
                       disabled={submitting}
                     />
+                    {needsLongReason && (
+                      <p className={reasonTooShort ? 'ui-error' : 'ui-meta'}>
+                        {reason.trim().length}/{minJustification} characters
+                      </p>
+                    )}
                   </div>
 
                   <div className="ui-form-row ui-form-row--2">
@@ -604,7 +736,7 @@ export function ProjectMaterialRequests({ projectId, isTL = false, onStatsChange
                   <button
                     type="submit"
                     className="ui-btn ui-btn--primary"
-                    disabled={submitting || Number(quantity) > maxAvailable || maxAvailable <= 0}
+                    disabled={submitting || linesInvalid || duplicateItems}
                   >
                     {submitting ? 'Submitting…' : 'Submit request'}
                   </button>

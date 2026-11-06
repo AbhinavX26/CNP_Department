@@ -3,6 +3,7 @@ import type { CSSProperties } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../../services/api';
 import { usePageLoading } from '../../context/LoadingContext';
+import { useAuth } from '../../context/AuthContext';
 import { Counter } from '../../components/ui/vis';
 import { Tooltip } from '../../components/ui/Tooltip';
 import { OpsOverlay } from '../Inventory/OpsOverlay';
@@ -25,6 +26,10 @@ interface MaterialRequest {
   quantity: number;
   reason?: string;
   status: 'pending' | 'approved' | 'rejected';
+  /** Who reviews it: the project's faculty mentor (within budget) or the project admin. */
+  route?: 'mentor' | 'admin';
+  submissionTotal?: number | null;
+  unitCost?: number | null;
   rejectionReason?: string | null;
   reviewedAt?: string | null;
   reviewedBy?: RequestUser | null;
@@ -52,6 +57,9 @@ const STATUS_LABEL: Record<MaterialRequest['status'], string> = {
   approved: 'Approved',
   rejected: 'Rejected',
 };
+
+const formatMoney = (value: number) =>
+  `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 
 const itemNameOf = (request: MaterialRequest) =>
   request.materialName || request.inventoryItemId?.name || 'Unlisted item';
@@ -286,6 +294,7 @@ function Ticket({ request, onOpen, onApprove, onReject, busy }: TicketProps) {
           <span className="mr-sub">
             {project}
             {requester?.name ? ` · ${requester.name}` : ''}
+            {request.submissionTotal != null ? ` · ${formatMoney(request.submissionTotal)}` : ''}
           </span>
         </span>
       </span>
@@ -316,6 +325,8 @@ function Ticket({ request, onOpen, onApprove, onReject, busy }: TicketProps) {
 
 export default function MaterialRequests() {
   const { setPageLoading } = usePageLoading();
+  const { user } = useAuth();
+  const isMentor = user?.role === 'faculty_mentor';
   const [requests, setRequests] = useState<MaterialRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -341,7 +352,7 @@ export default function MaterialRequests() {
     try {
       setPageLoading(true);
       setLoadError(null);
-      const res = await api<any>('GET', '/material-requests');
+      const res = await api<any>('GET', isMentor ? '/material-requests/assigned' : '/material-requests');
       setRequests(res.data || []);
     } catch (e: any) {
       console.error(e);
@@ -1030,6 +1041,16 @@ export default function MaterialRequests() {
                 <div className="ops-fact">
                   <dt className="ops-fact__label">Project</dt>
                   <dd className="ops-fact__value">{detail.projectId?.name || 'Unknown project'}</dd>
+                </div>
+                <div className="ops-fact">
+                  <dt className="ops-fact__label">Estimated total</dt>
+                  <dd className="ops-fact__value">
+                    {detail.submissionTotal != null ? formatMoney(detail.submissionTotal) : 'Not priced'}
+                  </dd>
+                </div>
+                <div className="ops-fact">
+                  <dt className="ops-fact__label">Reviewer</dt>
+                  <dd className="ops-fact__value">{detail.route === 'mentor' ? 'Faculty mentor' : 'Project admin'}</dd>
                 </div>
                 <div className="ops-fact">
                   <dt className="ops-fact__label">Category</dt>

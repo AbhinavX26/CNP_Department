@@ -73,6 +73,17 @@ const materialRequestSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // ── Budget routing ───────────────────────────────────────────────────────
+    // Requests submitted together share a submissionId (one email, one decision).
+    submissionId: { type: mongoose.Schema.Types.ObjectId, default: null, index: true },
+    // Price of one unit when the request was made (snapshot: later price edits don't rewrite history).
+    unitCost: { type: Number, default: null, min: 0 },
+    // Total of the WHOLE submission at submit time; null when any item was unpriced.
+    submissionTotal: { type: Number, default: null, min: 0 },
+    // Who reviews it: the project's faculty mentor, or the project admin.
+    route: { type: String, enum: ['mentor', 'admin'], default: 'admin', index: true },
+    // Why it went where it did: within_budget | over_budget | unpriced_item | no_mentor | legacy
+    routeReason: { type: String, default: 'legacy' },
     documentUrl: {
       type: String,
       default: null,

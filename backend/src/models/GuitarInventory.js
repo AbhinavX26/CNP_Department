@@ -40,6 +40,13 @@ const guitarInventorySchema = new mongoose.Schema(
     // Real low-stock threshold used by GET /inventory/summary and the "Running low"
     // tag. 0 means "no threshold configured" (never low). Replaces the frontend's
     // former 25%-of-totalQuantity presentation heuristic.
+    // Price of one unit, set by the Project Admin. null = not priced yet; the
+    // budget rules treat an unpriced item as "needs the admin".
+    unitCost: {
+      type: Number,
+      default: null,
+      min: [0, 'unitCost cannot be negative'],
+    },
     minimumStock: {
       type: Number,
       default: 0,

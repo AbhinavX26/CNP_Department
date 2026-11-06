@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { API_URL, ApiError, UNAUTHORIZED_EVENT, api, getStoredToken } from './api';
+import { API_URL, ApiError, HTTP_ERROR_EVENT, UNAUTHORIZED_EVENT, api, getStoredToken } from './api';
 import { mockResponse, mockUnparsableResponse, stubFetch, urlFor } from '../test/fixtures';
 
 const TOKEN_KEY = 'cnp_auth_token';
@@ -136,6 +136,19 @@ describe('api()', () => {
 
       expect(error).toBeInstanceOf(ApiError);
       expect(error).toMatchObject({ status: 502, message: 'API Request Failed', data: null });
+    });
+
+    it('signals the app to open the matching error page for a server 504', async () => {
+      stubFetch(async () => mockResponse({ success: false, message: 'Timed out' }, 504));
+      const listener = vi.fn();
+      window.addEventListener(HTTP_ERROR_EVENT, listener);
+
+      await expect(api('GET', '/slow')).rejects.toMatchObject({ status: 504 });
+
+      expect(listener).toHaveBeenCalledWith(
+        expect.objectContaining({ detail: { status: 504 } }),
+      );
+      window.removeEventListener(HTTP_ERROR_EVENT, listener);
     });
 
     it('wraps a network failure in ApiError instead of leaking the TypeError', async () => {

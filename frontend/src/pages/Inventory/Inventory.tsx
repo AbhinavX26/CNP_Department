@@ -24,6 +24,8 @@ interface InventoryItem {
   availableQuantity: number;
   /** The department's own reorder floor. 0 means the item has no threshold. */
   minimumStock?: number;
+  /** Price of one unit; null/absent = not priced (such requests always go to the admin). */
+  unitCost?: number | null;
   location?: string;
   createdBy?: InventoryPerson;
   createdAt?: string;
@@ -46,6 +48,8 @@ interface ItemForm {
   category: string;
   totalQuantity: number;
   minimumStock: number;
+  /** Kept as text so an empty box means "no price". */
+  unitCost: string;
   location: string;
 }
 
@@ -57,6 +61,7 @@ const EMPTY_FORM: ItemForm = {
   category: '',
   totalQuantity: 0,
   minimumStock: 0,
+  unitCost: '',
   location: '',
 };
 
@@ -399,6 +404,7 @@ export default function Inventory() {
       category: item.category || '',
       totalQuantity: item.totalQuantity || 0,
       minimumStock: item.minimumStock || 0,
+      unitCost: item.unitCost == null ? '' : String(item.unitCost),
       location: item.location || '',
     });
     setFormError(null);
@@ -466,6 +472,7 @@ export default function Inventory() {
         description: formData.description,
         category: formData.category,
         minimumStock: formData.minimumStock,
+        unitCost: formData.unitCost,
         location: formData.location,
       });
       setFormOpen(false);
@@ -953,6 +960,22 @@ export default function Inventory() {
                       }
                     />
                     <p className="ui-hint">At or below this, the shelf reads as low. 0 disables it.</p>
+                  </div>
+
+                  <div>
+                    <label className="ui-label" htmlFor="ops-item-cost">Unit cost (₹)</label>
+                    <input
+                      id="ops-item-cost"
+                      className="ui-field"
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      inputMode="decimal"
+                      value={formData.unitCost}
+                      onChange={(e) => setFormData({ ...formData, unitCost: e.target.value })}
+                      placeholder="e.g. 450"
+                    />
+                    <p className="ui-hint">Used to total a request against the budget limit. Leave empty if unknown; those requests go to you.</p>
                   </div>
 
                   <div className="ops-field--wide">

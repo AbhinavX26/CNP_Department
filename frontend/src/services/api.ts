@@ -98,4 +98,3 @@ export async function api<T>(method: string, endpoint: string, body?: any): Prom
 
   return data as T;
 }
-

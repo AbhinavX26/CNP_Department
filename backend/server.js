@@ -22,6 +22,7 @@ import notificationRoutes from './src/routes/notificationRoutes.js';
 import dashboardRoutes from './src/routes/dashboardRoutes.js';
 import searchRoutes from './src/routes/searchRoutes.js';
 import { startEventReminderScheduler } from './src/services/eventReminderService.js';
+import { requestTimeout } from './src/middleware/requestTimeout.js';
 
 dns.setServers(["4.2.2.2", "8.8.8.8", "1.1.1.1"]);
 
@@ -55,6 +56,7 @@ app.use(
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(requestTimeout());
 
 // Express 5 leaves `req.body` undefined when a request has no (or an unparsed)
 // body. Every handler destructures it, so normalise it once here: a POST with no

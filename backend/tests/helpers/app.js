@@ -21,6 +21,7 @@ import allocationRoutes from '../../src/routes/allocationRoutes.js';
 import notificationRoutes from '../../src/routes/notificationRoutes.js';
 import dashboardRoutes from '../../src/routes/dashboardRoutes.js';
 import searchRoutes from '../../src/routes/searchRoutes.js';
+import { requestTimeout } from '../../src/middleware/requestTimeout.js';
 
 /**
  * Test application factory.
@@ -46,6 +47,7 @@ export function createApp() {
   );
   app.use(express.json());
   app.use(express.urlencoded({ extended: true }));
+  app.use(requestTimeout());
 
   // ── Route mounts (keep in the same order as server.js) ──────────────────────
   app.use('/api', healthRoutes);
